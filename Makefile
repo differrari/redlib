@@ -1,6 +1,6 @@
 #shared
 
-include ../common.mk
+include ./common.mk
 
 CPPFLAGS := -I.
 CFLAGS   := $(CFLAGS_BASE) $(CPPFLAGS)
@@ -39,6 +39,12 @@ $(BUILD_DIR)/%.o: %.c
 $(BUILD_DIR)/%.o: %.cpp
 	@mkdir -p $(dir $@)
 	$(VCXX) $(CXXFLAGS) $(SH_FLAGS) -c -MMD -MP $< -o $@
+	
+cross:
+	$(MAKE) ARCH= SH_FLAGS=-DCROSS BUILD_DIR=./cbuild TARGET=clibshared.a
+	
+kern:
+	$(MAKE) SH_FLAGS=-DKERNEL BUILD_DIR=./kbuild TARGET=klibshared.a
 
 clean:
 	$(RM) $(CLEAN_OBJS) $(CLEAN_DEPS) $(TARGET)
