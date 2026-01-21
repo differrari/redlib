@@ -3,7 +3,7 @@
 include ./common.mk
 
 CPPFLAGS := -I.
-CFLAGS   := $(CFLAGS_BASE) $(CPPFLAGS)
+CFLAGS   += $(CFLAGS_BASE) $(CPPFLAGS) $(ADDFLAGS)
 CXXFLAGS := $(CXXFLAGS_BASE) $(CPPFLAGS)
 
 CLEAN_OBJS := $(shell find . -name "*.o")
@@ -16,7 +16,7 @@ DEP     := $(C_SRC:%.c=$(BUILD_DIR)/%.d) $(ASM_SRC:%.S=$(BUILD_DIR)/%.d) $(CPP_S
 
 TARGET  := libshared.a
 
-.PHONY: all clean prepare
+.PHONY: all clean prepare cross kern
 
 all: prepare $(TARGET)
 
@@ -40,14 +40,14 @@ $(BUILD_DIR)/%.o: %.cpp
 	@mkdir -p $(dir $@)
 	$(VCXX) $(CXXFLAGS) $(SH_FLAGS) -c -MMD -MP $< -o $@
 	
-cross:
-	$(MAKE) ARCH= SH_FLAGS=-DCROSS BUILD_DIR=./cbuild TARGET=clibshared.a
+cross: 
+	$(MAKE) ARCH= SH_FLAGS=-DCROSS BUILD_DIR=./cbuild ADDFLAGS=-std=c99\ -I../raylib/src TARGET=clibshared.a
 	
 kern:
 	$(MAKE) SH_FLAGS=-DKERNEL BUILD_DIR=./kbuild TARGET=klibshared.a
 
 clean:
-	$(RM) $(CLEAN_OBJS) $(CLEAN_DEPS) $(TARGET)
-	$(RM) -r $(BUILD_DIR)
+	$(RM) ./libshared.a ./klibshared.a ./clibshared.a
+	$(RM) -r ./build ./kbuild ./cbuild
 
 -include $(DEP)
