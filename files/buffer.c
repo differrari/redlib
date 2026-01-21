@@ -54,3 +54,8 @@ void buffer_write_lim(buffer *buf, char *lit, size_t lit_size){
 void buffer_write_space(buffer *buf){
     buffer_write_const(buf, " ");
 }
+
+void buffer_destroy(buffer *buf){
+    free_sized(buf->buffer,buf->limit);
+    *buf = (buffer){};
+}
