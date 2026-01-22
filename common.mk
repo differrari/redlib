@@ -11,14 +11,14 @@ OBJCOPY    := $(ARCH)objcopy
 
 BUILD_DIR := ./build
 
-COMMON_FLAGS  ?= -ffreestanding -nostdlib -fno-exceptions -fno-unwind-tables \
+COMMON_FLAGS  ?= -fno-exceptions -fno-unwind-tables \
                  -fno-asynchronous-unwind-tables -g -O0 -Wall -Wextra \
                  -Wno-unused-parameter -Wno-address-of-packed-member \
                  -Werror \
                  -Wno-unused-function
 
 ifeq ($(ARCH), aarch64-none-elf-)
-COMMON_FLAGS += -mcpu=cortex-a72 -Wno-error=sized-deallocation 
+COMMON_FLAGS += -mcpu=cortex-a72 -Wno-error=sized-deallocation -ffreestanding -nostdlib 
 endif
 
 CFLAGS_BASE   ?= $(COMMON_FLAGS) -std=c99
