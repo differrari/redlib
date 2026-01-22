@@ -1,7 +1,8 @@
 #include "buffer.h"
-#include "syscalls/syscalls.h"
+#include "alloc/allocate.h"
 #include "std/memory.h"
 #include "math/math.h"
+#include "string/string.h"
 
 buffer buffer_create(size_t size, buffer_options options){
     return (buffer){
@@ -23,7 +24,7 @@ size_t buffer_write(buffer *buf, char* fmt, ...){
 
 void buffer_resize(buffer *buf, size_t amount){
     size_t new_size = amount ? buf->limit + amount : buf->limit * 2;
-    buf->buffer = realloc_sized(buf->buffer, buf->limit, new_size);
+    buf->buffer = realloc(buf->buffer, new_size);
     buf->limit = new_size;
 }
 
@@ -82,7 +83,7 @@ size_t buffer_write_space(buffer *buf){
 }
 
 void buffer_destroy(buffer *buf){
-    free_sized(buf->buffer,buf->limit);
+    release(buf->buffer);
     *buf = (buffer){};
 }
 

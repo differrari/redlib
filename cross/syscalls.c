@@ -126,12 +126,6 @@ void closef(file *descriptor){
 
 }
 
-void* zalloc(size_t size){
-    void *p = malloc(size);
-    memset(p,0,size);
-    return p;
-}
-
 void msleep(uint64_t msec){
     struct timespec rqtp;
     rqtp.tv_sec = msec / 1000;

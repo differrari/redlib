@@ -1,5 +1,5 @@
 #include "chunk_array.h"
-#include "syscalls/syscalls.h"
+#include "alloc/allocate.h"
 #include "std/memory.h"
 
 #define CHUNK_ARRAY_ITEM(index) (void*)((uintptr_t)array + sizeof(chunk_array_t) + (index * array->item_size))
@@ -42,7 +42,7 @@ size_t chunk_array_count(chunk_array_t *array){
 void chunk_array_destroy(chunk_array_t *array){
     if (!array) return;
     if (array->next) chunk_array_destroy(array->next);
-    free_sized(array, sizeof(chunk_array_t) + (array->item_size * array->chunk_capacity));
+    release(array);
 }
 
 void* chunk_array_find(chunk_array_t *array, void *query, bool (*match)(void* value, void *query)){

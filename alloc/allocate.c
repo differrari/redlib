@@ -14,7 +14,7 @@ typedef struct allocator_header {
     struct allocator_header* next;
 } allocator_header;
 
-#define INDIVIDUAL_HDR (sizeof(size_t) * 2)
+#define INDIVIDUAL_HDR (sizeof(size_t) * 2)//TODO: use the extra value as a canary to indicate live memory
 
 void* allocate(void* page, size_t size, page_allocator fallback){
     if (!fallback) fallback = malloc;
@@ -35,6 +35,7 @@ void* allocate(void* page, size_t size, page_allocator fallback){
         void *addr = (void*)(hdr->free_mem + INDIVIDUAL_HDR);
         hdr->free_mem += size;
         hdr->used += size;
+        memset(addr, 0, size - INDIVIDUAL_HDR);
         return addr;
     }
     
@@ -50,7 +51,9 @@ void* allocate(void* page, size_t size, page_allocator fallback){
             *blk_ptr = next;
             hdr->used += size;
             *(size_t*)block = size;
-            return (void*)((uintptr_t)block + INDIVIDUAL_HDR);        
+            void* addr = (void*)((uintptr_t)block + INDIVIDUAL_HDR);
+            memset(addr, 0, size - INDIVIDUAL_HDR);
+            return addr;
         }
         block = block->next;
     }
@@ -94,6 +97,30 @@ void release(void* ptr){
             block->block_size += next_block->block_size;
         } 
     }
+}
+
+void* realloc(void* ptr, size_t new_size){
+    //TODO: if possible, once we have a sentinel value in the extra 0x8, we can check if we can just take up more memory without reallocating entirely
+    // allocator_header *hdr = (allocator_header*)((uintptr_t)ptr & (~0xFFF));
+    
+    // if (!hdr->used) return 0;
+    
+    uintptr_t header = (uintptr_t)ptr - INDIVIDUAL_HDR;
+    
+    size_t old_size = *(size_t*)header;
+    
+    // size_t diff = new_size > old_size ? new_size-old_size : size-old_size;
+    
+    // size_t next_val = *(size_t*)((uintptr_t)ptr + old_size);
+    
+    // if (next_val == 0 || next_val == 0xDEADBEEFDEADBEEF)
+    
+    void *new_ptr = allocate((void*)((uintptr_t)ptr & (~0xFFF)), new_size, malloc);
+    if (!new_ptr) return 0;
+    memcpy(new_ptr, ptr, old_size < new_size ? old_size : new_size);
+    release(ptr);
+    return new_ptr;
+    
 }
 
 #include "test.h"
