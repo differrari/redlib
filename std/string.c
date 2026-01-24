@@ -3,6 +3,7 @@
 #include "std/memory.h"
 #include "types.h"
 #include "string_slice.h"
+#include "math/math.h"
 
 #define TRUNC_MARKER "[…]"
 
@@ -1152,7 +1153,7 @@ float parse_float(char *input,size_t length){//TODO: can probably be improved
     int64_t i = parse_int64(input, l1-1);
     size_t l2 = length-l1;
     int64_t f = parse_int64(p, l2);
-    return i + sign(i) * ((float)f/pow(10,l2));
+    return i + sign(i) * ((float)f/powi(10,l2));
 }
 
 int64_t parse_int64(const char* str, size_t size){

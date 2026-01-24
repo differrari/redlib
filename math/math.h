@@ -10,7 +10,7 @@ extern "C" {
 #define INFINITY __builtin_inff()
 #endif
 
-static inline int64_t pow(int64_t n, int e){
+static inline int64_t powi(int n, int e){
     if (e == 1) return n;
     if (e == 2) return n << e;
     int acc = n;
