@@ -66,6 +66,7 @@ void fb_draw_partial_img(draw_ctx *ctx, uint32_t *img, uint32_t x, uint32_t y, u
 }
 
 gpu_rect fb_draw_line(draw_ctx *ctx, uint32_t x0, uint32_t y0, uint32_t x1, uint32_t y1, color color){
+    DrawLine(x0, y0, x1, y1, CONVERT_COLOR(color));
     return (gpu_rect){{0,0},{0,0}};
 }
 
