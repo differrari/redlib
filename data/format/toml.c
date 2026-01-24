@@ -1,6 +1,6 @@
 #include "toml.h"
-#include "data/scanner/scanner.h"
-#include "data/helpers/token_stream.h"
+#include "scanner/scanner.h"
+#include "helpers/token_stream.h"
 
 void read_toml_value(TokenStream *ts, Token key, toml_handler on_kvp, void *context){
     Token t;

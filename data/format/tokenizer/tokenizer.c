@@ -1,4 +1,4 @@
-#include "data/tokenizer/tokenizer.h"
+#include "tokenizer.h"
 
 static void tokenizer_fail(Tokenizer *t, TokenizerError err) {
     if (t->failed) return;

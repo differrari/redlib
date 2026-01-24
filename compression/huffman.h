@@ -1,7 +1,7 @@
 #pragma once
 
 #include "types.h"
-#include "data_struct/p_queue.h"
+#include "data/struct/p_queue.h"
 
 /*
     This compression algorithm is (very experimental). 

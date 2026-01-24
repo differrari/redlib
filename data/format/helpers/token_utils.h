@@ -2,7 +2,7 @@
 
 #include "types.h"
 #include "std/string.h"
-#include "data/tokenizer/tokenizer.h"
+#include "data/format/tokenizer/tokenizer.h"
 
 bool token_is_number(const Token *t);
 bool token_is_operator_token(const Token *t, const char *op);

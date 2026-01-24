@@ -1,7 +1,7 @@
 #pragma once
 
 #include "types.h"
-#include "data_struct/ring_buffer.hpp"
+#include "data/struct/ring_buffer.hpp"
 #include "ui/draw/draw.h"
 
 #define COLOR_WHITE 0xFFFFFFFF

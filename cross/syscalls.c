@@ -22,11 +22,14 @@ void printl(const char *str){
 
 char log_buf[1024];
 
-char *read_full_file(const char *path){
+char *read_full_file(const char *path, size_t *out_size){
+    if (strstart_case(path,"/resources",true) == 10)
+        path++;
     FILE *fd = fopen(path,"r");
     if (!fd) return 0;
     fseek(fd, 0, SEEK_END);
     long fsize = ftell(fd);
+    if (out_size) *out_size = fsize;
     rewind(fd);
 
     char *fcontent = (char*)zalloc(sizeof(char) * (fsize+1));

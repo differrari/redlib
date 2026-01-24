@@ -1,4 +1,4 @@
-#include "data/scanner/scanner.h"
+#include "scanner.h"
 
 bool scan_eof(Scanner *s) {
     return s->pos >= s->len;

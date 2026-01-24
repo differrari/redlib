@@ -77,11 +77,13 @@ void* zalloc(size_t size){
     return malloc(size);
 }
 
-char *read_full_file(const char *path){
+char *read_full_file(const char *path, size_t *out_size){
     
     file fd = {};
     if (openf(path, &fd) != FS_RESULT_SUCCESS) return false;
     char *fcontent = (char*)malloc(fd.size + 1);
+    
+    if (out_size) *out_size = fd.size;
     
     readf(&fd, fcontent, fd.size);
     

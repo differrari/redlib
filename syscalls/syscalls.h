@@ -65,7 +65,7 @@ void *calloc(size_t nitems, size_t size);
 sizedptr dir_list(const char *path);
 
 int print(const char *fmt, ...);
-char *read_full_file(const char *path);
+char *read_full_file(const char *path, size_t *out_size);
 
 bool write_full_file(const char *path, void* buf, size_t size);
 

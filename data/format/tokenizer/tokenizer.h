@@ -1,6 +1,6 @@
 #pragma once
 #include "types.h"
-#include "data/scanner/scanner.h"
+#include "data/format/scanner/scanner.h"
 #include "std/string_slice.h"
 
 typedef enum {

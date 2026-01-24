@@ -2,8 +2,8 @@
 #include "std/std.h"
 #include "std/string.h"
 #include "syscalls/syscalls.h"
-#include "data/scanner/scanner.h"
-#include "data/tokenizer/tokenizer.h"
+#include "scanner/scanner.h"
+#include "tokenizer/tokenizer.h"
 #include "helpers/token_stream.h"
 #include "helpers/token_utils.h"
 

@@ -3,7 +3,7 @@
 #include "types.h"
 #include "std/string.h"
 #include "std/std.h"
-#include "data/tokenizer/tokenizer.h"
+#include "data/format/tokenizer/tokenizer.h"
 #include "token_utils.h"
 
 typedef struct {
