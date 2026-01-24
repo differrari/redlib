@@ -1,6 +1,6 @@
 #pragma once
 #include "types.h"
-#include "std/std.h"
+#include "std/string_slice.h"
 
 typedef struct {
     const char *buf;
@@ -24,3 +24,4 @@ bool scan_match(Scanner *s, char c);
 bool scan_match_string(Scanner *s, const char *str);
 
 void scan_skip_ws(Scanner *s, bool skip_nl);
+string_slice scan_to(Scanner *s, char seek);

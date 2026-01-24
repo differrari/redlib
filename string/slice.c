@@ -1,4 +1,4 @@
-#include "string_slice.h"
+#include "slice.h"
 #include "math/math.h"
 
 string_slice make_string_slice(const char* buf, size_t start, size_t length){

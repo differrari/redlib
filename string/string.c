@@ -2,7 +2,7 @@
 #include "syscalls/syscalls.h"
 #include "std/memory.h"
 #include "types.h"
-#include "string_slice.h"
+#include "slice.h"
 #include "math/math.h"
 
 #define TRUNC_MARKER "[…]"

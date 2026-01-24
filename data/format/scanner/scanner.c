@@ -39,3 +39,15 @@ void scan_skip_ws(Scanner *s, bool skip_nl) {
         else break;
     }
 }
+
+#include "syscalls/syscalls.h"
+
+string_slice scan_to(Scanner *s, char seek){
+    uint32_t initial = s->pos;
+    while (!scan_eof(s)) {
+        char c = s->buf[s->pos++];
+        if (c == seek) break;
+    }
+    if (s->pos == s->len && initial == s->pos) return (string_slice){.data = (char*)s->buf + initial, .length = 0 };
+    return (string_slice){.data = (char*)s->buf + initial, .length = s->pos-initial };
+}
