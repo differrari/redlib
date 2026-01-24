@@ -10,6 +10,15 @@ extern "C" {
 #define INFINITY __builtin_inff()
 #endif
 
+static inline int64_t pow(int64_t n, int e){
+    if (e == 1) return n;
+    if (e == 2) return n << e;
+    int acc = n;
+    for (int i = 1; i < e; i++)
+        acc *= n;
+    return acc;
+}
+
 static inline int min(int a, int b){
     return a < b ? a : b;
 }

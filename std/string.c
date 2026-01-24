@@ -1146,6 +1146,15 @@ uint64_t parse_int_u64(const char* str, size_t size){
     return result;
 }
 
+float parse_float(char *input,size_t length){//TODO: can probably be improved
+    char *p = (char*)seek_to(input, '.');
+    size_t l1 = p-input;
+    int64_t i = parse_int64(input, l1-1);
+    size_t l2 = length-l1;
+    int64_t f = parse_int64(p, l2);
+    return i + sign(i) * ((float)f/pow(10,l2));
+}
+
 int64_t parse_int64(const char* str, size_t size){
     uint64_t result = 0;
     bool neg = false;
