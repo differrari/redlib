@@ -91,15 +91,22 @@ bool read_event(kbd_event *event){
     return false;
 }
 
+static int old_x = 0;
+static int old_y = 0;
+
 void get_mouse_status(mouse_data *in){
-    in->raw.x = (int8_t)(GetMouseDelta().x * 128);
-    in->raw.y = (int8_t)(GetMouseDelta().y * 128);
     in->raw.scroll = ((int)GetMouseWheelMove() & 0xFF);
     in->raw.buttons = 0;
     for (int i = 0; i < 3; i++)
         in->raw.buttons |= (IsMouseButtonDown(i) & 1) << i;
-    in->position.x = GetMouseX();
-    in->position.y = GetMouseY();
+    int x_pos = GetMouseX();
+    int y_pos = GetMouseY();
+    in->raw.x = x_pos - old_x;
+    in->raw.y = y_pos - old_y;
+    in->position.x = x_pos;
+    in->position.y = y_pos;
+    old_x = x_pos;
+    old_y = y_pos;
 }
 
 FS_RESULT openf(const char* path, file* descriptor){
