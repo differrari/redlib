@@ -4,6 +4,7 @@
 
 #include "std/allocator.hpp"
 #include "syscalls/syscalls.h"
+#include "std/memory.h"
 
 //TODO: review allocs & C
 template<typename T>

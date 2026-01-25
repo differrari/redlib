@@ -2,7 +2,6 @@
 
 #ifdef __cplusplus
 #include "allocator.hpp"
-#include "data_struct/data_struct.hpp"
 #endif
 #include "types.h"
 #include "../syscalls/syscalls.h"
