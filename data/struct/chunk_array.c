@@ -58,6 +58,8 @@ bool chunk_array_test(){
     }
     
     assert_true(test_array->count == 10, "Chunked Array: Wrong number of items in chunk. Expected 10, found %i",test_array->count);
-    assert_true(test_array->next, "Chunked Array: should not have next pointer");
+    assert_true(test_array->next > 0, "Chunked Array: should not have next pointer");
     assert_true(chunk_array_count(test_array) == 20, "Chunked Array: Wrong number of calculated items. Expected 20, found %i",test_array->count);
+    
+    return true;
 }
