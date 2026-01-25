@@ -1153,7 +1153,8 @@ float parse_float(char *input,size_t length){//TODO: can probably be improved
     int64_t i = parse_int64(input, l1-1);
     size_t l2 = length-l1;
     int64_t f = parse_int64(p, l2);
-    return i + sign(i) * ((float)f/powi(10,l2));
+    int s = (i == 0 && *input == '-') ? -1 : sign(i);
+    return i + s * ((float)f/powi(10,l2));
 }
 
 int64_t parse_int64(const char* str, size_t size){
