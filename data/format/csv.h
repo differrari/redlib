@@ -1,6 +1,6 @@
 #pragma once
 
-#include "std/string_slice.h"
+#include "string/slice.h"
 
 typedef void (*csv_handler)(string_slice value);
 

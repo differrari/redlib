@@ -9,7 +9,7 @@
 #include <dirent.h>
 #include <pwd.h>
 #include <sys/stat.h>
-#include "std/string.h"
+#include "string/string.h"
 #include "syscalls/syscalls.h"
 
 static char cwd[128];

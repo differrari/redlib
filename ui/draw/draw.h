@@ -6,7 +6,7 @@ extern "C" {
 
 #include "types.h"
 #include "ui/graphic_types.h"
-#include "std/string.h"
+#include "string/string.h"
 
 #define CHAR_SIZE 8
 

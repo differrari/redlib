@@ -3,6 +3,7 @@
 #include "syscalls/syscalls.h"
 #include "bmp.h"
 #include "png.h"
+#include "files/helpers.h"
 
 uint32_t get_color_bpp(uint16_t bpp, uintptr_t value_ptr){
     switch (bpp) {
@@ -53,49 +54,41 @@ uint32_t get_bpp_converted_color(uint16_t bpp, uintptr_t value_ptr){
     return 0;
 }
 
-#ifndef CROSS
-
 void* load_image(char *path, image_info *info, IMAGE_FORMATS format){
-    file descriptor = {};
-    FS_RESULT res = openf(path, &descriptor);
-    void *img = 0;
+    size_t file_size = 0;
+    void *img_file = read_full_file(path, &file_size);
     image_info img_info;
-    if (res == FS_RESULT_SUCCESS){
-        void *img_file = (void*)malloc(descriptor.size);
-        readf(&descriptor, img_file, descriptor.size);
-        switch (format) {
-            case PNG:
-            img_info = png_get_info(img_file, descriptor.size);
-            break;
-            case BMP:
-            img_info = bmp_get_info(img_file, descriptor.size);
-            break;
-            //Unknown can be handled by reading magic bytes
-        }
-        closef(&descriptor);
-        if (img_info.width > 0 && img_info.height > 0){
-            size_t image_size = img_info.width * img_info.height * system_bpp;
-            img = (void*)malloc(image_size);
-            switch (format) {
-                case PNG:
-                png_read_image(img_file, descriptor.size, img);
-                break;
-                case BMP:
-                bmp_read_image(img_file, descriptor.size, img);
-                break;
-            }
-            *info = img_info;
-            return img;
-        } else { 
-            printf("Wrong image size %i",img_info.width,img_info.height);
-            *info = (image_info){0, 0};
-            return 0;
-        }
-    } else { 
+    if (!img_file || !file_size){
         printf("Failed to open image");
         *info = (image_info){0, 0};
         return 0;
     }
+    switch (format) {
+        case PNG:
+        img_info = png_get_info(img_file, file_size);
+        break;
+        case BMP:
+        img_info = bmp_get_info(img_file, file_size);
+        break;
+        //Unknown can be handled by reading magic bytes
+    }
+    if (!img_info.width || !img_info.height){
+        printf("Wrong image size %i",img_info.width,img_info.height);
+        *info = (image_info){0, 0};
+        return 0;
+    }
+    size_t image_size = img_info.width * img_info.height * system_bpp;
+    void *img = (void*)malloc(image_size);
+    switch (format) {
+        case PNG:
+        png_read_image(img_file, file_size, img);
+        break;
+        case BMP:
+        bmp_read_image(img_file, file_size, img);
+        break;
+    }
+    *info = img_info;
+    return img;
 }
 
 //TODO: downsize & other interpolations
@@ -114,7 +107,6 @@ void* load_image_resized(char *path, image_info *info, IMAGE_FORMATS format, uin
 }
 
 void rescale_image(uint32_t old_width, uint32_t old_height, uint32_t new_width, uint32_t new_height, uint32_t *old_img, uint32_t* new_img){
-    
     for (uint32_t y = 0; y < new_height; y++){
         uint32_t oy = y * old_height/new_height;
         uint32_t *old_row = old_img + (oy * old_width);
@@ -125,5 +117,3 @@ void rescale_image(uint32_t old_width, uint32_t old_height, uint32_t new_width, 
         }   
     }
 }
-
-#endif

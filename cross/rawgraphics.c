@@ -1,6 +1,6 @@
 #ifdef CROSS
 
-#include "std/string.h"
+#include "string/string.h"
 #include "ui/draw/draw.h"
 #include "raylib.h"
 #include "syscalls/syscalls.h"
@@ -60,8 +60,36 @@ void fb_draw_img(draw_ctx *ctx, uint32_t x, uint32_t y, uint32_t *img, uint32_t 
 }
 
 void fb_draw_partial_img(draw_ctx *ctx, uint32_t *img, uint32_t x, uint32_t y, uint32_t full_width, uint32_t full_height, image_transform transform){
-    Texture2D *tex = (Texture2D*)img;
-    DrawTexture(*tex, x, y, WHITE);
+    if (x >= ctx->width || y >= ctx->height) return;
+
+    if (transform.start_x >= full_width) return;
+
+    uint32_t w = transform.img_width == 0 ? full_width : transform.img_width;
+    uint32_t h = transform.img_height == 0 ? full_height : transform.img_height;
+
+    if (w > full_width - transform.start_x) w = full_width - transform.start_x;
+
+    if (x + w > ctx->width) w = ctx->width - x;
+    if (y + h > ctx->height) h = ctx->height - y;
+    if (!w || !h) return;
+
+    uint32_t y_sind = transform.flip_y ? (full_height-transform.start_y) : transform.start_y;
+
+    const uint32_t src_pitch_px = full_width;
+    const uint32_t* src_row = img + (y_sind * full_width);
+
+    for (uint32_t row = 0; row < h; ++row) {
+        const uint32_t* src = src_row;
+        for (uint32_t col = 0; col < w; ++col) {
+            uint32_t x_ind = transform.flip_x ? full_width-transform.start_x-col : transform.start_x + col;
+            uint32_t pix = src[x_ind];
+            DrawPixel(col + x, y + row, CONVERT_COLOR(pix));
+        }
+        if (transform.flip_y) src_row -= src_pitch_px;
+        else src_row += src_pitch_px;
+    }
+
+    mark_dirty(ctx, x,y,w, h);
 }
 
 gpu_rect fb_draw_line(draw_ctx *ctx, uint32_t x0, uint32_t y0, uint32_t x1, uint32_t y1, color color){

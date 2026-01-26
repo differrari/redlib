@@ -1,7 +1,7 @@
 #pragma once
 
 #include "types.h"
-#include "std/string.h"
+#include "string/string.h"
 #include "data/format/tokenizer/tokenizer.h"
 
 bool token_is_number(const Token *t);

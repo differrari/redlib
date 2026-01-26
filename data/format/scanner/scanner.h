@@ -1,6 +1,6 @@
 #pragma once
 #include "types.h"
-#include "std/string_slice.h"
+#include "string/slice.h"
 
 typedef struct {
     const char *buf;

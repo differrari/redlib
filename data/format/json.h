@@ -1,7 +1,7 @@
 #pragma once
 
 #include "types.h"
-#include "std/string.h"
+#include "string/string.h"
 
 #ifdef __cplusplus
 extern "C" {

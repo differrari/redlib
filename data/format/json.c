@@ -1,6 +1,6 @@
 #include "json.h"
 #include "std/std.h"
-#include "std/string.h"
+#include "string/string.h"
 #include "syscalls/syscalls.h"
 #include "scanner/scanner.h"
 #include "tokenizer/tokenizer.h"

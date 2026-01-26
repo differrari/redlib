@@ -1,5 +1,5 @@
 #include "percent.h"
-#include "std/string.h"
+#include "string/string.h"
 
 bool percent_decode(sizedptr in, string *out) {
     *out = string_repeat('\0', 0);

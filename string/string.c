@@ -1,4 +1,4 @@
-#include "std/string.h"
+#include "string/string.h"
 #include "syscalls/syscalls.h"
 #include "std/memory.h"
 #include "types.h"

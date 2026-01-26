@@ -1,5 +1,5 @@
 #include "syscalls.h"
-#include "std/string.h"
+#include "string/string.h"
 #include "math/math.h"
 #include "std/memory.h"
 

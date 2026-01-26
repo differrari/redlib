@@ -1,7 +1,7 @@
 #pragma once
 #include "types.h"
 #include "data/format/scanner/scanner.h"
-#include "std/string_slice.h"
+#include "string/slice.h"
 
 typedef enum {
     TOK_EOF = 0,

@@ -1,5 +1,5 @@
 #include "query_string.h"
-#include "std/string.h"
+#include "string/string.h"
 #include "syscalls/syscalls.h"
 
 void query_parse(const char *buf, uint32_t len, QueryParam **out_params, uint32_t *out_count) {

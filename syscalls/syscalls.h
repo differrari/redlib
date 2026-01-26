@@ -4,7 +4,7 @@
 #include "ui/graphic_types.h"
 #include "keyboard_input.h"
 #include "mouse_input.h"
-#include "std/string.h"
+#include "string/string.h"
 #include "net/network_types.h"
 #include "ui/draw/draw.h"
 #include "files/fs.h"
