@@ -49,7 +49,8 @@ void seek(file *descriptor, int64_t offset, SEEK_TYPE type){
 }
 
 void* realloc_sized(void* old_ptr, size_t old_size, size_t new_size){
-    void* new_ptr = malloc(new_size);
+    void* new_ptr = zalloc(new_size);
+    if (!new_ptr) return 0;
     memcpy(new_ptr, old_ptr, min(old_size,new_size));
     free_sized(old_ptr, old_size);
     return new_ptr;
