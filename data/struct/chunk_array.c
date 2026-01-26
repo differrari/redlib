@@ -2,6 +2,8 @@
 #include "syscalls/syscalls.h"
 #include "std/memory.h"
 
+#define CHUNK_ARRAY_ITEM(index) (void*)((uintptr_t)array + sizeof(chunk_array_t) + (index * array->item_size))
+
 chunk_array_t* chunk_array_create(size_t item_size, size_t chunk_capacity){
     chunk_array_t *array = (chunk_array_t*)zalloc(sizeof(chunk_array_t) + (item_size * chunk_capacity));
     array->item_size = item_size;
@@ -23,7 +25,7 @@ chunk_array_t* chunk_array_push(chunk_array_t* array, void *data){
 
 void* chunk_array_get(chunk_array_t *array, uint64_t index){
     if (index < array->count){
-        return (void*)((uintptr_t)array + sizeof(chunk_array_t) + (index * array->item_size));
+        return CHUNK_ARRAY_ITEM(index);
     } else if (array->next){
         return chunk_array_get(array->next, index - array->count);
     } else return 0;
@@ -62,4 +64,12 @@ bool chunk_array_test(){
     assert_true(chunk_array_count(test_array) == 20, "Chunked Array: Wrong number of calculated items. Expected 20, found %i",test_array->count);
     
     return true;
+}
+
+void* chunk_array_find(chunk_array_t *array, void *query, bool (*match)(void* value, void *query)){
+    for (size_t i = 0; i < array->count; i++){
+        if (match(CHUNK_ARRAY_ITEM(i), query)) return CHUNK_ARRAY_ITEM(i);
+    }
+    if (array->next) return chunk_array_find(array->next, query, match);
+    return 0;
 }
