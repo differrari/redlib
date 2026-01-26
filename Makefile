@@ -41,13 +41,13 @@ $(BUILD_DIR)/%.o: %.cpp
 	$(VCXX) $(CXXFLAGS) $(SH_FLAGS) -c -MMD -MP $< -o $@
 	
 cross: 
-	$(MAKE) ARCH= SH_FLAGS=-DCROSS BUILD_DIR=./cbuild ADDFLAGS=-std=c99\ -I../raylib/src TARGET=clibshared.a
+	$(MAKE) ARCH= SH_FLAGS=-DCROSS BUILD_DIR=./.cbuild ADDFLAGS=-std=c99\ -I../raylib/src TARGET=clibshared.a
 	
 kern:
-	$(MAKE) SH_FLAGS=-DKERNEL BUILD_DIR=./kbuild TARGET=klibshared.a
+	$(MAKE) SH_FLAGS=-DKERNEL BUILD_DIR=./.kbuild TARGET=klibshared.a
 
 clean:
 	$(RM) ./libshared.a ./klibshared.a ./clibshared.a
-	$(RM) -r ./build ./kbuild ./cbuild
+	$(RM) -r ./.build ./.kbuild ./.cbuild
 
 -include $(DEP)

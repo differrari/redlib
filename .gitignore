@@ -16,7 +16,7 @@ compile_commands.json
 .DS_STORE
 *.d
 *.red
-build/*
-cbuild/*
-kbuild/*
+.build/*
+.cbuild/*
+.kbuild/*
 trace

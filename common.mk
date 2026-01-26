@@ -9,7 +9,7 @@ LD         := $(ARCH)ld
 AR         := $(ARCH)ar
 OBJCOPY    := $(ARCH)objcopy
 
-BUILD_DIR := ./build
+BUILD_DIR := ./.build
 
 COMMON_FLAGS  ?= -fno-exceptions -fno-unwind-tables \
                  -fno-asynchronous-unwind-tables -g -O0 -Wall -Wextra \
