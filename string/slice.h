@@ -25,3 +25,4 @@ static inline bool slice_lit_match(string_slice sl, const char *lit, bool case_i
     return slices_equal(sl, make_string_slice(lit,0,strlen(lit)), case_insensitive);
 }
 
+void string_split(const char *str, char seek, void (*perform)(string_slice slice));
