@@ -26,7 +26,7 @@ void buffer_resize(buffer *buf, size_t amount){
 }
 
 void buffer_write_va(buffer *buf, char* fmt, va_list args){
-    if (strlen(fmt) > buf->limit-256){
+    if (strlen(fmt) > buf->limit-buf->cursor-256){
         if (buf->options & buffer_can_grow){
             buffer_resize(buf,strlen(fmt)*2);
         } if (buf->options & buffer_can_grow){
@@ -36,9 +36,14 @@ void buffer_write_va(buffer *buf, char* fmt, va_list args){
         }
     }
     size_t n = string_format_va_buf(fmt, buf->buffer+buf->cursor, buf->limit-buf->cursor, args);
-    buf->cursor += n;
-    buf->buffer_size += n;
-    if ((buf->options & buffer_can_grow) && buf->buffer_size > buf->limit-256){
+    if (buf->options & buffer_static) {
+        buf->cursor = 0;
+        buf->buffer_size = n;
+    } else {
+        buf->cursor += n;
+        buf->buffer_size += n;
+    }
+    if ((buf->options & buffer_can_grow) && buf->cursor > buf->limit-256){
         buffer_resize(buf,0);
     }
 }
@@ -49,7 +54,7 @@ void buffer_write_const(buffer *buf, char *lit){
 }
 
 void buffer_write_lim(buffer *buf, char *lit, size_t lit_size){
-    if ((int64_t)buf->limit - buf->buffer_size <= lit_size){
+    if ((int64_t)buf->limit - buf->cursor < lit_size){
         if (buf->options & buffer_can_grow){
             buffer_resize(buf,lit_size*2);
         } else if (buf->options & buffer_circular && lit_size < buf->limit){
@@ -61,7 +66,11 @@ void buffer_write_lim(buffer *buf, char *lit, size_t lit_size){
     for (size_t i = 0; i < lit_size; i++){
         buf->buffer[buf->cursor++] = lit[i];
     }
-    buf->buffer_size += lit_size;
+    if (buf->options & buffer_static){
+        buf->cursor = 0;  
+        buf->buffer_size = lit_size;
+    } else
+        buf->buffer_size += lit_size;
 }
 
 void buffer_write_space(buffer *buf){
@@ -113,5 +122,14 @@ bool buffer_test(){
     buffer_write_const(&testbuf, "it shouldnt loop");
     assert_eq(testbuf.buffer_size, 15, "Buffer did not loop correctly");
         
+    buffer_destroy(&testbuf);
+    testbuf = buffer_create(0x8, buffer_static);
+    buffer_write_const(&testbuf, "heyheyhe");
+    assert_eq(testbuf.buffer_size, 8, "Size (%i) != 8", testbuf.buffer_size,testbuf.cursor);
+    assert_eq(testbuf.cursor, 0, "Cursor moved in static buffer %i", testbuf.cursor);
+    buffer_write_const(&testbuf, "heyheyhe");
+    assert_eq(testbuf.buffer_size, 8, "Size (%i) != 8", testbuf.buffer_size,testbuf.cursor);
+    assert_eq(testbuf.cursor, 0, "Cursor moved in static buffer %i", testbuf.cursor);
+    
     return true;
 }
