@@ -1,6 +1,7 @@
 #include "buffer.h"
 #include "syscalls/syscalls.h"
 #include "std/memory.h"
+#include "math/math.h"
 
 buffer buffer_create(size_t size, buffer_options options){
     return (buffer){
@@ -12,11 +13,12 @@ buffer buffer_create(size_t size, buffer_options options){
     };
 }
 
-void buffer_write(buffer *buf, char* fmt, ...){
+size_t buffer_write(buffer *buf, char* fmt, ...){
     __attribute__((aligned(16))) va_list args;
     va_start(args, fmt); 
-    buffer_write_va(buf, fmt, args);
+    size_t n = buffer_write_va(buf, fmt, args);
     va_end(args);
+    return n;
 }
 
 void buffer_resize(buffer *buf, size_t amount){
@@ -25,7 +27,7 @@ void buffer_resize(buffer *buf, size_t amount){
     buf->limit = new_size;
 }
 
-void buffer_write_va(buffer *buf, char* fmt, va_list args){
+size_t buffer_write_va(buffer *buf, char* fmt, va_list args){
     if (strlen(fmt) > buf->limit-buf->cursor-256){
         if (buf->options & buffer_can_grow){
             buffer_resize(buf,strlen(fmt)*2);
@@ -46,14 +48,15 @@ void buffer_write_va(buffer *buf, char* fmt, va_list args){
     if ((buf->options & buffer_can_grow) && buf->cursor > buf->limit-256){
         buffer_resize(buf,0);
     }
+    return n;
 }
 
-void buffer_write_const(buffer *buf, char *lit){
+size_t buffer_write_const(buffer *buf, const char *lit){
     size_t lit_size = strlen(lit);
-    buffer_write_lim(buf, lit, lit_size);
+    return buffer_write_lim(buf, lit, lit_size);
 }
 
-void buffer_write_lim(buffer *buf, char *lit, size_t lit_size){
+size_t buffer_write_lim(buffer *buf, const char *lit, size_t lit_size){
     if ((int64_t)buf->limit - buf->cursor < lit_size){
         if (buf->options & buffer_can_grow){
             buffer_resize(buf,lit_size*2);
@@ -61,25 +64,33 @@ void buffer_write_lim(buffer *buf, char *lit, size_t lit_size){
             memset(buf->buffer, 0, buf->limit);
             buf->cursor = 0;
             buf->buffer_size = 0;
-        } else return;
+        } else return 0;
     }
     for (size_t i = 0; i < lit_size; i++){
-        buf->buffer[buf->cursor++] = lit[i];
+        *(char*)(buf->buffer + buf->cursor++) = lit[i];
     }
     if (buf->options & buffer_static){
         buf->cursor = 0;  
         buf->buffer_size = lit_size;
     } else
         buf->buffer_size += lit_size;
+    return lit_size;
 }
 
-void buffer_write_space(buffer *buf){
-    buffer_write_const(buf, " ");
+size_t buffer_write_space(buffer *buf){
+    return buffer_write_lim(buf, " ", 1);
 }
 
 void buffer_destroy(buffer *buf){
     free_sized(buf->buffer,buf->limit);
     *buf = (buffer){};
+}
+
+size_t buffer_read(buffer *buf, void *into, size_t size, uintptr_t cursor){
+    if (buf->options & buffer_static) cursor = 0;
+    size = min(size, buf->buffer_size - cursor);
+    memcpy(into, (buf->buffer + cursor), size);
+    return size;
 }
 
 #include "test.h"
@@ -103,6 +114,10 @@ bool buffer_test(){
     buffer_write_const(&testbuf, "another really long string. Should expand");
     assert_eq(testbuf.buffer_size, 81, "Buffer did not reach expected size", testbuf.buffer_size);
     
+    char grow_vals[5];
+    assert_eq(buffer_read(&testbuf, grow_vals, 5, 0),5,"Did not read 8 from circular buffer");
+    assert_false(strcmp(grow_vals, "hello"), "Read wrong values from circular buffer");
+    
     buffer_destroy(&testbuf);
     
     assert_false(testbuf.buffer, "Buffer not freed");
@@ -119,8 +134,14 @@ bool buffer_test(){
     assert_eq(testbuf.buffer_size, 14, "Buffer did not loop correctly");
     buffer_write_const(&testbuf, "it should loop.");
     assert_eq(testbuf.buffer_size, 15, "Buffer did not loop correctly");
+    
+    char circ_vals[8];
+    assert_eq(buffer_read(&testbuf, circ_vals, 8, 0),8,"Did not read 8 from circular buffer");
+    assert_false(strcmp(circ_vals, "it shoul"), "Read wrong values from circular buffer");
+    
     buffer_write_const(&testbuf, "it shouldnt loop");
     assert_eq(testbuf.buffer_size, 15, "Buffer did not loop correctly");
+    
         
     buffer_destroy(&testbuf);
     testbuf = buffer_create(0x8, buffer_static);
@@ -130,6 +151,14 @@ bool buffer_test(){
     buffer_write_const(&testbuf, "heyheyhe");
     assert_eq(testbuf.buffer_size, 8, "Size (%i) != 8", testbuf.buffer_size,testbuf.cursor);
     assert_eq(testbuf.cursor, 0, "Cursor moved in static buffer %i", testbuf.cursor);
+    
+    char test_vals[8];
+    
+    assert_eq(buffer_read(&testbuf, test_vals, 8, 0),8,"Did not read 8 from buffer");
+    assert_false(strcmp(test_vals, "heyheyh"), "Read wrong values");
+    
+    assert_eq(buffer_read(&testbuf, test_vals, 8, 0),8,"Did not read 8 from buffer");
+    assert_false(strcmp(test_vals, "heyheyh"), "Read wrong values");
     
     return true;
 }

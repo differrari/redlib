@@ -11,7 +11,7 @@ typedef enum {
 } buffer_options;
 
 typedef struct {
-    char* buffer;
+    void* buffer;
     size_t buffer_size;
     size_t limit;
     buffer_options options;
@@ -19,11 +19,12 @@ typedef struct {
 } buffer;
 
 buffer buffer_create(size_t size, buffer_options options);
-void buffer_write(buffer *buf, char* fmt, ...);
-void buffer_write_va(buffer *buf, char* fmt, va_list args);
-void buffer_write_const(buffer *buf, char *lit);
-void buffer_write_lim(buffer *buf, char *lit, size_t size);
-void buffer_write_space(buffer *buf);
+size_t buffer_write(buffer *buf, char* fmt, ...);
+size_t buffer_write_va(buffer *buf, char* fmt, va_list args);
+size_t buffer_write_const(buffer *buf, const char *lit);
+size_t buffer_write_lim(buffer *buf, const char *lit, size_t size);
+size_t buffer_write_space(buffer *buf);
+size_t buffer_read(buffer *buf, void *into, size_t size, uintptr_t cursor);
 void buffer_destroy(buffer *buf);
 
 bool buffer_test();
