@@ -1,5 +1,6 @@
 #include "buffer.h"
 #include "syscalls/syscalls.h"
+#include "std/memory.h"
 
 buffer buffer_create(size_t size, buffer_options options){
     return (buffer){
@@ -15,7 +16,6 @@ void buffer_write(buffer *buf, char* fmt, ...){
     __attribute__((aligned(16))) va_list args;
     va_start(args, fmt); 
     buffer_write_va(buf, fmt, args);
-    //TODO: circular
     va_end(args);
 }
 
@@ -26,8 +26,14 @@ void buffer_resize(buffer *buf, size_t amount){
 }
 
 void buffer_write_va(buffer *buf, char* fmt, va_list args){
-    if ((buf->options & buffer_can_grow) && strlen(fmt) > buf->limit-256){
-        buffer_resize(buf,strlen(fmt)*2);
+    if (strlen(fmt) > buf->limit-256){
+        if (buf->options & buffer_can_grow){
+            buffer_resize(buf,strlen(fmt)*2);
+        } if (buf->options & buffer_can_grow){
+            memset(buf->buffer, 0, buf->limit);
+            buf->cursor = 0;
+            buf->buffer_size = 0;
+        }
     }
     size_t n = string_format_va_buf(fmt, buf->buffer+buf->cursor, buf->limit-buf->cursor, args);
     buf->cursor += n;
@@ -46,8 +52,11 @@ void buffer_write_lim(buffer *buf, char *lit, size_t lit_size){
     if ((int64_t)buf->limit - buf->buffer_size <= lit_size){
         if (buf->options & buffer_can_grow){
             buffer_resize(buf,lit_size*2);
+        } else if (buf->options & buffer_circular && lit_size < buf->limit){
+            memset(buf->buffer, 0, buf->limit);
+            buf->cursor = 0;
+            buf->buffer_size = 0;
         } else return;
-        //TODO: circular
     }
     for (size_t i = 0; i < lit_size; i++){
         buf->buffer[buf->cursor++] = lit[i];
@@ -85,10 +94,24 @@ bool buffer_test(){
     buffer_write_const(&testbuf, "another really long string. Should expand");
     assert_eq(testbuf.buffer_size, 81, "Buffer did not reach expected size", testbuf.buffer_size);
     
-    //Loop:
-        //Create buffer. Write less than capacity: stays. Write more, loops, write more than full capacity, error
-    //Static
-        //Create buffer. Write less than capacity: stays, Write more, error. Write again, starts at 0
+    buffer_destroy(&testbuf);
+    
+    assert_false(testbuf.buffer, "Buffer not freed");
+    assert_false(testbuf.buffer_size, "Buffer not freed");
+    assert_false(testbuf.options, "Buffer not freed");
+    assert_false(testbuf.cursor, "Buffer not freed");
+    
+    testbuf = buffer_create(0x10, buffer_circular);
+    buffer_write_const(&testbuf, "hey");
+    assert_eq(testbuf.buffer_size, testbuf.cursor, "Size (%i) != cursor (%i)", testbuf.buffer_size,testbuf.cursor);
+    buffer_write_const(&testbuf, "a really long string. Should not fully fit");
+    assert_eq(testbuf.buffer_size, 3, "Large write overwrote circular buffer", testbuf.buffer_size,testbuf.cursor);
+    buffer_write_const(&testbuf, "it should loop");
+    assert_eq(testbuf.buffer_size, 14, "Buffer did not loop correctly");
+    buffer_write_const(&testbuf, "it should loop.");
+    assert_eq(testbuf.buffer_size, 15, "Buffer did not loop correctly");
+    buffer_write_const(&testbuf, "it shouldnt loop");
+    assert_eq(testbuf.buffer_size, 15, "Buffer did not loop correctly");
         
     return true;
 }
