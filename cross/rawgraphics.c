@@ -44,7 +44,7 @@ void fb_clear(draw_ctx *ctx, uint32_t color) {
 }
 
 void fb_draw_raw_pixel(draw_ctx *ctx, uint32_t x, uint32_t y, color color){
-
+    DrawPixel(x, y, CONVERT_COLOR(color));
 }
 
 void fb_draw_pixel(draw_ctx *ctx, uint32_t x, uint32_t y, color color){

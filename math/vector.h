@@ -177,7 +177,7 @@ static __inline__ __attribute__((always_inline)) float vmagnitude_vector2(float3
     return 1.f/rinv[0];
 }
 
-static inline float vector2_magnitude(vector2 v)
+static inline float vector2_magnitude(vector2 v)//TODO: not working on cross platform
 {
     float32x2_t xy = vld1_f32_b(&v.x);  // [x, y]
     return vmagnitude_vector2(xy);
@@ -209,4 +209,8 @@ static inline float dot_product(vector2 a, vector2 b) {
 
 static inline vector2 vector2_lerp(vector2 a, vector2 b, float f){
     return (vector2){ lerpf(a.x, b.x, f), lerpf(a.y, b.y, f)};
+}
+
+static inline float vector2_dot(vector2 a, vector2 b){
+    return a.x * b.x + a.y * b.y;
 }
