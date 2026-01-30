@@ -77,14 +77,14 @@ static inline float lerpf(float a, float b, float t) {
 }
 
 static inline double ceil(double val){
-    uint64_t whole = (uint64_t)val;
+    int64_t whole = (uint64_t)val;
     double frac = val - (double)whole;
 
     return frac > 0 ? whole + 1 : whole;
 }
 
 static inline double floor(double val){
-    return (uint64_t)val;
+    return (int64_t)val;
 }
 
 static inline int64_t abs_i64(int64_t v){

@@ -99,8 +99,6 @@ uint32_t pixel_blend(uint32_t p1, uint32_t p2){
     return (a << 24) | (r << 16) | (g << 8) | (b);
 }
 
-#ifndef CROSS
-
 void fb_clear(draw_ctx *ctx, uint32_t color) {
     uint32_t* row = ctx->fb;
     const uint32_t w = ctx->width;
@@ -400,5 +398,3 @@ void fb_draw_cursor(draw_ctx *ctx, uint32_t color) {
         }
     }
 }
-
-#endif
