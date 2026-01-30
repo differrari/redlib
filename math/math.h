@@ -39,6 +39,11 @@ static inline int abs(int n){
     return n < 0 ? -n : n;
 }
 
+static inline int clamp(int v, int min, int max){
+    int t = v < min ? min : v;
+    return t > max ? max : t;
+}
+
 static inline float absf(float n){
     return n < 0 ? -n : n;
 }
