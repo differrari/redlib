@@ -27,9 +27,20 @@ void commit_draw_ctx(draw_ctx *ctx){
 }
 
 void resize_draw_ctx(draw_ctx *ctx, uint32_t width, uint32_t height){
-    SetWindowSize(width, height);
+    free_sized(ctx->fb, ctx->width*ctx->height*sizeof(color));
+    UnloadTexture(_screen_tex);
     ctx->width = width;
     ctx->height = height;
+    ctx->fb = zalloc(width*height*sizeof(color));
+    ctx->stride = 4 * width;
+    _screen_tex = LoadTextureFromImage((Image){
+        .data = ctx->fb,
+        .width = width,
+        .height = height,
+        .mipmaps = 1,
+        .format = PIXELFORMAT_UNCOMPRESSED_R8G8B8A8
+    });
+    SetWindowSize(width, height);
 }
 
 void request_draw_ctx(draw_ctx *ctx){
