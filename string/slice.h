@@ -14,6 +14,10 @@ static inline string string_from_slice(string_slice slice){
     return string_from_literal_length(slice.data, slice.length);
 }
 
+static inline string_slice slice_from_literal(const char* lit){
+    return (string_slice){.data = (char*)lit, .length = strlen(lit)};
+}
+
 static inline bool slices_equal(string_slice sl1, string_slice sl2, bool case_insensitive){
     if (sl1.length != sl2.length) return false;
     for (size_t i = 0; i < sl1.length; i++)
