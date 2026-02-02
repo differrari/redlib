@@ -42,3 +42,5 @@
 // #define UNLOAD_FSMODULE_CODE        67
 
 #define DIR_LIST_CODE               70
+
+#define IN_CASE_OF_JS_CODE          99

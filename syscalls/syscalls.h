@@ -73,6 +73,8 @@ int print(const char *fmt, ...);
 
 int system(const char *command);
 
+void in_case_of_js_break_glass();
+
 static inline void yield(){
     msleep(0);
 }

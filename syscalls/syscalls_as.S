@@ -51,6 +51,8 @@ syscall_def swritef, FILE_SIMPLE_WRITE_CODE
 //syscall_def load_fsmodule, LOAD_FSMODULE_CODE
 //syscall_def unload_fsmodule, UNLOAD_FSMODULE_CODE 
 
+syscall_def in_case_of_js_break_glass, IN_CASE_OF_JS_CODE
+
 #endif
 syscall_def msleep, SLEEP_CODE
 syscall_def halt, HALT_CODE
