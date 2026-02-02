@@ -1,6 +1,7 @@
 #include "draw.h"
 #include "ui/font8x8_bridge.h"
 #include "std/memory.h"
+#include "string/slice.h"
 
 int try_merge(gpu_rect* a, gpu_rect* b) {
     uint32_t ax1 = a->point.x;
@@ -312,8 +313,12 @@ void fb_draw_char(draw_ctx *ctx, uint32_t x, uint32_t y, char c, uint32_t scale,
 }
 
 gpu_size fb_draw_string(draw_ctx *ctx, const char* s, uint32_t x0, uint32_t y0, uint32_t scale, uint32_t color){
-    const uint32_t char_size = fb_get_char_size(scale);
     const int str_length = strlen(s);
+    return fb_draw_slice(ctx, (string_slice){(char*)s,str_length}, x0, y0, scale, color);
+}
+
+gpu_size fb_draw_slice(draw_ctx *ctx, string_slice slice, uint32_t x0, uint32_t y0, uint32_t scale, uint32_t color){
+    const uint32_t char_size = fb_get_char_size(scale);
     
     uint32_t xoff = 0;
     uint32_t xSize = 0;
@@ -323,8 +328,8 @@ gpu_size fb_draw_string(draw_ctx *ctx, const char* s, uint32_t x0, uint32_t y0, 
     const uint32_t start_y = y0;
     uint32_t rows = 1;
 
-    for (int i = 0; i < str_length; ++i){    
-        char c = s[i];
+    for (int i = 0; i < slice.length; ++i){    
+        char c = slice.data[i];
         if (c == '\n'){
             if (xRowSize > xSize)
                 xSize = xRowSize;
@@ -351,7 +356,7 @@ gpu_size fb_draw_string(draw_ctx *ctx, const char* s, uint32_t x0, uint32_t y0, 
 
     if (bbox_w && bbox_h) mark_dirty(ctx, x0,start_y,bbox_w,bbox_h);
 
-    return (gpu_size){xSize,ySize};
+    return (gpu_size){bbox_w,bbox_h};
 }
 
 uint32_t fb_get_char_size(uint32_t scale){
