@@ -17,7 +17,7 @@ extern "C" {
 
 extern void printl(const char *str);
 
-extern void* malloc(size_t size);
+extern void* malloc(size_t size);//NOTE: malloc can return a faulty address for allocations smaller than 0x1000. Use zalloc/allocate until this is fixed, or allocate full pages (0x1000) if you wish to manage memory manually
 void* zalloc(size_t size);
 extern void free_sized(void *ptr, size_t size);
 

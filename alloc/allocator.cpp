@@ -6,11 +6,11 @@ void* operator new(size_t size, void* ptr) noexcept {
 }
 
 void* operator new(size_t size) { 
-    return (void*)malloc(size);
+    return (void*)zalloc(size);
 }
 
 void* operator new[](size_t size) { 
-    return (void*)malloc(size);
+    return (void*)zalloc(size);
 }
 
 //TODO: properly implement these

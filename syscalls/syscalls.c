@@ -74,10 +74,6 @@ void* calloc(size_t nitems, size_t size){
     return malloc(nitems * size);
 }
 
-void* zalloc(size_t size){
-    return malloc(size);
-}
-
 int system(const char *command){
     print("[SYS implementation error] system not implemented");
     return -1;

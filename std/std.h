@@ -1,7 +1,7 @@
 #pragma once
 
 #ifdef __cplusplus
-#include "allocator.hpp"
+#include "alloc/allocator.hpp"
 #endif
 #include "types.h"
 #include "../syscalls/syscalls.h"

@@ -2,7 +2,7 @@
 
 #include "types.h"
 
-#include "std/allocator.hpp"
+#include "alloc/allocator.hpp"
 #include "syscalls/syscalls.h"
 #include "std/memory.h"
 
