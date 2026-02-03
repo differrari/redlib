@@ -16,7 +16,7 @@ void* zalloc(size_t size);
 
 void release(void* ptr);
 
-void* realloc(void* ptr, size_t new_size);
+void* reallocate(void* ptr, size_t new_size);
 
 #ifdef __cplusplus
 }
