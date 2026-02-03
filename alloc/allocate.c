@@ -22,40 +22,42 @@ void* allocate(void* page, size_t size, page_allocator fallback){
     size += INDIVIDUAL_HDR;
     size = (size + ALIGNMENT - 1) & ~(ALIGNMENT - 1);
     
-    if (size >= PAGE_SIZE){
+    if (size >= PAGE_SIZE - sizeof(allocator_header)){
         return fallback(size);
     }
     
     allocator_header *hdr = (allocator_header*)page;
     
-    if (!hdr->free_mem) hdr->free_mem = (uintptr_t)hdr + sizeof(allocator_header);
-    
-    if (((int64_t)PAGE_SIZE - (int32_t)(hdr->free_mem - (uintptr_t)hdr)) >= (int64_t)size){
-        *(size_t*)hdr->free_mem = size;
-        void *addr = (void*)(hdr->free_mem + INDIVIDUAL_HDR);
-        hdr->free_mem += size;
-        hdr->used += size;
-        memset(addr, 0, size - INDIVIDUAL_HDR);
-        return addr;
-    }
-    
-    free_block *block = hdr->free_block;
-    free_block **blk_ptr = &hdr->free_block;
-    while (block){
-        if (block->block_size >= size){
-            free_block *next = block->next;
-            if (block->block_size > size){
-                next = block + size;
-                next->block_size = block->block_size - size;
-            }
-            *blk_ptr = next;
+    if (((int64_t)PAGE_SIZE - (int32_t)(hdr->used - sizeof(allocator_header))) >= (int64_t)size){
+        if (!hdr->free_mem) hdr->free_mem = (uintptr_t)hdr + sizeof(allocator_header);
+        
+        if (((int64_t)PAGE_SIZE - (int32_t)(hdr->free_mem - (uintptr_t)hdr)) >= (int64_t)size){
+            *(size_t*)hdr->free_mem = size;
+            void *addr = (void*)(hdr->free_mem + INDIVIDUAL_HDR);
+            hdr->free_mem += size;
             hdr->used += size;
-            *(size_t*)block = size;
-            void* addr = (void*)((uintptr_t)block + INDIVIDUAL_HDR);
             memset(addr, 0, size - INDIVIDUAL_HDR);
             return addr;
         }
-        block = block->next;
+        
+        free_block *block = hdr->free_block;
+        free_block **blk_ptr = &hdr->free_block;
+        while (block){
+            if (block->block_size >= size){
+                free_block *next = block->next;
+                if (block->block_size > size){
+                    next = block + size;
+                    next->block_size = block->block_size - size;
+                }
+                *blk_ptr = next;
+                hdr->used += size;
+                *(size_t*)block = size;
+                void* addr = (void*)((uintptr_t)block + INDIVIDUAL_HDR);
+                memset(addr, 0, size - INDIVIDUAL_HDR);
+                return addr;
+            }
+            block = block->next;
+        }
     }
     
     if (!hdr->next) hdr->next = fallback(PAGE_SIZE);
@@ -101,7 +103,7 @@ void release(void* ptr){
     }
 }
 
-void* realloc(void* ptr, size_t new_size){
+void* reallocate(void* ptr, size_t new_size){
     //TODO: if possible, once we have a sentinel value in the extra 0x8, we can check if we can just take up more memory without reallocating entirely
     // allocator_header *hdr = (allocator_header*)((uintptr_t)ptr & (~0xFFF));
     
@@ -122,7 +124,6 @@ void* realloc(void* ptr, size_t new_size){
     memcpy(new_ptr, ptr, old_size < new_size ? old_size : new_size);
     release(ptr);
     return new_ptr;
-    
 }
 
 #include "test.h"
