@@ -24,7 +24,7 @@ size_t buffer_write(buffer *buf, char* fmt, ...){
 
 void buffer_resize(buffer *buf, size_t amount){
     size_t new_size = amount ? buf->limit + amount : buf->limit * 2;
-    buf->buffer = realloc(buf->buffer, new_size);
+    buf->buffer = reallocate(buf->buffer, new_size);
     buf->limit = new_size;
 }
 
