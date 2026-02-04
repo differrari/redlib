@@ -28,7 +28,7 @@ void commit_draw_ctx(draw_ctx *ctx){
 }
 
 void resize_draw_ctx(draw_ctx *ctx, uint32_t width, uint32_t height){
-    free(ctx->fb);
+    release(ctx->fb);
     UnloadTexture(_screen_tex);
     ctx->width = width;
     ctx->height = height;
