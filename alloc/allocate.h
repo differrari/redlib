@@ -10,3 +10,7 @@ typedef void* (*page_allocator)(size_t size);
 void* allocate(void* page, size_t size, page_allocator fallback);
 
 void* zalloc(size_t size);
+
+void release(void* ptr);
+
+bool test_zalloc();
