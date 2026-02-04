@@ -1,7 +1,7 @@
 #pragma once
 
 #include "types.h"
-#include "std/args.h"
+#include "args.h"
 
 typedef enum {
     buffer_opt_none = 0,

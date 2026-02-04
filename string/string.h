@@ -1,7 +1,7 @@
 #pragma once
 
 #include "types.h"
-#include "std/args.h"
+#include "args.h"
 #include "alloc/allocate.h"
 
 #ifdef __cplusplus

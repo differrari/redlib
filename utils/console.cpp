@@ -49,7 +49,7 @@ void Console::resize(){
     uint32_t old_offset = scroll_row_offset;
 
     uint32_t new_buf_size = new_rows * new_columns;
-    char* new_data = (char*)malloc(new_buf_size);
+    char* new_data = (char*)zalloc(new_buf_size);
     if (!new_data) return;
     memset(new_data, 0, new_buf_size);
 

@@ -72,7 +72,7 @@ bool should_close_ctx(){
 }
 
 void* calloc(size_t nitems, size_t size){
-    return malloc(nitems * size);
+    return zalloc(nitems * size);
 }
 
 int system(const char *command){
