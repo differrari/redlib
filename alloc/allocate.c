@@ -16,8 +16,16 @@ typedef struct allocator_header {
 
 #define INDIVIDUAL_HDR (sizeof(size_t) * 2)//TODO: use the extra value as a canary to indicate live memory
 
+static inline void* malloc_proxy(size_t size){
+    void* m = malloc(size);
+#ifdef CROSS//Let the record show libc is fn stupid
+    memset(m,0,size);
+#endif
+    return m;
+}
+
 void* allocate(void* page, size_t size, page_allocator fallback){
-    if (!fallback) fallback = malloc;
+    if (!fallback) fallback = malloc_proxy;
     if (!page) return 0;
     size += INDIVIDUAL_HDR;
     size = (size + ALIGNMENT - 1) & ~(ALIGNMENT - 1);
@@ -67,8 +75,8 @@ void* allocate(void* page, size_t size, page_allocator fallback){
 static void* zalloc_page = 0;
 
 void* zalloc(size_t size){
-    if (!zalloc_page) zalloc_page = malloc(PAGE_SIZE);
-    return allocate(zalloc_page, size, malloc);
+    if (!zalloc_page) zalloc_page = malloc_proxy(PAGE_SIZE);
+    return allocate(zalloc_page, size, malloc_proxy);
 }
 
 void release(void* ptr){
