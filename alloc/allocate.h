@@ -1,9 +1,7 @@
 #pragma once
 
 #include "types.h"
-
-#define PAGE_SIZE 0x1000
-#define ALIGNMENT 0x10
+#include "mem_types.h"
 
 #ifdef __cplusplus
 extern "C" {
