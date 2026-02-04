@@ -3,7 +3,8 @@
 #include "string/string.h"
 #include "ui/draw/draw.h"
 #include "raylib.h"
-#include "syscalls/syscalls.h"
+#include "alloc/allocate.h"
+extern void free(void*ptr);
 
 #define CONVERT_COLOR(color) ((color & 0xFF00FF00) | ((color & 0xFF) << 16) | ((color >> 16) & 0xFF))
 
@@ -27,7 +28,7 @@ void commit_draw_ctx(draw_ctx *ctx){
 }
 
 void resize_draw_ctx(draw_ctx *ctx, uint32_t width, uint32_t height){
-    free_sized(ctx->fb, ctx->width*ctx->height*sizeof(color));
+    free(ctx->fb);
     UnloadTexture(_screen_tex);
     ctx->width = width;
     ctx->height = height;

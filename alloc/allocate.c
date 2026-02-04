@@ -70,6 +70,8 @@ void* zalloc(size_t size){
 }
 
 void release(void* ptr){
+    if (!((uintptr_t)ptr & 0xFFF)) return;//TODO: send to system to handle once page_free is ready
+    
     allocator_header *hdr = (allocator_header*)((uintptr_t)ptr & (~0xFFF));
     
     if (!hdr->used) return;

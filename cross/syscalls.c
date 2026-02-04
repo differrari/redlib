@@ -11,6 +11,7 @@
 #define __USE_POSIX199309
 #include <time.h>
 #include <stdio.h>
+#include "alloc/allocate.h"
 
 extern void free(void *ptr);
 extern int puts(const char *str);
