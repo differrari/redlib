@@ -5,37 +5,57 @@
 extern "C" {
 #endif
 
-//TODO: review allocs & C
-typedef struct clinkedlist_node {
-    void *data;
-    struct clinkedlist_node *next;
-} clinkedlist_node_t;
+//DEADLINE: 01/03/2026 - clinkedlist will become linked_list
 
-typedef struct clinkedlist {
-    clinkedlist_node_t *head;
-    clinkedlist_node_t *tail;
+typedef struct linked_list_node {
+    void *data;
+    struct linked_list_node *next;
+} linked_list_node_t;
+
+typedef linked_list_node_t clinkedlist_node_t;
+
+typedef struct {
+    linked_list_node_t *head;
+    linked_list_node_t *tail;
     uint64_t length;
     void* (*alloc)(size_t size);
     void (*free)(void *ptr, size_t size);
-} clinkedlist_t;
+} linked_list_t;
 
-clinkedlist_t *clinkedlist_create();
-void clinkedlist_destroy(clinkedlist_t *list);
-clinkedlist_t *clinkedlist_clone(const clinkedlist_t *list);
-void clinkedlist_push_front(clinkedlist_t *list, void *data);
-void *clinkedlist_pop_front(clinkedlist_t *list);
-clinkedlist_node_t *clinkedlist_insert_after(clinkedlist_t *list, clinkedlist_node_t *node, void *data);
+typedef linked_list_t clinkedlist_t;
 
-static inline void clinkedlist_push(clinkedlist_t *list, void *data){
-    clinkedlist_insert_after(list, list->tail, data);
+linked_list_t *linked_list_create();
+void linked_list_destroy(linked_list_t *list);
+linked_list_t *linked_list_clone(const linked_list_t *list);
+void linked_list_push_front(linked_list_t *list, void *data);
+void *linked_list_pop_front(linked_list_t *list);
+clinkedlist_node_t *linked_list_insert_after(linked_list_t *list, clinkedlist_node_t *node, void *data);
+
+static inline void linked_list_push(linked_list_t *list, void *data){
+    linked_list_insert_after(list, list->tail, data);
 }
 
-void *clinkedlist_remove(clinkedlist_t *list, clinkedlist_node_t *node);
-void clinkedlist_update(clinkedlist_t *list, clinkedlist_node_t *node, void *new_data);
-uint64_t clinkedlist_length(const clinkedlist_t *list);
-uint64_t clinkedlist_size_bytes(const clinkedlist_t *list);
-clinkedlist_node_t *clinkedlist_find(clinkedlist_t *list, void *key, int (*cmp)(void *, void *));
-void clinkedlist_for_each(const clinkedlist_t *list, void (*func)(void *));
+void* linked_list_get(linked_list_t *list, uint64_t index);
+void *linked_list_remove(linked_list_t *list, clinkedlist_node_t *node);
+void linked_list_update(linked_list_t *list, clinkedlist_node_t *node, void *new_data);
+uint64_t linked_list_count(const linked_list_t *list);
+uint64_t linked_list_size_bytes(const linked_list_t *list);
+clinkedlist_node_t *linked_list_find(linked_list_t *list, void *key, int (*cmp)(void *, void *));
+void linked_list_for_each(const linked_list_t *list, void (*func)(void *));
+
+#define clinkedlist_create linked_list_create
+#define clinkedlist_destroy linked_list_destroy
+#define clinkedlist_clone linked_list_clone
+#define clinkedlist_push_front linked_list_push_front
+#define clinkedlist_pop_front linked_list_pop_front
+#define clinkedlist_insert_after linked_list_insert_after
+#define clinkedlist_push linked_list_push
+#define clinkedlist_remove linked_list_remove
+#define clinkedlist_update linked_list_update
+#define clinkedlist_count linked_list_count
+#define clinkedlist_size_bytes linked_list_size_bytes
+#define clinkedlist_find linked_list_find
+#define clinkedlist_for_each linked_list_for_each
 
 #ifdef __cplusplus
 }

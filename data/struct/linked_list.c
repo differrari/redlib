@@ -2,61 +2,61 @@
 #include "alloc/allocate.h"
 #include "syscalls/syscalls.h"
 
-clinkedlist_t *clinkedlist_create(){
-    uintptr_t mem = (uintptr_t)zalloc(sizeof(clinkedlist_t));
+linked_list_t *linked_list_create(){
+    uintptr_t mem = (uintptr_t)zalloc(sizeof(linked_list_t));
     if((void *)mem == NULL) return NULL;
-    clinkedlist_t *list = (clinkedlist_t *)mem;
+    linked_list_t *list = (linked_list_t *)mem;
     list->head = NULL;
     list->tail = NULL;
     list->length = 0;
     return list;
 }
 
-void* clinkedlist_alloc(clinkedlist_t *list, size_t size){
+void* linked_list_alloc(linked_list_t *list, size_t size){
     if (list->alloc) return list->alloc(size);
     return zalloc(size);
 }
 
-void clinkedlist_free(clinkedlist_t *list, void*ptr, size_t size){
+void linked_list_free(linked_list_t *list, void*ptr, size_t size){
     if (list->free) list->free(ptr,size);
     return release(ptr);
 }
 
-void clinkedlist_destroy(clinkedlist_t *list){
+void linked_list_destroy(linked_list_t *list){
     if(list == NULL) return;
-    clinkedlist_node_t *node = list->head;
+    linked_list_node_t *node = list->head;
     while(node){
-        clinkedlist_node_t *next = node->next;
-        clinkedlist_free(list, node, sizeof(clinkedlist_node_t));
+        linked_list_node_t *next = node->next;
+        linked_list_free(list, node, sizeof(linked_list_node_t));
         node = next;
     }
-    clinkedlist_free(list, list, sizeof(clinkedlist_t));
+    linked_list_free(list, list, sizeof(linked_list_t));
 }
 
-clinkedlist_t *clinkedlist_clone(const clinkedlist_t *list){
+linked_list_t *linked_list_clone(const linked_list_t *list){
     if(list == NULL) return NULL;
-    clinkedlist_t *clone = clinkedlist_create();
+    linked_list_t *clone = linked_list_create();
     if(clone == NULL) return NULL;
-    clinkedlist_node_t *it = list->head;
+    linked_list_node_t *it = list->head;
     while(it){
         if(clone->tail){
-            clinkedlist_node_t *new_node = (clinkedlist_node_t *)zalloc(sizeof(clinkedlist_node_t));
+            linked_list_node_t *new_node = (linked_list_node_t *)zalloc(sizeof(linked_list_node_t));
             new_node->data = it->data;
             new_node->next = NULL;
             clone->tail->next = new_node;
             clone->tail = new_node;
             clone->length++;
         } else {
-            clinkedlist_push_front(clone, it->data);
+            linked_list_push_front(clone, it->data);
         }
         it = it->next;
     }
     return clone;
 }
 
-void clinkedlist_push_front(clinkedlist_t *list, void *data){
+void linked_list_push_front(linked_list_t *list, void *data){
     if(list == NULL) return;
-    clinkedlist_node_t *node = (clinkedlist_node_t *)clinkedlist_alloc(list, sizeof(clinkedlist_node_t));
+    linked_list_node_t *node = (linked_list_node_t *)linked_list_alloc(list, sizeof(linked_list_node_t));
     node->data = data;
     node->next = list->head;
     list->head = node;
@@ -64,24 +64,24 @@ void clinkedlist_push_front(clinkedlist_t *list, void *data){
     list->length++;
 }
 
-void *clinkedlist_pop_front(clinkedlist_t *list){
+void *linked_list_pop_front(linked_list_t *list){
     if(list == NULL || list->head == NULL) return NULL;
-    clinkedlist_node_t *node = list->head;
+    linked_list_node_t *node = list->head;
     void *data = node->data;
     list->head = node->next;
     if (list->head == NULL) list->tail = NULL;
     list->length--;
-    clinkedlist_free(list, node, sizeof(clinkedlist_node_t));
+    linked_list_free(list, node, sizeof(linked_list_node_t));
     return data;
 }
 
-clinkedlist_node_t *clinkedlist_insert_after(clinkedlist_t *list, clinkedlist_node_t *node, void *data){
+linked_list_node_t *linked_list_insert_after(linked_list_t *list, linked_list_node_t *node, void *data){
     if(list == NULL) return NULL;
     if(node == NULL){
-        clinkedlist_push_front(list, data);
+        linked_list_push_front(list, data);
         return list->head;
     }
-    clinkedlist_node_t *new_node = (clinkedlist_node_t *)clinkedlist_alloc(list, sizeof(clinkedlist_node_t));
+    linked_list_node_t *new_node = (linked_list_node_t *)linked_list_alloc(list, sizeof(linked_list_node_t));
     new_node->data = data;
     new_node->next = node->next;
     node->next = new_node;
@@ -90,12 +90,12 @@ clinkedlist_node_t *clinkedlist_insert_after(clinkedlist_t *list, clinkedlist_no
     return new_node;
 }
 
-void *clinkedlist_remove(clinkedlist_t *list, clinkedlist_node_t *node){
+void *linked_list_remove(linked_list_t *list, linked_list_node_t *node){
     if(list == NULL || node == NULL || list->head == NULL) return NULL;
     if(node == list->head){
-        return clinkedlist_pop_front(list);
+        return linked_list_pop_front(list);
     }
-    clinkedlist_node_t *prev = list->head;
+    linked_list_node_t *prev = list->head;
     while(prev->next && prev->next != node){
         prev = prev->next;
     }
@@ -104,38 +104,44 @@ void *clinkedlist_remove(clinkedlist_t *list, clinkedlist_node_t *node){
     if(node == list->tail) list->tail = prev;
     void *data = node->data;
     list->length--;
-    clinkedlist_free(list, node, sizeof(clinkedlist_node_t));
+    linked_list_free(list, node, sizeof(linked_list_node_t));
     return data;
 }
 
-void clinkedlist_update(clinkedlist_t *list, clinkedlist_node_t *node, void *new_data){
+void linked_list_update(linked_list_t *list, linked_list_node_t *node, void *new_data){
     (void)list;
     if(node) node->data = new_data;
 }
 
-uint64_t clinkedlist_length(const clinkedlist_t *list){
+uint64_t linked_list_count(const linked_list_t *list){
     return list ? list->length : 0;
 }
 
-uint64_t clinkedlist_size_bytes(const clinkedlist_t *list){
-    return list ? list->length * sizeof(clinkedlist_node_t) : 0;
+uint64_t linked_list_size_bytes(const linked_list_t *list){
+    return list ? list->length * sizeof(linked_list_node_t) : 0;
 }
 
-clinkedlist_node_t *clinkedlist_find(clinkedlist_t *list, void *key, int (*cmp)(void *, void *)){
+linked_list_node_t *linked_list_find(linked_list_t *list, void *key, int (*cmp)(void *, void *)){
     if(list == NULL || cmp == NULL) return NULL;
-    clinkedlist_node_t *it = list->head;
-    while(it){
+    for (linked_list_node_t *it = list->head; it; it = it->next){
         if(cmp(it->data, key) == 0) return it;
-        it = it->next;
     }
     return NULL;
 }
 
-void clinkedlist_for_each(const clinkedlist_t *list, void (*func)(void *)){
+void linked_list_for_each(const linked_list_t *list, void (*func)(void *)){
     if(list == NULL || func == NULL) return;
-    clinkedlist_node_t *it = list->head;
-    while(it){
+    for (linked_list_node_t *it = list->head; it; it = it->next){
         func(it->data);
-        it = it->next;
     }
 }
+
+void* linked_list_get(linked_list_t *list, uint64_t index){
+    u64 i = 0;
+    for (linked_list_node_t *node = list->head; node && i < index; node = node->next, i++){
+        if (i == index) return node;
+    }
+    return 0;
+}
+
+//TEST: whole file
