@@ -1,5 +1,4 @@
 #include "string/string.h"
-#include "syscalls/syscalls.h"
 #include "std/memory.h"
 #include "types.h"
 #include "slice.h"
@@ -179,7 +178,7 @@ string string_from_literal(const char *literal){
     if (literal == NULL) return (string){ .data = NULL, .length = 0, .mem_length = 0};
     
     uint32_t len = strlen(literal);
-    char *buf = (char*)malloc(len + 1);
+    char *buf = (char*)zalloc(len + 1);
     if (!buf) return (string){ .data = NULL, .length = 0, .mem_length = 0 };
 
     for (uint32_t i = 0; i < len; i++) buf[i] = literal[i];
@@ -189,7 +188,7 @@ string string_from_literal(const char *literal){
 }
 
 string string_repeat(char symbol, uint32_t amount){
-    char *buf = (char*)malloc(amount + 1);
+    char *buf = (char*)zalloc(amount + 1);
     if (!buf) return (string){0};
     memset(buf, symbol, amount);
     buf[amount] = 0;
@@ -205,7 +204,7 @@ string string_tail(const char *array, uint32_t max_length){
     if (offset < 0) offset = 0;
     
     uint32_t adjusted_len = len - offset;
-    char *buf = (char*)malloc(adjusted_len + 1);
+    char *buf = (char*)zalloc(adjusted_len + 1);
     if (!buf) return (string){ .data = NULL, .length = 0, .mem_length = 0 };
 
     for (uint32_t i = 0; i < adjusted_len; i++) buf[i] = array[offset + i];
@@ -218,7 +217,7 @@ string string_from_literal_length(const char *array, uint32_t max_length){
     if (array == NULL) return (string){.data = NULL, .length = 0, .mem_length= 0 };
 
     uint32_t len = strlen_max(array, max_length);
-    char *buf = (char*)malloc(len + 1);
+    char *buf = (char*)zalloc(len + 1);
     if(!buf) return (string){ .data = NULL, .length = 0, .mem_length=0 };
 
     for (uint32_t i = 0; i < len; i++) buf[i] = array[i];
@@ -228,7 +227,7 @@ string string_from_literal_length(const char *array, uint32_t max_length){
 }
 
 string string_from_char(const char c){
-    char *buf = (char*)malloc(2);
+    char *buf = (char*)zalloc(2);
     if (!buf) return (string){0};
     buf[0] = c;
     buf[1] = 0;
@@ -256,7 +255,7 @@ uint32_t parse_hex(uint64_t value, char* buf){
 }
 
 string string_from_hex(uint64_t value){
-    char *buf = (char*)malloc(18);
+    char *buf = (char*)zalloc(18);
     if (!buf) return (string){0};
     uint32_t len = parse_hex(value, buf);
     return (string){ .data = buf, .length = len, .mem_length = 18 };
@@ -282,7 +281,7 @@ uint32_t parse_bin(uint64_t value, char* buf){
 }
 
 string string_from_bin(uint64_t value){
-    char *buf = (char*)malloc(66);
+    char *buf = (char*)zalloc(66);
     if (!buf) return (string){0};
     uint32_t len = parse_bin(value, buf);
     return (string){ .data = buf, .length = len, .mem_length = 66 };
@@ -294,7 +293,7 @@ bool string_equals(string a, string b){
 
 string string_replace(const char *str, char orig, char repl){
     size_t str_size = strlen(str);
-    char *buf = (char*)malloc(str_size+1);
+    char *buf = (char*)zalloc(str_size+1);
     for (size_t i = 0; i < str_size && str[i]; i++){
         buf[i] = str[i] == orig ? repl : str[i];
     }
@@ -313,7 +312,7 @@ string string_format(const char *fmt, ...){
 }
 
 string string_format_va(const char *fmt, va_list args){
-    char *buf = (char*)malloc(STRING_MAX_LEN);
+    char *buf = (char*)zalloc(STRING_MAX_LEN);
     if (!buf) return (string){0};
     size_t len = string_format_va_buf(fmt, buf, STRING_MAX_LEN, args);
     return (string){ .data = buf, .length = len, .mem_length = STRING_MAX_LEN };
@@ -1174,7 +1173,7 @@ int64_t parse_int64(const char* str, size_t size){
 string string_from_const(const char *lit)
 {
     uint32_t len = strlen(lit);
-    char* nlit = malloc(len+1);
+    char* nlit = zalloc(len+1);
     strncpy(nlit, lit, len+1);
     return (string){ nlit, len, len + 1};
 }
@@ -1182,7 +1181,7 @@ string string_from_const(const char *lit)
 string string_concat(string a, string b)
 {
     uint32_t len = a.length + b.length;
-    char *dst = (char *)malloc(len + 1);
+    char *dst = (char *)zalloc(len + 1);
     if (!dst) return (string){0};
     memcpy(dst, a.data, a.length);
     memcpy(dst + a.length, b.data, b.length);
@@ -1197,7 +1196,7 @@ void string_concat_inplace(string *dest, string src)
     uint32_t new_len = dest->length + src.length;
     uint32_t new_cap = new_len + 1;
 
-    char *dst = (char *)malloc(new_cap);
+    char *dst = (char *)zalloc(new_cap);
     if (!dst) return;
 
     if (dest->data && dest->length) {
@@ -1206,7 +1205,7 @@ void string_concat_inplace(string *dest, string src)
     memcpy(dst + dest->length, src.data, src.length);
     dst[new_len] = '\0';
     if (dest->data) {
-        free_sized(dest->data, dest->mem_length);
+        release(dest->data);
     }
     dest->data = dst;
     dest->length = new_len;
@@ -1275,7 +1274,7 @@ void strcat_buf(const char *a, const char *b, char *dest){
 }
 
 char* strcat_new(const char *a, const char *b){
-    char* dest = (char*)malloc(strlen(a) + strlen(b) + 1);
+    char* dest = (char*)zalloc(strlen(a) + strlen(b) + 1);
     strcat_buf(a,b,dest);
     return dest;
 }

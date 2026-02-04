@@ -2,6 +2,7 @@
 
 #include "types.h"
 #include "std/args.h"
+#include "alloc/allocate.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -36,8 +37,6 @@ static inline int32_t str_has_char(const char* s, uint32_t max, char c){
     return -1;
 }
 
-extern void free_sized(void*,size_t);
-
 static inline int hex_val(char c) {
     if (is_digit(c)) return c - '0';
     if (c >= 'a' && c <= 'f') return 10 + (c - 'a');
@@ -62,7 +61,7 @@ string string_tail(const char *array, uint32_t max_length);
 string string_repeat(char symbol, uint32_t amount);
 
 static inline void string_free(string str){
-    if (str.data && str.mem_length) free_sized(str.data, str.mem_length);
+    if (str.data && str.mem_length) release(str.data);
 }
 
 int tolower(int c);
