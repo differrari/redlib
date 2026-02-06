@@ -16,10 +16,34 @@ typedef struct allocator_header {
 
 #define INDIVIDUAL_HDR (sizeof(size_t) * 2)//TODO: use the extra value as a canary to indicate live memory
 
+#define ALIGN 0x1000
+
+void *aligned_malloc(int size) {
+    void *mem = malloc(size+ALIGN+sizeof(void*));
+    void **ptr = (void**)((uintptr_t)(mem+ALIGN+sizeof(void*)) & ~(ALIGN-1));
+    ptr[-1] = mem;
+    return ptr;
+}
+
+void aligned_free(void *ptr) {
+#ifdef CROSS
+    free(((void**)ptr)[-1]);
+#endif
+}
+
+static inline void free_proxy(void* ptr){
+#ifdef CROSS
+    aligned_free(ptr);
+#endif
+    //TODO: free page on redacted
+}
+
 static inline void* malloc_proxy(size_t size){
+#ifdef CROSS
+    void *m = aligned_malloc(size);
+    memset(m,0,size);//Let the record show libc is fn stupid
+#else 
     void* m = malloc(size);
-#ifdef CROSS//Let the record show libc is fn stupid
-    memset(m,0,size);
 #endif
     return m;
 }
@@ -80,7 +104,10 @@ void* zalloc(size_t size){
 }
 
 void release(void* ptr){
-    if (!((uintptr_t)ptr & 0xFFF)) return;//TODO: send to system to handle once page_free is ready
+    if (!((uintptr_t)ptr & 0xFFF)){
+        free_proxy(ptr);
+        return;
+    }
     
     allocator_header *hdr = (allocator_header*)((uintptr_t)ptr & (~0xFFF));
     

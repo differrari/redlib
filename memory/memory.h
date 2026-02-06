@@ -5,7 +5,7 @@ extern "C" {
 #include "types.h"
 
 int memcmp(const void *s1, const void *s2, size_t count);
-void* memset(void* dest, int byte, size_t count);
+void* memset(void* dest, int byte, size_t count);//Let the record show libc is fn stupid
 void* memset32(void* dest, uint32_t val, size_t count);
 void* memcpy(void *dest, const void *src, size_t count);
 void memreverse(void *ptr, size_t n);
