@@ -15,8 +15,8 @@ typedef struct allocator_header {
 } allocator_header;
 
 // #define DEBUG_ALLOC
-#if DEBUG_ALLOC
-#define alloc_print(fmt,...) print(fmt,##__VA_ARGS__##)
+#ifdef DEBUG_ALLOC
+#define alloc_print(fmt,...) print(fmt,##__VA_ARGS__)
 #else
 #define alloc_print(fmt,...) 
 #endif
@@ -88,6 +88,7 @@ void* allocate(void* page, size_t size, page_allocator fallback){
             }
             if (block->block_size >= size){
                 free_block *next = block->next;
+                if ((pointer)next == 0xDEADBEEFDEADBEEF) next = 0;
                 if (block->block_size > size){
                     next = (free_block*)((pointer)block + size);
                     next->block_size = block->block_size - size;
