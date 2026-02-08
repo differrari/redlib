@@ -114,10 +114,8 @@ static __inline__ __attribute__((always_inline)) float32x2_t vpadd_f32_b(float32
   return __builtin_aarch64_faddpv2sf(a, b);
 #elif defined(__ARM_NEON) || defined(__ARM_NEON__)
   return (float32x2_t)__builtin_neon_vpaddv2sf(a, b);
-#elif defined(__x86_64__)
-  return (float32x2_t){a[0] + b[0], a[1] + b[1]};
 #else
-# error "no vpadd_f32_b builtin"
+  return (float32x2_t){a[0] + b[0], a[1] + b[1]};
 #endif
 }
 
@@ -128,10 +126,8 @@ static __inline__ __attribute__((always_inline)) float32x2_t vmax_f32_b(float32x
   return __builtin_aarch64_fmax_nanv2sf(a, b);
 #elif defined(__ARM_NEON) || defined(__ARM_NEON__)
   return (float32x2_t)__builtin_neon_vmaxfv2sf(a, b);
-#elif defined(__x86_64__)
-  return a;//TODO: not implemented
 #else
-# error "no vmax_f32_b builtin"
+  return (float32x2_t){ a[0] < b[0] ? b[0] : a[0], a[1] < b[1] ? b[1] : a[1], a[2] < b[2] ? b[2] : a[2], a[3] < b[3] ? b[3] : a[3]};
 #endif
 }
 
@@ -142,10 +138,8 @@ static __inline__ __attribute__((always_inline)) float32x2_t vdup_n_f32_b(float 
   return (float32x2_t){ x, x };
 #elif defined(__ARM_NEON) || defined(__ARM_NEON__)
   return (float32x2_t)__builtin_neon_vdup_nv2sf(x);
-#elif defined(__x86_64__)
-  return (float32x2_t){ x, x };
 #else
-# error "no vdup_n_f32_b builtin"
+  return (float32x2_t){ x, x };
 #endif
 }
 
@@ -177,7 +171,7 @@ static __inline__ __attribute__((always_inline)) float vmagnitude_vector2(float3
     return 1.f/rinv[0];
 }
 
-static inline float vector2_magnitude(vector2 v)//TODO: not working on cross platform
+static inline float vector2_magnitude(vector2 v)
 {
     float32x2_t xy = vld1_f32_b(&v.x);  // [x, y]
     return vmagnitude_vector2(xy);

@@ -78,7 +78,7 @@ static inline float lerpf(float a, float b, float t) {
   // Exact at t=0, monotonic except near t=1,
   // bounded, determinate, and consistent:
   const float x = a + t*(b-a);
-  return (t>1) == (b>a) ? max(b,x) : min(b,x);  // monotonic near t=1
+  return (t>1) == (b>a) ? maxf(b,x) : minf(b,x);  // monotonic near t=1
 }
 
 static inline double ceil(double val){
