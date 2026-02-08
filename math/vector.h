@@ -127,7 +127,7 @@ static __inline__ __attribute__((always_inline)) float32x2_t vmax_f32_b(float32x
 #elif defined(__ARM_NEON) || defined(__ARM_NEON__)
   return (float32x2_t)__builtin_neon_vmaxfv2sf(a, b);
 #else
-  return (float32x2_t){ a[0] < b[0] ? b[0] : a[0], a[1] < b[1] ? b[1] : a[1], a[2] < b[2] ? b[2] : a[2], a[3] < b[3] ? b[3] : a[3]};
+  return (float32x2_t){ a[0] < b[0] ? b[0] : a[0], a[1] < b[1] ? b[1] : a[1]};
 #endif
 }
 
