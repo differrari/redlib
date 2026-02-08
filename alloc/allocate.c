@@ -14,6 +14,13 @@ typedef struct allocator_header {
     struct allocator_header* next;
 } allocator_header;
 
+// #define DEBUG_ALLOC
+#if DEBUG_ALLOC
+#define alloc_print(fmt,...) print(fmt,##__VA_ARGS__##)
+#else
+#define alloc_print(fmt,...) 
+#endif
+
 #define INDIVIDUAL_HDR (sizeof(size_t) * 2)//TODO: use the extra value as a canary to indicate live memory
 
 #define ALIGN 0x1000
@@ -74,12 +81,20 @@ void* allocate(void* page, size_t size, page_allocator fallback){
         
         free_block *block = hdr->free_block;
         free_block **blk_ptr = &hdr->free_block;
-        while (block){
+        while (block && (pointer)block != 0xDEADBEEFDEADBEEF){
+            if ((uintptr_t)block + block->block_size >= (uintptr_t)hdr + 0x1000){
+                alloc_print("[ALLOC] Wrong allocation, a free block points outside its page %llx + %llx >= %llx",(uintptr_t)block & ~(0xFFF), block->block_size,(uintptr_t)hdr & ~(0xFFF));
+                return 0;
+            }
             if (block->block_size >= size){
                 free_block *next = block->next;
                 if (block->block_size > size){
-                    next = block + size;
+                    next = (free_block*)((pointer)block + size);
                     next->block_size = block->block_size - size;
+                }
+                if (next && ((uintptr_t)next & ~0xFFF) != ((uintptr_t)hdr & ~0xFFF)){
+                    alloc_print("[ALLOC] Wrong free block pointer, outside of current page %llx vs %llx",next,hdr);
+                    return 0;
                 }
                 *blk_ptr = next;
                 hdr->used += size;
@@ -88,12 +103,13 @@ void* allocate(void* page, size_t size, page_allocator fallback){
                 memset(addr, 0, size - INDIVIDUAL_HDR);
                 return addr;
             }
+            blk_ptr = &block->next;
             block = block->next;
         }
     }
     
     if (!hdr->next) hdr->next = fallback(PAGE_SIZE);
-    return allocate(hdr->next,size, fallback);
+    return allocate(hdr->next, size, fallback);
 }
 
 static void* zalloc_page = 0;
@@ -117,7 +133,12 @@ void release(void* ptr){
     
     size_t size = *(size_t*)header;
     
-    if (size > 0x1000 - ((uintptr_t)ptr & 0xFFF)) return;
+    alloc_print("[FREE] Freeing %llx at %llx",size,header);
+    
+    if (size > 0x1000 - ((uintptr_t)ptr & 0xFFF)){
+        alloc_print("[FREE] allocated memory pointed outside of block");
+        return;
+    }
     
     memset32((void*)header, 0xDEADBEEF, size);
     
@@ -129,7 +150,15 @@ void release(void* ptr){
         free_block *block = (free_block*)header;
         block->block_size = size;
         block->next = hdr->free_block;
+        if (block->next && ((uintptr_t)block->next & ~0xFFF) != ((uintptr_t)hdr & ~0xFFF)){
+            alloc_print("[FREE] block free now pointing to other page %llx vs %llx",block->next,hdr);
+            return;
+        }
         hdr->free_block = block;
+        if (((uintptr_t)block & ~0xFFF) != ((uintptr_t)hdr & ~0xFFF)){
+            alloc_print("[FREE] free list head now pointing to other page %llx vs %llx",block,hdr);
+            return;
+        }
         while ((uintptr_t)block->next == header + size){
             free_block *next_block = (free_block*)block->next;
             block->next = next_block->next;
