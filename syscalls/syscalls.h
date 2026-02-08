@@ -67,7 +67,7 @@ void* realloc_sized(void* old_ptr, size_t old_size, size_t new_size);
 
 void *calloc(size_t nitems, size_t size);
 
-sizedptr dir_list(const char *path);
+size_t dir_list(const char *path, void *buf, size_t size, u64 *offset);
 
 int print(const char *fmt, ...);
 

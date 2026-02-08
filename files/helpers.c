@@ -3,8 +3,29 @@
 
 #ifndef CROSS
 
-void traverse_directory(char *directory, bool recursive, dir_traverse func){
-    print("[FS implementation error] Traverse directory not implemented for [REDACTED]");
+void traverse_directory(const char *directory, bool recursive, dir_traverse func){//TODO: not yet capable of getting all data
+    if (recursive){
+        print("[FS implementation error] recursion is not supported on [REDACTED]");
+        return;
+    }
+    size_t listsize = 0x1000;
+    void *listptr = zalloc(listsize);
+    uint64_t offset = 0;
+    size_t read_size = dir_list(directory, listptr, listsize, &offset);
+    (void)read_size;
+    string_list *list = (string_list*)listptr;
+    if (list){
+        char* reader = (char*)list->array;
+        for (uint32_t i = 0; i < list->count; i++){
+            char *file = reader;
+            if (*file){
+                func(directory, file);
+                while (*reader) reader++;
+                reader++;
+            }
+        }
+    }
+    release(listptr);
 }
 
 char* get_current_dir(){
@@ -21,7 +42,7 @@ char *read_full_file(const char *path, size_t *out_size){
     
     file fd = {};
     if (openf(path, &fd) != FS_RESULT_SUCCESS) return false;
-    char *fcontent = (char*)malloc(fd.size + 1);
+    char *fcontent = (char*)zalloc(fd.size + 1);
     
     if (out_size) *out_size = fd.size;
     

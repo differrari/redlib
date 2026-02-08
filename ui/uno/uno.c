@@ -2,12 +2,12 @@
 #include "ui/draw/draw.h"
 
 gpu_size calculate_label_size(text_ui_config text_config){
-    if (!text_config.text || text_config.font_size==0) return (gpu_size){0,0};
+    if (!text_config.slice.length || text_config.font_size==0) return (gpu_size){0,0};
     int num_lines = 1;
     int num_chars = 0;
     int local_num_chars = 0;
-    for (const char* p = text_config.text; *p; ++p){
-        if (*p == '\n'){
+    for (size_t i = 0; i < text_config.slice.length; i++){
+        if (text_config.slice.data[i] == '\n'){
             if (local_num_chars > num_chars)
                 num_chars = local_num_chars;
             num_lines++;
@@ -53,9 +53,12 @@ int_point calculate_label_pos(text_ui_config text_config, common_ui_config commo
 }
 
 common_ui_config label(draw_ctx *ctx, text_ui_config text_config, common_ui_config common_config){
-    if (!text_config.text || text_config.font_size==0) return common_config;
+    if ((!text_config.text && !text_config.slice.length) || text_config.font_size==0) return common_config;
+    if (!text_config.slice.length)
+        text_config.slice = slice_from_literal(text_config.text);
     int_point p = calculate_label_pos(text_config, common_config);
-    fb_draw_string(ctx, text_config.text, p.x, p.y, text_config.font_size, common_config.foreground_color);
+    if (text_config.slice.length)
+        fb_draw_slice(ctx, text_config.slice, p.x, p.y, text_config.font_size, common_config.foreground_color);
     return common_config;
 }
 

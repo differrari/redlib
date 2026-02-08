@@ -17,7 +17,8 @@ typedef enum VerticalAlignment {
 } VerticalAlignment;  
 
 typedef struct text_ui_config {
-    const char* text;
+    const char* text;//DEADLINE: 01/04/2026 - will be removed in favor of string slices
+    string_slice slice;
     uint16_t font_size;
 } text_ui_config;
 
