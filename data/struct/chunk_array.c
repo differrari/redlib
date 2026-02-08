@@ -4,11 +4,19 @@
 
 #define CHUNK_ARRAY_ITEM(index) (void*)((uintptr_t)array + sizeof(chunk_array_t) + (index * array->item_size))
 
-chunk_array_t* chunk_array_create(size_t item_size, size_t chunk_capacity){
-    chunk_array_t *array = (chunk_array_t*)zalloc(sizeof(chunk_array_t) + (item_size * chunk_capacity));
+chunk_array_t* chunk_array_create_alloc(size_t item_size, size_t chunk_capacity, void* (*allocator)(size_t size), void (*free)(void*)){
+    if (!allocator) allocator = zalloc;
+    if (!free) free = release;
+    chunk_array_t *array = (chunk_array_t*)allocator(sizeof(chunk_array_t) + (item_size * chunk_capacity));
     array->item_size = item_size;
     array->chunk_capacity = chunk_capacity;
+    array->allocator = allocator;
+    array->free = free;
     return array;
+}
+
+chunk_array_t* chunk_array_create(size_t item_size, size_t chunk_capacity){
+    return chunk_array_create_alloc(item_size, chunk_capacity, 0, 0);
 }
 
 size_t chunk_array_push(chunk_array_t* array, void *data){
@@ -18,7 +26,7 @@ size_t chunk_array_push(chunk_array_t* array, void *data){
         return array->count++;
     } else {
         if (!array->next)
-            array->next = chunk_array_create(array->item_size, array->chunk_capacity);
+            array->next = chunk_array_create_alloc(array->item_size, array->chunk_capacity, array->allocator, array->free);
         return array->count + chunk_array_push(array->next, data);
     }
 }
@@ -42,7 +50,7 @@ size_t chunk_array_count(chunk_array_t *array){
 void chunk_array_destroy(chunk_array_t *array){
     if (!array) return;
     if (array->next) chunk_array_destroy(array->next);
-    release(array);
+    array->free(array);
 }
 
 void* chunk_array_find(chunk_array_t *array, void *query, bool (*match)(void* value, void *query)){

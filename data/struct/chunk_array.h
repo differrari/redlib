@@ -7,8 +7,11 @@ typedef struct chunk_array_t {
     size_t item_size;
     size_t count;
     struct chunk_array_t *next;
+    void* (*allocator)(size_t size);
+    void (*free)(void*);
 } chunk_array_t;
 
+chunk_array_t* chunk_array_create_alloc(size_t item_size, size_t chunk_capacity, void* (*allocator)(size_t size), void (*free)(void*));
 chunk_array_t* chunk_array_create(size_t item_size, size_t chunk_capacity);
 size_t chunk_array_push(chunk_array_t* array, void *data);
 void chunk_array_destroy(chunk_array_t *array);
