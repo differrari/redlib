@@ -1183,8 +1183,8 @@ string string_concat(string a, string b)
     uint32_t len = a.length + b.length;
     char *dst = (char *)zalloc(len + 1);
     if (!dst) return (string){0};
-    memcpy(dst, a.data, a.length);
-    memcpy(dst + a.length, b.data, b.length);
+    if (a.data) memcpy(dst, a.data, a.length);
+    if (b.data) memcpy(dst + a.length, b.data, b.length);
     dst[len] = 0;
     return (string){ dst, len, len +1 };
 }

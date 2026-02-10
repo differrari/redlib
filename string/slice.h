@@ -11,6 +11,10 @@ static inline string string_from_slice(string_slice slice){
     return string_from_literal_length(slice.data, slice.length);
 }
 
+static inline string_slice slice_from_string(string str){
+    return (string_slice){.data = str.data,.length = str.length};
+}
+
 static inline string_slice slice_from_literal(const char* lit){
     return (string_slice){.data = (char*)lit, .length = strlen(lit)};
 }
