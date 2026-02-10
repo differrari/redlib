@@ -41,22 +41,23 @@ void aligned_free(void *ptr) {
 static inline void free_proxy(void* ptr){
 #ifdef CROSS
     aligned_free(ptr);
+#else
+    page_free(ptr);
 #endif
-    //TODO: free page on redacted
 }
 
-static inline void* malloc_proxy(size_t size){
+static inline void* alloc_proxy(size_t size){
 #ifdef CROSS
     void *m = aligned_malloc(size);
     memset(m,0,size);//Let the record show libc is fn stupid
 #else 
-    void* m = malloc(size);
+    void* m = page_alloc(size);
 #endif
     return m;
 }
 
 void* allocate(void* page, size_t size, page_allocator fallback){
-    if (!fallback) fallback = malloc_proxy;
+    if (!fallback) fallback = alloc_proxy;
     if (!page) return 0;
     size += INDIVIDUAL_HDR;
     size = (size + ALIGNMENT - 1) & ~(ALIGNMENT - 1);
@@ -115,8 +116,8 @@ void* allocate(void* page, size_t size, page_allocator fallback){
 static void* zalloc_page = 0;
 
 void* zalloc(size_t size){
-    if (!zalloc_page) zalloc_page = malloc_proxy(PAGE_SIZE);
-    return allocate(zalloc_page, size, malloc_proxy);
+    if (!zalloc_page) zalloc_page = alloc_proxy(PAGE_SIZE);
+    return allocate(zalloc_page, size, alloc_proxy);
 }
 
 void release(void* ptr){

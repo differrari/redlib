@@ -18,8 +18,10 @@ extern "C" {
 extern void printl(const char *str);
 
 extern void* malloc(size_t size);//NOTE: malloc can return a faulty address for allocations smaller than 0x1000. Use zalloc/allocate until this is fixed, or allocate full pages (0x1000) if you wish to manage memory manually
-
 extern void free_sized(void *ptr, size_t size);//NOTE: this function should be used in conjunction with malloc. For zalloc, use release(void*) instead
+
+extern void* page_alloc(size_t size);
+extern void page_free(void* ptr);
 
 extern bool read_key(keypress *kp);
 extern bool read_event(kbd_event *event);

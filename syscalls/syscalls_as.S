@@ -12,6 +12,8 @@
 #ifndef KERNEL
 syscall_def malloc, MALLOC_CODE
 syscall_def free_sized, FREE_CODE
+syscall_def page_alloc, PALLOC_CODE
+syscall_def page_free, PFREE_CODE
 
 syscall_def printl, PRINTL_CODE
 

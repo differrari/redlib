@@ -1,9 +1,12 @@
 #pragma once
 
-#define MALLOC_CODE                 0
-#define FREE_CODE                   1
+#define PALLOC_CODE                 1
+#define PFREE_CODE                  2
 
 #define PRINTL_CODE                 3
+
+#define MALLOC_CODE                 4//DEADLINE: 01/03/2026 - will be deprecated in favor of PALLOC/PFREE
+#define FREE_CODE                   5//DEADLINE: 01/03/2026 - will be deprecated in favor of PALLOC/PFREE
 
 #define READ_KEY_CODE               10
 #define REGISTER_SHORTCUT_CODE      11
