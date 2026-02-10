@@ -99,9 +99,9 @@ typedef uint32_t u32;
 typedef uint64_t u64;
 typedef uint16_t u16;
 typedef uint8_t u8;
-typedef uintptr_t pointer;
+typedef uintptr_t uptr;
 typedef char* literal;
-typedef size_t size;
+typedef size_t usize;
 
 typedef int32_t i32;
 typedef int64_t i64;

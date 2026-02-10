@@ -19,7 +19,7 @@ static char *homedir;
 #define DT_DIR 4
 #endif
 
-void traverse_directory(char *directory, bool recursive, dir_traverse func){
+void traverse_directory(const char *directory, bool recursive, dir_traverse func){
     DIR *dir;
     struct dirent *ent;
     if ((dir = opendir (directory)) == 0) {

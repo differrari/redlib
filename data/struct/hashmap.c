@@ -49,7 +49,7 @@ static void chm_update_threshold(chashmap_t* map){
     map->resize_threshold = (map->capacity*3)/4;
 }
 
-chashmap_t* chashmap_create_alloc(uint64_t initial_capacity, void* (*alloc)(size_t size),void (*mfree)(void* ptr, size_t size)){
+chashmap_t* hash_map_create_alloc(uint64_t initial_capacity, void* (*alloc)(size_t size),void (*mfree)(void* ptr, size_t size)){
     uint64_t cap = chm_next_pow2(initial_capacity ? initial_capacity : 8);
     chashmap_t* m = (chashmap_t*)alloc((uint64_t)sizeof(chashmap_t));
 
@@ -73,11 +73,11 @@ chashmap_t* chashmap_create_alloc(uint64_t initial_capacity, void* (*alloc)(size
     return m;
 }
 
-chashmap_t* chashmap_create(uint64_t initial_capacity){
-    return chashmap_create_alloc(initial_capacity, malloc, free_sized);
+chashmap_t* hash_map_create(uint64_t initial_capacity){
+    return hash_map_create_alloc(initial_capacity, malloc, free_sized);
 }
 
-void chashmap_destroy(chashmap_t* map){
+void hash_map_destroy(chashmap_t* map){
     if(!map) return;
 
     for (uint64_t i = 0; i < map->capacity; i++) {
@@ -94,19 +94,19 @@ void chashmap_destroy(chashmap_t* map){
     chm_free(map, map, (uint64_t)sizeof(chashmap_t));
 }
 
-void chashmap_set_allocator(chashmap_t* map, void* (*alloc)(size_t), void (*dealloc)(void*, size_t)){
+void hash_map_set_allocator(chashmap_t* map, void* (*alloc)(size_t), void (*dealloc)(void*, size_t)){
     if (!map) return;
     map->alloc = alloc;
     map->free = dealloc;
 }
 
-void chashmap_set_hash(chashmap_t* map, chashmap_hash_fn hash_fn, chashmap_keyeq_fn keyeq_fn){
+void hash_map_set_hash(chashmap_t* map, chashmap_hash_fn hash_fn, chashmap_keyeq_fn keyeq_fn){
     if (!map) return;
     if (hash_fn) map->hash_fn = hash_fn;
     if (keyeq_fn) map->keyeq_fn = keyeq_fn;
 }
 
-void chashmap_set_value_dispose(chashmap_t* map, void (*dispose_fn)(void*)){
+void hash_map_set_value_dispose(chashmap_t* map, void (*dispose_fn)(void*)){
     if(!map) return;
     map->value_dispose = dispose_fn;
 }
@@ -135,7 +135,7 @@ static int chm_resize(chashmap_t* map, uint64_t new_capacity){
     return 1;
 }
 
-int chashmap_put(chashmap_t* map, const void* key, uint64_t key_len, void* value){
+int hash_map_put(chashmap_t* map, const void* key, uint64_t key_len, void* value){
     if (!map) return -1;
 
     if (map->size >= map->resize_threshold){
@@ -175,7 +175,7 @@ int chashmap_put(chashmap_t* map, const void* key, uint64_t key_len, void* value
     return 1;
 }
 
-void* chashmap_get(const chashmap_t* map, const void* key, uint64_t key_len){
+void* hash_map_get(const chashmap_t* map, const void* key, uint64_t key_len){
     if (!map) return 0;
 
     uint64_t h = map->hash_fn(key,key_len);
@@ -189,7 +189,7 @@ void* chashmap_get(const chashmap_t* map, const void* key, uint64_t key_len){
     return 0;
 }
 
-int chashmap_remove(chashmap_t* map, const void* key, uint64_t key_len, void** out_value){
+int hash_map_remove(chashmap_t* map, const void* key, uint64_t key_len, void** out_value){
     if (!map) return 0;
 
     uint64_t h = map->hash_fn(key, key_len);
@@ -217,17 +217,17 @@ int chashmap_remove(chashmap_t* map, const void* key, uint64_t key_len, void** o
     return 0;
 }
 
-uint64_t chashmap_size(const chashmap_t* map){
+uint64_t hash_map_size(const chashmap_t* map){
     if(!map) return 0;
     return map->size;
 }
 
-uint64_t chashmap_capacity(const chashmap_t* map){
+uint64_t hash_map_capacity(const chashmap_t* map){
     if(!map) return 0;
     return map->capacity;
 }
 
-void chashmap_for_each(const chashmap_t* map, void (*func)(void* key, uint64_t key_len, void* value)){
+void hash_map_for_each(const chashmap_t* map, void (*func)(void* key, uint64_t key_len, void* value)){
     if (!map || !func) return;
 
     for (uint64_t i = 0; i < map->capacity; i++){
