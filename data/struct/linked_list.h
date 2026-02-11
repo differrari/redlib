@@ -19,11 +19,12 @@ typedef struct {
     linked_list_node_t *tail;
     uint64_t length;
     void* (*alloc)(size_t size);
-    void (*free)(void *ptr, size_t size);
+    void (*free)(void *ptr);
 } linked_list_t;
 
 typedef linked_list_t clinkedlist_t;
 
+linked_list_t *linked_list_create_alloc(void* (*alloc)(size_t size), void (*free)(void *ptr));
 linked_list_t *linked_list_create();
 void linked_list_destroy(linked_list_t *list);
 linked_list_t *linked_list_clone(const linked_list_t *list);

@@ -2,14 +2,17 @@
 #include "alloc/allocate.h"
 #include "syscalls/syscalls.h"
 
-linked_list_t *linked_list_create(){
-    uintptr_t mem = (uintptr_t)zalloc(sizeof(linked_list_t));
+linked_list_t *linked_list_create_alloc(void* (*alloc)(size_t size), void (*free)(void *ptr)){
+    uintptr_t mem = (uintptr_t)alloc(sizeof(linked_list_t));
     if((void *)mem == NULL) return NULL;
     linked_list_t *list = (linked_list_t *)mem;
-    list->head = NULL;
-    list->tail = NULL;
-    list->length = 0;
+    list->alloc = alloc;
+    list->free = free;
     return list;
+}
+
+linked_list_t *linked_list_create(){
+    return linked_list_create_alloc(zalloc, release);
 }
 
 void* linked_list_alloc(linked_list_t *list, size_t size){
@@ -18,7 +21,7 @@ void* linked_list_alloc(linked_list_t *list, size_t size){
 }
 
 void linked_list_free(linked_list_t *list, void*ptr, size_t size){
-    if (list->free) list->free(ptr,size);
+    if (list->free) list->free(ptr);
     return release(ptr);
 }
 
