@@ -2,6 +2,10 @@
 #include "syscalls/syscalls.h"
 #include "std/memory.h"
 
+#ifdef CROSS
+extern void free(void*);
+#endif
+
 typedef struct free_block {
     size_t block_size;//TEST: corrupt this value
     struct free_block* next;
