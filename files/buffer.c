@@ -32,7 +32,7 @@ size_t buffer_write_va(buffer *buf, char* fmt, va_list args){
     if (strlen(fmt) > buf->limit-buf->cursor-256){
         if (buf->options & buffer_can_grow){
             buffer_resize(buf,strlen(fmt)*2);
-        } if (buf->options & buffer_can_grow){
+        } if (buf->options & buffer_circular){
             memset(buf->buffer, 0, buf->limit);
             buf->cursor = 0;
             buf->buffer_size = 0;
