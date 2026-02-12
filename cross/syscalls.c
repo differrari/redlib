@@ -64,12 +64,13 @@ bool read_key(keypress *kp){
     return false;
 }
 
-uint64_t get_time(){
-    return floor(GetTime() * 1000);
+u64 get_time(){
+    struct timespec ts;
+    clock_gettime(CLOCK_REALTIME, &ts);
+    return (u64)(ts.tv_sec * 1000LL) + (ts.tv_nsec/1000000LL);
 }
 
 bool keypresses[512];
-
 bool read_event(kbd_event *event){
     //TODO: modifiers
     int key;
