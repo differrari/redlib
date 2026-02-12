@@ -27,15 +27,6 @@ typedef struct allocator_header {
 
 #define INDIVIDUAL_HDR (sizeof(size_t) * 2)//TODO: use the extra value as a canary to indicate live memory
 
-#define ALIGN 0x1000
-
-void *aligned_malloc(int size) {
-    void *mem = malloc(size+ALIGN+sizeof(void*));
-    void **ptr = (void**)((uintptr_t)(mem+ALIGN+sizeof(void*)) & ~(ALIGN-1));
-    ptr[-1] = mem;
-    return ptr;
-}
-
 void aligned_free(void *ptr) {
 #ifdef CROSS
     free(((void**)ptr)[-1]);
@@ -50,18 +41,8 @@ static inline void free_proxy(void* ptr){
 #endif
 }
 
-static inline void* alloc_proxy(size_t size){
-#ifdef CROSS
-    void *m = aligned_malloc(size);
-    memset(m,0,size);//Let the record show libc is fn stupid
-#else 
-    void* m = page_alloc(size);
-#endif
-    return m;
-}
-
 void* allocate(void* page, size_t size, page_allocator fallback){
-    if (!fallback) fallback = alloc_proxy;
+    if (!fallback) fallback = page_alloc;
     if (!page) return 0;
     size += INDIVIDUAL_HDR;
     size = (size + ALIGNMENT - 1) & ~(ALIGNMENT - 1);
@@ -121,8 +102,8 @@ void* allocate(void* page, size_t size, page_allocator fallback){
 static void* zalloc_page = 0;
 
 void* zalloc(size_t size){
-    if (!zalloc_page) zalloc_page = alloc_proxy(PAGE_SIZE);
-    return allocate(zalloc_page, size, alloc_proxy);
+    if (!zalloc_page) zalloc_page = page_alloc(PAGE_SIZE);
+    return allocate(zalloc_page, size, page_alloc);
 }
 
 void release(void* ptr){
@@ -181,6 +162,11 @@ void* reallocate(void* ptr, size_t new_size){
     
     uintptr_t header = (uintptr_t)ptr - INDIVIDUAL_HDR;
     
+    if (!((uintptr_t)ptr & 0xFFF)){
+        print("[ALLOC implementation error] large reallocations not implemented");
+        return 0;
+    }
+    
     size_t old_size = *(size_t*)header;
     
     // size_t diff = new_size > old_size ? new_size-old_size : size-old_size;
@@ -189,7 +175,7 @@ void* reallocate(void* ptr, size_t new_size){
     
     // if (next_val == 0 || next_val == 0xDEADBEEFDEADBEEF)
     
-    void *new_ptr = allocate((void*)((uintptr_t)ptr & (~0xFFF)), new_size, malloc);
+    void *new_ptr = allocate((void*)((uintptr_t)ptr & (~0xFFF)), new_size, page_alloc);
     if (!new_ptr) return 0;
     memcpy(new_ptr, ptr, old_size < new_size ? old_size : new_size);
     release(ptr);

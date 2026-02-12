@@ -17,6 +17,15 @@ extern void free(void *ptr);
 extern int puts(const char *str);
 extern void exit(int status);
 
+#define ALIGN 0x1000
+void* page_alloc(size_t size) {
+    void *mem = malloc(size+ALIGN+sizeof(void*));
+    void **ptr = (void**)((uintptr_t)(mem+ALIGN+sizeof(void*)) & ~(ALIGN-1));
+    ptr[-1] = mem;
+    memset(ptr,0,size);
+    return ptr;
+}
+
 void printl(const char *str){
     puts(str);
 }
