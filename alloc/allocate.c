@@ -182,7 +182,7 @@ void* reallocate(void* ptr, size_t new_size){
     return new_ptr;
 }
 
-#include "assert.h"
+#include "debug/assert.h"
 
 bool test_zalloc(){
     

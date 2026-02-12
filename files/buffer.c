@@ -94,7 +94,7 @@ size_t buffer_read(buffer *buf, void *into, size_t size, uintptr_t cursor){
     return size;
 }
 
-#include "assert.h"
+#include "debug/assert.h"
 
 bool buffer_test(){
     buffer testbuf = buffer_create(0x10, buffer_opt_none);
