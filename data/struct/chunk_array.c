@@ -68,7 +68,7 @@ void chunk_array_reset(chunk_array_t *array){
     if (array->next) chunk_array_reset(array->next);
 }
 
-#include "test.h"
+#include "debug/assert.h"
 
 bool chunk_array_test(){
     chunk_array_t *test_array = chunk_array_create(sizeof(uint64_t), 10);
