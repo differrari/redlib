@@ -1,6 +1,7 @@
 #include "allocate.h"
 #include "syscalls/syscalls.h"
 #include "std/memory.h"
+#include "page_index.h"
 
 #ifdef CROSS
 extern void free(void*);
@@ -27,18 +28,13 @@ typedef struct allocator_header {
 
 #define INDIVIDUAL_HDR (sizeof(size_t) * 2)//TODO: use the extra value as a canary to indicate live memory
 
-void aligned_free(void *ptr) {
-#ifdef CROSS
-    free(((void**)ptr)[-1]);
-#endif
-}
+page_index *p_index;
 
-static inline void free_proxy(void* ptr){
-#ifdef CROSS
-    aligned_free(ptr);
-#else
-    page_free(ptr);
-#endif
+static inline void* fallback_proxy(size_t size, page_allocator fallback){
+    if (!p_index) p_index = fallback(PAGE_SIZE);
+    void *p = fallback(size);
+    register_page_alloc(p_index, p, size, fallback);
+    return p;
 }
 
 void* allocate(void* page, size_t size, page_allocator fallback){
@@ -48,7 +44,7 @@ void* allocate(void* page, size_t size, page_allocator fallback){
     size = (size + ALIGNMENT - 1) & ~(ALIGNMENT - 1);
     
     if (size >= PAGE_SIZE - sizeof(allocator_header)){
-        return fallback(size);
+        return fallback_proxy(size,fallback);
     }
     
     allocator_header *hdr = (allocator_header*)page;
@@ -95,7 +91,7 @@ void* allocate(void* page, size_t size, page_allocator fallback){
         }
     }
     
-    if (!hdr->next) hdr->next = fallback(PAGE_SIZE);
+    if (!hdr->next) hdr->next = fallback_proxy(PAGE_SIZE,fallback);
     return allocate(hdr->next, size, fallback);
 }
 
@@ -108,7 +104,8 @@ void* zalloc(size_t size){
 
 void release(void* ptr){
     if (!((uintptr_t)ptr & 0xFFF)){
-        free_proxy(ptr);
+        page_free(ptr);
+        if (p_index) unregister_page_alloc(p_index, ptr);
         return;
     }
     
@@ -162,12 +159,14 @@ void* reallocate(void* ptr, size_t new_size){
     
     uintptr_t header = (uintptr_t)ptr - INDIVIDUAL_HDR;
     
+    size_t old_size;
     if (!((uintptr_t)ptr & 0xFFF)){
-        print("[ALLOC implementation error] large reallocations not implemented");
-        return 0;
-    }
-    
-    size_t old_size = *(size_t*)header;
+        old_size = get_alloc_size(p_index, ptr);
+        if (!old_size) {
+            print("[ALLOC error] Trying to reallocate non-owned memory");
+            return 0;
+        }
+    } else old_size = *(size_t*)header;
     
     // size_t diff = new_size > old_size ? new_size-old_size : size-old_size;
     

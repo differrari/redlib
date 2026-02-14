@@ -26,6 +26,10 @@ void* page_alloc(size_t size) {
     return ptr;
 }
 
+void page_free(void* ptr){
+    free(((void**)ptr)[-1]);
+}
+
 void printl(const char *str){
     puts(str);
 }

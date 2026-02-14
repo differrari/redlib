@@ -6,7 +6,6 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-typedef void* (*page_allocator)(size_t size);
 
 void* allocate(void* page, size_t size, page_allocator fallback);
 
