@@ -1,8 +1,8 @@
 #pragma once
 
 #include "types.h"
-#include "std/string.h"
-#include "std/string_slice.h"
+#include "string/string.h"
+#include "string/slice.h"
 #include "syscalls/syscalls.h"
 #include "files/helpers.h"
 #include "files/buffer.h"
@@ -411,6 +411,7 @@ bool gen_compile_commands(const char *file){
 bool emit_compile_commands(){
     buffer_write(&ccbuf,"]");
     write_full_file("compile_commands.json",ccbuf.buffer,ccbuf.buffer_size);
+    return true;
 }
 
 int run(){
@@ -502,7 +503,6 @@ void rebuild_self(){
     set_target(target_native);
     set_package_type(package_bin);
     
-    add_local_dependency("~/redbuild", "", "", false);
     debug();
     
     source("build.c");

@@ -14,16 +14,16 @@ typedef struct {
 } fs_stat;
 
 typedef bool   (*getstat)(const char*, fs_stat*);
-typedef size_t (*sread)(const char*, void*, size_t, file_offset*);
-typedef size_t (*swrite)(const char*, const void*, size_t);
+typedef size_t (*simple_read_fn)(const char*, void*, size_t, file_offset*);
+typedef size_t (*simple_write_fn)(const char*, const void*, size_t);
 
 typedef struct {
     const char* name;
     fs_backing_type backing_type;
     fs_entry_type entry_type;
     getstat stat_func;
-    sread read_func;
-    swrite write_func;
+    simple_read_fn read_func;
+    simple_write_fn write_func;
 } fs_entry;
 
 typedef enum { fs_action_invalid, fs_action_stat, fs_action_read, fs_action_write, } fs_action;
@@ -43,8 +43,8 @@ typedef struct system_module {
     
     getstat get_stat;
 
-    sread sread;
-    swrite swrite;
+    simple_read_fn sread;
+    simple_write_fn swrite;
 
     size_t (*readdir)(const char*, void*, size_t, file_offset*);
 
