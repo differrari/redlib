@@ -1,5 +1,7 @@
 #pragma once
 
+#include "types.h"
+
 #define FD_INVALID 0
 #define FD_IN 1
 #define FD_OUT 2

@@ -154,11 +154,11 @@ void png_read_image(void *file, size_t size, uint32_t *buf){
                 return;
             }
             if (!out_buf){ 
-                out_buf = (uintptr_t)malloc((info.width * info.height * system_bpp) + info.height);//TODO: bpp might be too big, read image format
+                out_buf = (uintptr_t)zalloc((info.width * info.height * system_bpp) + info.height);//TODO: bpp might be too big, read image format
                 ctx.output_buf = (uint8_t*)out_buf;
             }
             if (!data_buf){
-                data_buf = malloc(size);
+                data_buf = zalloc(size);
             }
             memcpy((void*)((uintptr_t)data_buf + data_cursor), (void*)(p + sizeof(png_chunk_hdr)), length);
             data_cursor += length;
@@ -174,7 +174,7 @@ void* load_png(char *path, image_info *info){
     file descriptor = {};
     FS_RESULT res = openf(path, &descriptor);
     void *img = 0;
-    void* file_img = malloc(descriptor.size);
+    void* file_img = zalloc(descriptor.size);
     readf(&descriptor, file_img, descriptor.size);
     if (res != FS_RESULT_SUCCESS){ 
         closef(&descriptor);

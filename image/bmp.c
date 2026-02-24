@@ -2,31 +2,10 @@
 #include "math/math.h"
 #include "syscalls/syscalls.h"
 
-typedef struct bmp_header {
-    char signature[2];
-    uint32_t file_size;
-    uint32_t rsvd;
-    uint32_t data_offset;
-
-    //DIB - BITMAPINFOHEADER
-    uint32_t dib_size;
-    int32_t width;
-    int32_t height;
-    uint16_t planes;//Must be 1
-    uint16_t bpp;
-    uint32_t compression;//Table
-    uint32_t img_size;
-    
-    int32_t horizontal_ppm;
-    int32_t vertical_ppm;
-    
-    uint32_t num_colors;//0 is 2^n
-    uint32_t important_colors;//0 is all, ignored
-}__attribute__((packed)) bmp_header;
-
 image_info bmp_get_info(void * file, size_t size){
     if (size < sizeof(bmp_header)) return (image_info){0,0};
     bmp_header *header = (bmp_header*)file;
+    if (header->signature[0] != 'B' || header->signature[1] != 'M') return (image_info){0,0};
     return (image_info){
         .width = header->width,
         .height = abs(header->height)
@@ -41,6 +20,10 @@ void bmp_read_image(void *file, size_t size, uint32_t *buf){
     bmp_header *header = (bmp_header*)file;
     if (size < header->data_offset + header->img_size || size < header->file_size){ 
         printf("Wrong file size");
+        return;
+    }
+    if (header->signature[0] != 'B' || header->signature[1] != 'P'){
+        print("Wrong signature. Not a BMP");
         return;
     }
     uintptr_t color_data = (uintptr_t)file + header->data_offset;
@@ -63,13 +46,13 @@ void* load_bmp(char *path, image_info *info){
     void *img = 0;
     image_info img_info;
     if (res == FS_RESULT_SUCCESS){
-        void *img_file = (void*)malloc(descriptor.size);
+        void *img_file = (void*)zalloc(descriptor.size);
         readf(&descriptor, img_file, descriptor.size);
         img_info = bmp_get_info(img_file, descriptor.size);
         closef(&descriptor);
         if (img_info.width > 0 && img_info.height > 0){
             size_t image_size = img_info.width * img_info.height * system_bpp;
-            img = (void*)malloc(image_size);
+            img = (void*)zalloc(image_size);
             bmp_read_image(img_file, descriptor.size, img);
             *info = img_info;
             return img;
@@ -83,4 +66,26 @@ void* load_bmp(char *path, image_info *info){
         *info = (image_info){0, 0};
         return 0;
     }
+}
+
+bmp_header* allocate_bmp_file(u32 width, u32 height){
+    size_t data_offset = sizeof(bmp_header) + 10/* Align */;
+    size_t bmp_size = (sizeof(u32) * width * height) + data_offset;
+    
+    void *bmp = zalloc(bmp_size);
+    
+    bmp_header *header = bmp;
+    
+    header->dib_size = 40;
+    header->signature[0] = 'B';
+    header->signature[1] = 'M';
+    header->data_offset = data_offset;
+    header->img_size = bmp_size - data_offset;
+    header->bpp = 32;
+    header->file_size = bmp_size;
+    header->height = -height;
+    header->width = width;
+    header->planes = 1;
+    
+    return header;
 }
