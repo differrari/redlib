@@ -41,6 +41,18 @@ static inline void write_unaligned32(uint32_t *up, uint32_t value) {
     p[3] = (uint8_t)((value >> 24) & 0xFF);
 }
 
+static inline void write_unaligned64(uint64_t *up, uint64_t value) {
+    uint8_t *p = (uint8_t*)up;
+    p[0] = (uint8_t)(value & 0xFF);
+    p[1] = (uint8_t)((value >> 8) & 0xFF);
+    p[2] = (uint8_t)((value >> 16) & 0xFF);
+    p[3] = (uint8_t)((value >> 24) & 0xFF);
+    p[4] = (uint8_t)((value >> 32) & 0xFF);
+    p[5] = (uint8_t)((value >> 40) & 0xFF);
+    p[6] = (uint8_t)((value >> 48) & 0xFF);
+    p[7] = (uint8_t)((value >> 56) & 0xFF);
+}
+
 static inline void write_unaligned16(uint16_t *up, uint16_t value){
     uint8_t *p = (uint8_t*)up;
     p[0] = (uint8_t)(value & 0xFF);
