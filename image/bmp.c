@@ -22,8 +22,8 @@ void bmp_read_image(void *file, size_t size, uint32_t *buf){
         printf("Wrong file size");
         return;
     }
-    if (header->signature[0] != 'B' || header->signature[1] != 'P'){
-        print("Wrong signature. Not a BMP");
+    if (header->signature[0] != 'B' || header->signature[1] != 'M'){
+        print("Wrong signature %c%c. Not a BMP",header->signature[0],header->signature[1]);
         return;
     }
     uintptr_t color_data = (uintptr_t)file + header->data_offset;
