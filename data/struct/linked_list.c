@@ -141,7 +141,7 @@ void linked_list_for_each(const linked_list_t *list, void (*func)(void *)){
 
 void* linked_list_get(linked_list_t *list, uint64_t index){
     u64 i = 0;
-    for (linked_list_node_t *node = list->head; node && i < index; node = node->next, i++){
+    for (linked_list_node_t *node = list->head; node && i <= index; node = node->next, i++){
         if (i == index) return node;
     }
     return 0;
