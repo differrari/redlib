@@ -9,7 +9,9 @@
 #include "ui/draw/draw.h"
 #include "files/fs.h"
 #include "net/socket_types.h"
+#ifndef CROSS
 #include "files/system_module.h"
+#endif
 
 #ifdef __cplusplus
 extern "C" {
