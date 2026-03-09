@@ -2,7 +2,7 @@
 #include "alloc/allocate.h"
 #include "std/memory.h"
 
-#define CHUNK_ARRAY_ITEM(index) (void*)((uintptr_t)array + sizeof(chunk_array_t) + (index * array->item_size))
+#define CHUNK_ARRAY_ITEM(index) (void*)((uptr)array + sizeof(chunk_array_t) + ((index) * array->item_size))
 
 chunk_array_t* chunk_array_create_alloc(size_t item_size, size_t chunk_capacity, void* (*allocator)(size_t size), void (*free)(void*)){
     if (!allocator) allocator = zalloc;
@@ -22,7 +22,7 @@ chunk_array_t* chunk_array_create(size_t item_size, size_t chunk_capacity){
 size_t chunk_array_push(chunk_array_t* array, void *data){
     if (!array) return 0;
     if (array->count < array->chunk_capacity){
-        memcpy((void*)((uintptr_t)array + sizeof(chunk_array_t) + (array->count * array->item_size)), data, array->item_size);
+        memcpy((void*)((uptr)array + sizeof(chunk_array_t) + (array->count * array->item_size)), data, array->item_size);
         return array->count++;
     } else {
         if (!array->next)
@@ -38,6 +38,21 @@ void* chunk_array_get(chunk_array_t *array, uint64_t index){
     } else if (array->next){
         return chunk_array_get(array->next, index - array->count);
     } else return 0;
+}
+
+void* chunk_array_pop(chunk_array_t *array){
+    if (!array || !array->count) return 0;
+    if (array->next){
+        void *result = chunk_array_pop(array->next);
+        if (result) return result;
+    }
+    if (array->count <= array->chunk_capacity){
+        void *result = CHUNK_ARRAY_ITEM(array->count-1);
+        array->count--;
+        return result;
+    }
+    
+    return 0;
 }
 
 size_t chunk_array_count(chunk_array_t *array){
