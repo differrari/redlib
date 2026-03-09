@@ -19,18 +19,18 @@ typedef union argbcolor {
 } argbcolor;
 
 typedef struct {
-    uint32_t x;
-    uint32_t y;
+    i32 x;
+    i32 y;
 } gpu_point;
 
 typedef struct {
-    int32_t x;
-    int32_t y;
+    i32 x;
+    i32 y;
 } int_point;
 
 typedef struct {
-    uint32_t width;
-    uint32_t height;
+    u32 width;
+    u32 height;
 } gpu_size;
 
 typedef struct {

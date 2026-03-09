@@ -31,15 +31,15 @@ typedef struct {
 typedef enum { package_red, package_bin, package_lib } package_type;
 
 typedef struct redb_ctx {
-    clinkedlist_t *compile_list;
-    clinkedlist_t *preproc_flags_list;
-    clinkedlist_t *comp_flags_list;
-    clinkedlist_t *link_flags_list_f;
-    clinkedlist_t *link_flags_list_b;
-    clinkedlist_t *includes;
-    clinkedlist_t *link_libs;
-    clinkedlist_t *ignore_list;
-    clinkedlist_t *out_files;
+    linked_list_t *compile_list;
+    linked_list_t *preproc_flags_list;
+    linked_list_t *comp_flags_list;
+    linked_list_t *link_flags_list_f;
+    linked_list_t *link_flags_list_b;
+    linked_list_t *includes;
+    linked_list_t *link_libs;
+    linked_list_t *ignore_list;
+    linked_list_t *out_files;
     
     target selected_target;
     
@@ -87,10 +87,10 @@ void free_deps(void *data){
     release(dep);
 }
 
-void push_lit(clinkedlist_t *list, const char* lit){
+void push_lit(linked_list_t *list, const char* lit){
     string *s = zalloc(sizeof(string));
     *s = string_from_literal(lit);
-    clinkedlist_push(list, s);
+    linked_list_push(list, s);
 }
 
 void add_local_dependency(char *include, char *link, char* build, bool use_make);
@@ -198,48 +198,48 @@ void set_package_type(package_type type){
 
 void destroy_module(redb_ctx *old_ctx){
     if (old_ctx->compile_list){
-        if (old_ctx->compile_list->length) clinkedlist_for_each(old_ctx->compile_list, free_strings);
-        clinkedlist_destroy(old_ctx->compile_list);
+        if (old_ctx->compile_list->length) linked_list_for_each(old_ctx->compile_list, free_strings);
+        linked_list_destroy(old_ctx->compile_list);
     }
     
     if (old_ctx->preproc_flags_list){
-        if (old_ctx->preproc_flags_list->length) clinkedlist_for_each(old_ctx->preproc_flags_list, free_strings);
-        clinkedlist_destroy(old_ctx->preproc_flags_list);
+        if (old_ctx->preproc_flags_list->length) linked_list_for_each(old_ctx->preproc_flags_list, free_strings);
+        linked_list_destroy(old_ctx->preproc_flags_list);
     }
     
     if (old_ctx->includes){
-        if (old_ctx->includes->length) clinkedlist_for_each(old_ctx->includes, free_strings);
-        clinkedlist_destroy(old_ctx->includes);
+        if (old_ctx->includes->length) linked_list_for_each(old_ctx->includes, free_strings);
+        linked_list_destroy(old_ctx->includes);
     }
     
     if (old_ctx->link_libs){
-        if (old_ctx->link_libs->length) clinkedlist_for_each(old_ctx->link_libs, free_strings);
-        clinkedlist_destroy(old_ctx->link_libs);
+        if (old_ctx->link_libs->length) linked_list_for_each(old_ctx->link_libs, free_strings);
+        linked_list_destroy(old_ctx->link_libs);
     }
     
     if (old_ctx->comp_flags_list){
-        if (old_ctx->comp_flags_list->length) clinkedlist_for_each(old_ctx->comp_flags_list, free_strings);
-        clinkedlist_destroy(old_ctx->comp_flags_list);
+        if (old_ctx->comp_flags_list->length) linked_list_for_each(old_ctx->comp_flags_list, free_strings);
+        linked_list_destroy(old_ctx->comp_flags_list);
     }
     
     if (old_ctx->link_flags_list_f){
-        if (old_ctx->link_flags_list_f->length) clinkedlist_for_each(old_ctx->link_flags_list_f, free_strings);
-        clinkedlist_destroy(old_ctx->link_flags_list_f);
+        if (old_ctx->link_flags_list_f->length) linked_list_for_each(old_ctx->link_flags_list_f, free_strings);
+        linked_list_destroy(old_ctx->link_flags_list_f);
     }
     
     if (old_ctx->link_flags_list_b){
-        if (old_ctx->link_flags_list_b->length) clinkedlist_for_each(old_ctx->link_flags_list_b, free_strings);
-        clinkedlist_destroy(old_ctx->link_flags_list_b);
+        if (old_ctx->link_flags_list_b->length) linked_list_for_each(old_ctx->link_flags_list_b, free_strings);
+        linked_list_destroy(old_ctx->link_flags_list_b);
     }
     
     if (old_ctx->ignore_list){
-        if (old_ctx->ignore_list->length) clinkedlist_for_each(old_ctx->ignore_list, free_strings);
-        clinkedlist_destroy(old_ctx->ignore_list);
+        if (old_ctx->ignore_list->length) linked_list_for_each(old_ctx->ignore_list, free_strings);
+        linked_list_destroy(old_ctx->ignore_list);
     }
     
     if (old_ctx->out_files){
-        if (old_ctx->out_files->length) clinkedlist_for_each(old_ctx->out_files, free_strings);
-        clinkedlist_destroy(old_ctx->out_files);
+        if (old_ctx->out_files->length) linked_list_for_each(old_ctx->out_files, free_strings);
+        linked_list_destroy(old_ctx->out_files);
     }
     
     redbuild_debug("Finished cleanup");
@@ -249,15 +249,15 @@ void new_module(const char *name){
     printf("Compiling target %s",name);
     ctx = (redb_ctx*)zalloc(sizeof(redb_ctx));
     
-    ctx->compile_list = clinkedlist_create();
-    ctx->preproc_flags_list = clinkedlist_create();
-    ctx->includes = clinkedlist_create();
-    ctx->link_libs = clinkedlist_create();
-    ctx->comp_flags_list = clinkedlist_create();
-    ctx->link_flags_list_f = clinkedlist_create();
-    ctx->link_flags_list_b = clinkedlist_create();
-    ctx->ignore_list = clinkedlist_create();
-    ctx->out_files = clinkedlist_create();
+    ctx->compile_list = linked_list_create();
+    ctx->preproc_flags_list = linked_list_create();
+    ctx->includes = linked_list_create();
+    ctx->link_libs = linked_list_create();
+    ctx->comp_flags_list = linked_list_create();
+    ctx->link_flags_list_f = linked_list_create();
+    ctx->link_flags_list_b = linked_list_create();
+    ctx->ignore_list = linked_list_create();
+    ctx->out_files = linked_list_create();
     ctx->debug_syms = false;
 }
 
@@ -356,18 +356,18 @@ void prepare_command(){
     buffer_write(&ctx->buf, ctx->chosen_compiler);
     buffer_write_space(&ctx->buf);
     
-    clinkedlist_for_each(ctx->preproc_flags_list, process_preproc_flags);
+    linked_list_for_each(ctx->preproc_flags_list, process_preproc_flags);
     
     if (ctx->debug_syms){
         buffer_write_const(&ctx->buf," -g -fsanitize=address ");
     }
     
-    clinkedlist_for_each(ctx->link_flags_list_f, list_strings);
-    clinkedlist_for_each(ctx->includes, list_strings);
-    clinkedlist_for_each(ctx->compile_list, list_strings);
-    clinkedlist_for_each(ctx->link_libs, list_strings);
-    clinkedlist_for_each(ctx->comp_flags_list, process_comp_flags);
-    clinkedlist_for_each(ctx->link_flags_list_b, list_strings);
+    linked_list_for_each(ctx->link_flags_list_f, list_strings);
+    linked_list_for_each(ctx->includes, list_strings);
+    linked_list_for_each(ctx->compile_list, list_strings);
+    linked_list_for_each(ctx->link_libs, list_strings);
+    linked_list_for_each(ctx->comp_flags_list, process_comp_flags);
+    linked_list_for_each(ctx->link_flags_list_b, list_strings);
     
     buffer_write(&ctx->buf, "-o %s",ctx->output);
     redbuild_debug("Final compilation command:");
@@ -424,7 +424,7 @@ int run(){
 bool cred_compile(){
     buffer b = buffer_create(1024, buffer_can_grow);
     buffer_write_const(&b, "cred ");
-    clinkedlist_for_each(ctx->compile_list, list_strings);
+    linked_list_for_each(ctx->compile_list, list_strings);
     buffer_write(&b, "-o %s",ctx->output_name);
     redbuild_debug("Final compilation command:");
     printl(b.buffer);
@@ -451,7 +451,7 @@ int comp_str(void *a, void *b){
 
 void handle_files(const char *directory, const char *name){
     if (strend(name, ctx->extension)) return;
-    if (clinkedlist_find(ctx->ignore_list, (char*)name, comp_str)) {
+    if (linked_list_find(ctx->ignore_list, (char*)name, comp_str)) {
         redbuild_debug("Ignoring %s",name);
         return;
     }
