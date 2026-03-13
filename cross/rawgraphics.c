@@ -42,6 +42,10 @@ void resize_draw_ctx(draw_ctx *ctx, uint32_t width, uint32_t height){
     ctx->fb = zalloc(width*height*sizeof(color));
     ctx->stride = 4 * width;
     glfwSetWindowSize(_window, width, height);
+    glViewport( 0, 0, width, height );
+    glMatrixMode( GL_PROJECTION );
+    glLoadIdentity();
+    glOrtho( 0, width, 0, height, -1, 1 );
 }
 
 static void error_callback(int error, const char* description)
@@ -113,7 +117,7 @@ bool read_event(kbd_event *out){
 }
 
 void get_mouse_status(mouse_data *in){
-    in->raw.scroll = scroll * 128;
+    in->raw.scroll = (u8)(scroll * 127);
     in->raw.buttons = 0;
     for (int i = 0; i < 3; i++)
         in->raw.buttons |= (glfwGetMouseButton(_window, GLFW_MOUSE_BUTTON_LEFT) & 1) << i;
