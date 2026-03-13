@@ -61,34 +61,34 @@ void* allocate(void* page, size_t size, page_allocator fallback){
             return addr;
         }
         
-        free_block *block = hdr->free_block;
-        free_block **blk_ptr = &hdr->free_block;
-        while (block && (uptr)block != 0xDEADBEEFDEADBEEF){
-            if ((uintptr_t)block + block->block_size >= (uintptr_t)hdr + 0x1000){
-                print("[ALLOC] Wrong allocation, a free block points outside its page %llx + %llx >= %llx",(uintptr_t)block & ~(0xFFF), block->block_size,(uintptr_t)hdr & ~(0xFFF));
-                return 0;
-            }
-            if (block->block_size >= size){
-                free_block *next = block->next;
-                if ((uptr)next == 0xDEADBEEFDEADBEEF) next = 0;
-                if (block->block_size > size){
-                    next = (free_block*)((uptr)block + size);
-                    next->block_size = block->block_size - size;
-                }
-                if (next && ((uintptr_t)next & ~0xFFF) != ((uintptr_t)hdr & ~0xFFF)){
-                    print("[ALLOC] Wrong free block pointer, outside of current page %llx vs %llx",next,hdr);
-                    return 0;
-                }
-                *blk_ptr = next;
-                hdr->used += size;
-                *(size_t*)block = size;
-                void* addr = (void*)((uintptr_t)block + INDIVIDUAL_HDR);
-                memset(addr, 0, size - INDIVIDUAL_HDR);
-                return addr;
-            }
-            blk_ptr = &block->next;
-            block = block->next;
-        }
+        // free_block *block = hdr->free_block;
+        // free_block **blk_ptr = &hdr->free_block;
+        // while (block && (uptr)block != 0xDEADBEEFDEADBEEF){
+        //     if ((uintptr_t)block + block->block_size >= (uintptr_t)hdr + 0x1000){
+        //         print("[ALLOC] Wrong allocation, a free block points outside its page %llx + %llx >= %llx",(uintptr_t)block & ~(0xFFF), block->block_size,(uintptr_t)hdr & ~(0xFFF));
+        //         return 0;
+        //     }
+        //     if (block->block_size >= size){
+        //         free_block *next = block->next;
+        //         if ((uptr)next == 0xDEADBEEFDEADBEEF) next = 0;
+        //         if (block->block_size > size){
+        //             next = (free_block*)((uptr)block + size);
+        //             next->block_size = block->block_size - size;
+        //         }
+        //         if (next && ((uintptr_t)next & ~0xFFF) != ((uintptr_t)hdr & ~0xFFF)){
+        //             print("[ALLOC] Wrong free block pointer, outside of current page %llx vs %llx",next,hdr);
+        //             return 0;
+        //         }
+        //         *blk_ptr = next;
+        //         hdr->used += size;
+        //         *(size_t*)block = size;
+        //         void* addr = (void*)((uintptr_t)block + INDIVIDUAL_HDR);
+        //         memset(addr, 0, size - INDIVIDUAL_HDR);
+        //         return addr;
+        //     }
+        //     blk_ptr = &block->next;
+        //     block = block->next;
+        // }
     }
     
     if (!hdr->next) hdr->next = fallback_proxy(PAGE_SIZE,fallback);
@@ -104,6 +104,7 @@ void* zalloc(size_t size){
 
 void release(void* ptr){
     if (!((uintptr_t)ptr & 0xFFF)){
+        alloc_print("[FREE] Page free %llx",ptr);
         page_free(ptr);
         if (p_index) unregister_page_alloc(p_index, ptr);
         return;
@@ -135,19 +136,19 @@ void release(void* ptr){
         block->block_size = size;
         block->next = hdr->free_block;
         if (block->next && ((uintptr_t)block->next & ~0xFFF) != ((uintptr_t)hdr & ~0xFFF)){
-            alloc_print("[FREE] block free now pointing to other page %llx vs %llx",block->next,hdr);
+            print("[FREE] block free now pointing to other page %llx vs %llx",block->next,hdr);
             return;
         }
         hdr->free_block = block;
         if (((uintptr_t)block & ~0xFFF) != ((uintptr_t)hdr & ~0xFFF)){
-            alloc_print("[FREE] free list head now pointing to other page %llx vs %llx",block,hdr);
+            print("[FREE] free list head now pointing to other page %llx vs %llx",block,hdr);
             return;
         }
-        while ((uintptr_t)block->next == header + size){
-            free_block *next_block = (free_block*)block->next;
-            block->next = next_block->next;
-            block->block_size += next_block->block_size;
-        } 
+        // while ((uintptr_t)block->next == header + size){
+        //     free_block *next_block = (free_block*)block->next;
+        //     block->next = next_block->next;
+        //     block->block_size += next_block->block_size;
+        // } 
     }
 }
 

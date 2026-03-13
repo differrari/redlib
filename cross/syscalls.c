@@ -6,7 +6,6 @@
 #include "raylib.h"
 #include "math/math.h"
 #include "syscalls/syscalls.h"
-#include "keycode_convert.h"
 #include "std/memory.h"
 #define __USE_POSIX199309
 #include <time.h>
@@ -81,47 +80,6 @@ u64 get_time(){
     struct timespec ts;
     clock_gettime(CLOCK_REALTIME, &ts);
     return (u64)(ts.tv_sec * 1000LL) + (ts.tv_nsec/1000000LL);
-}
-
-bool keypresses[512];
-bool read_event(kbd_event *event){
-    //TODO: modifiers
-    int key;
-    // do {
-        key = GetKeyPressed();
-        if (key){
-            event->type = KEY_PRESS;
-            event->key = raylib_to_redacted[key];
-            keypresses[key] = true;
-            return true;
-        }
-    // } while (key);
-    for (int i = 0; i < 512; i++)
-        if (keypresses[i] && IsKeyUp(i)){
-            event->type = KEY_RELEASE;
-            event->key = raylib_to_redacted[i];
-            keypresses[i] = false;
-            return true;
-        }
-    return false;
-}
-
-static int old_x = 0;
-static int old_y = 0;
-
-void get_mouse_status(mouse_data *in){
-    in->raw.scroll = ((int)GetMouseWheelMove() & 0xFF);
-    in->raw.buttons = 0;
-    for (int i = 0; i < 3; i++)
-        in->raw.buttons |= (IsMouseButtonDown(i) & 1) << i;
-    int x_pos = GetMouseX();
-    int y_pos = GetMouseY();
-    in->raw.x = x_pos - old_x;
-    in->raw.y = y_pos - old_y;
-    in->position.x = x_pos;
-    in->position.y = y_pos;
-    old_x = x_pos;
-    old_y = y_pos;
 }
 
 FS_RESULT openf(const char* path, file* descriptor){

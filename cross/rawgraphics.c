@@ -4,44 +4,85 @@
 #include "ui/draw/draw.h"
 #include "raylib.h"
 #include "alloc/allocate.h"
+#include <GLFW/glfw3.h>
+#include "keyboard_input.h"
+#include "mouse_input.h"
+#include "keycode_convert.h"
+
 extern void free(void*ptr);
 
 #define CONVERT_COLOR(color) ((color & 0xFF00FF00) | ((color & 0xFF) << 16) | ((color >> 16) & 0xFF))
 
-Texture2D _screen_tex;
+GLFWwindow* _window;
 
 void begin_drawing(draw_ctx *ctx){
-    BeginDrawing();
+    
 }
 
 void destroy_draw_ctx(draw_ctx *ctx){
-    CloseWindow();
+    glfwTerminate();
 }
 
 void commit_draw_ctx(draw_ctx *ctx){
-    BeginDrawing();
-    ClearBackground(GetColor(0));
-    for (uint64_t i = 0; i < ctx->width * ctx->height; i++) ctx->fb[i] = CONVERT_COLOR(ctx->fb[i]);//TODO: sux
-    UpdateTexture(_screen_tex, ctx->fb);
-    DrawTexture(_screen_tex, 0, 0, WHITE);
-    EndDrawing();
+    glRasterPos2i(0,ctx->height-1);
+    glPixelZoom(1,-1);
+    glDrawPixels(ctx->width,
+     	 ctx->height,
+         GL_BGRA,
+     	 GL_UNSIGNED_INT_8_8_8_8_REV,
+     	 ctx->fb);
+    glfwSwapBuffers(_window);
+    glfwPollEvents();
 }
 
 void resize_draw_ctx(draw_ctx *ctx, uint32_t width, uint32_t height){
     release(ctx->fb);
-    UnloadTexture(_screen_tex);
     ctx->width = width;
     ctx->height = height;
     ctx->fb = zalloc(width*height*sizeof(color));
     ctx->stride = 4 * width;
-    _screen_tex = LoadTextureFromImage((Image){
-        .data = ctx->fb,
-        .width = width,
-        .height = height,
-        .mipmaps = 1,
-        .format = PIXELFORMAT_UNCOMPRESSED_R8G8B8A8
-    });
-    SetWindowSize(width, height);
+    glfwSetWindowSize(_window, width, height);
+}
+
+static void error_callback(int error, const char* description)
+{
+    print("Error: %s", description);
+}
+
+#define INPUT_BUFFER_CAPACITY 64
+
+kbd_event event_queue[INPUT_BUFFER_CAPACITY];
+int kbd_event_read;
+int kbd_event_write;
+static void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
+{
+    uint32_t next_index = (kbd_event_write + 1) % INPUT_BUFFER_CAPACITY;
+
+    event_queue[kbd_event_write] = (kbd_event){
+        .type = action == GLFW_PRESS ? KEY_PRESS : KEY_RELEASE,
+        .key = glfw_to_redacted[key],
+        .modifier = mods
+    };
+    kbd_event_write = next_index;
+
+    if (kbd_event_write == kbd_event_read)
+        kbd_event_read = (kbd_event_read + 1) % INPUT_BUFFER_CAPACITY;
+}
+
+double x_pos, y_pos;
+static int old_x = 0;
+static int old_y = 0;
+static double scroll;
+
+static void cursor_position_callback(GLFWwindow* window, double xpos, double ypos)
+{
+    x_pos = xpos;
+    y_pos = ypos;
+}
+
+static void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
+{
+    scroll = yoffset;
 }
 
 void request_draw_ctx(draw_ctx *ctx){
@@ -51,19 +92,42 @@ void request_draw_ctx(draw_ctx *ctx){
     ctx->width = w;
     ctx->height = h;
     ctx->stride = 4 * w;
-    InitWindow(w, h, "RedXLib");
-    _screen_tex = LoadTextureFromImage((Image){
-        .data = ctx->fb,
-        .width = w,
-        .height = h,
-        .mipmaps = 1,
-        .format = PIXELFORMAT_UNCOMPRESSED_R8G8B8A8
-    });
-    SetExitKey(0);
+    glfwInit();
+    glfwSetErrorCallback(error_callback);
+    _window = glfwCreateWindow(w, h, "redlib", NULL, NULL);
+    glfwMakeContextCurrent(_window);
+    glViewport( 0, 0, w, h );
+    glMatrixMode( GL_PROJECTION );
+    glLoadIdentity();
+    glOrtho( 0, w, 0, h, -1, 1 );
+    glfwSetKeyCallback(_window, key_callback);
+    glfwSetCursorPosCallback(_window, cursor_position_callback);
+    glfwSetScrollCallback(_window, scroll_callback);
+}
+
+bool read_event(kbd_event *out){
+    if (kbd_event_read == kbd_event_write) return false;
+
+    *out = event_queue[kbd_event_read];
+    kbd_event_read = (kbd_event_read + 1) % INPUT_BUFFER_CAPACITY;
+}
+
+void get_mouse_status(mouse_data *in){
+    in->raw.scroll = scroll * 128;
+    in->raw.buttons = 0;
+    for (int i = 0; i < 3; i++)
+        in->raw.buttons |= (glfwGetMouseButton(_window, GLFW_MOUSE_BUTTON_LEFT) & 1) << i;
+    in->raw.x = x_pos - old_x;
+    in->raw.y = y_pos - old_y;
+    in->position.x = x_pos;
+    in->position.y = y_pos;
+    old_x = x_pos;
+    old_y = y_pos;
 }
 
 bool should_close_ctx(){
-    return WindowShouldClose();
+    return false;
+    return glfwWindowShouldClose(_window);
 }
 
 #endif

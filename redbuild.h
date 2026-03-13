@@ -107,6 +107,8 @@ void cross_mod(){
     add_system_lib("m");
     add_local_dependency("~/redlib", "~/redlib/clibshared.a", "~/redlib", true);
     add_local_dependency("~/raylib/src", "~/raylib/src/libraylib.a", "", false);
+    add_system_lib("glfw");
+    add_system_lib("GL");
     add_precomp_flag("CROSS");
     redbuild_debug("Common platform setup done");
     switch (ctx->compilation_target) {
