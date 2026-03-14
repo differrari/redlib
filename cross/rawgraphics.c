@@ -2,12 +2,12 @@
 
 #include "string/string.h"
 #include "ui/draw/draw.h"
-#include "raylib.h"
 #include "alloc/allocate.h"
 #include <GLFW/glfw3.h>
 #include "keyboard_input.h"
 #include "mouse_input.h"
 #include "keycode_convert.h"
+#include "syscalls/syscalls.h"
 
 extern void free(void*ptr);
 
@@ -55,9 +55,9 @@ static void error_callback(int error, const char* description)
 
 #define INPUT_BUFFER_CAPACITY 64
 
-kbd_event event_queue[INPUT_BUFFER_CAPACITY];
-int kbd_event_read;
-int kbd_event_write;
+static kbd_event event_queue[INPUT_BUFFER_CAPACITY];
+static int kbd_event_read;
+static int kbd_event_write;
 static void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
     uint32_t next_index = (kbd_event_write + 1) % INPUT_BUFFER_CAPACITY;
@@ -98,6 +98,8 @@ void request_draw_ctx(draw_ctx *ctx){
     ctx->stride = 4 * w;
     glfwInit();
     glfwSetErrorCallback(error_callback);
+    glfwWindowHint(GLFW_COCOA_RETINA_FRAMEBUFFER, GLFW_FALSE);
+    
     _window = glfwCreateWindow(w, h, "redlib", NULL, NULL);
     glfwMakeContextCurrent(_window);
     glViewport( 0, 0, w, h );
@@ -114,6 +116,8 @@ bool read_event(kbd_event *out){
 
     *out = event_queue[kbd_event_read];
     kbd_event_read = (kbd_event_read + 1) % INPUT_BUFFER_CAPACITY;
+    
+    return true;
 }
 
 void get_mouse_status(mouse_data *in){
@@ -130,7 +134,6 @@ void get_mouse_status(mouse_data *in){
 }
 
 bool should_close_ctx(){
-    return false;
     return glfwWindowShouldClose(_window);
 }
 
