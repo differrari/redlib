@@ -104,6 +104,8 @@ literal target_to_string(target t){
     return "none";
 }
 
+void set_global_target(target t);
+
 void parse_arguments(int argc, char* argv[]){
     enum { arg_none, arg_target };
     int next_argument = 0;
@@ -115,7 +117,7 @@ void parse_arguments(int argc, char* argv[]){
                 next_argument = arg_none;
         } else {
             switch (next_argument) {
-                case arg_target: global_target = parse_target(argv[i]); break;
+                case arg_target: set_global_target(parse_target(argv[i])); break;
                 default: break;
             }
             next_argument = arg_none;
@@ -139,6 +141,7 @@ void push_lit(linked_list_t *list, const char* lit){
     linked_list_push(list, s);
 }
 
+void add_dependency(dependency_type type, char *include, char *link, char* build, bool use_make);
 void add_local_dependency(char *include, char *link, char* build, bool use_make);
 void add_system_lib(char *name);
 void add_system_framework(char *name);
@@ -153,28 +156,35 @@ void cross_mod(){
     add_system_lib("m");
     add_local_dependency("~/redlib", "~/redlib/clibshared.a", "~/redlib", true);
     add_system_lib("glfw");
-    add_system_lib("GL");
     add_precomp_flag("CROSS");
     redbuild_debug("Common platform setup done");
+    if (ctx->compilation_target == target_none || ctx->compilation_target == target_native) ctx->compilation_target = native_target;
     switch (ctx->compilation_target) {
         case target_linux: add_linker_flag("-Wl,--start-group", false); add_linker_flag("-Wl,--end-group", true);break;
         case target_windows: add_linker_flag("-fuse-ld=lld", false); break;
         case target_mac: {
+            add_linker_flag("-L/opt/homebrew/lib", false);
             add_system_framework("Cocoa");
             add_system_framework("IOKit");
             add_system_framework("CoreVideo");
             add_system_framework("CoreFoundation");
+            add_dependency(dep_local, "/opt/homebrew/include", 0, 0, 0);
         } break;
         default: break;
     }
+    if (ctx->compilation_target == target_mac){
+        add_system_framework("OpenGL");
+    } else {
+        add_system_lib("GL");
+    }
     redbuild_debug("Platform specific setup done. Selecting compiler");
-    ctx->chosen_compiler = "gcc";
+    ctx->chosen_compiler = "";
     redbuild_debug("Compiler selected");
     redbuild_debug("Compiler %s",ctx->chosen_compiler);
 }
 
 void red_mod(){
-    ctx->chosen_compiler = "aarch64-none-elf-gcc";
+    ctx->chosen_compiler = "aarch64-none-elf-";
     add_local_dependency("~/redlib", "~/redlib/libshared.a", "~/os/", true);
     add_linker_flag("-Wl,-emain",false);
     add_linker_flag("-ffreestanding", false);
@@ -193,11 +203,13 @@ void common(){
 }
 
 void set_global_target(target t){
+    if (t == target_native)
+        t = native_target;
     global_target = t;
 }
 
-void set_target(target t){
-    if (global_target != target_none) ctx->compilation_target = global_target;
+void set_target(target t, bool overwrite_global){
+    if (!overwrite_global && global_target != target_none) ctx->compilation_target = global_target;
     if (t == target_native)
         ctx->compilation_target = native_target;
     else 
@@ -311,6 +323,7 @@ void new_module(const char *name){
     ctx->ignore_list = linked_list_create();
     ctx->out_files = linked_list_create();
     ctx->debug_syms = false;
+    ctx->selected_target = global_target;
 }
 
 bool source(const char *name){
@@ -398,7 +411,7 @@ void prepare_command(char* source, char* out){
     redbuild_debug("Beginning compilation process");
     if (ctx->buf.buffer) buffer_destroy(&ctx->buf);
     ctx->buf = buffer_create(1024, buffer_can_grow);
-    buffer_write(&ctx->buf, ctx->chosen_compiler);
+    buffer_write(&ctx->buf, "%sgcc", ctx->chosen_compiler);
     buffer_write_space(&ctx->buf);
     
     linked_list_for_each(ctx->preproc_flags_list, process_preproc_flags);
@@ -427,14 +440,14 @@ void prepare_command(char* source, char* out){
         buffer_write(&ctx->buf, "-o %S",ctx->output);
     }
     redbuild_debug("Final compilation command:");
-    redbuild_debug(ctx->buf.buffer);
+    printl(ctx->buf.buffer);
 }
 
 void prepare_archive(){
     if (ctx->buf.buffer) buffer_destroy(&ctx->buf);
     ctx->buf = buffer_create(1024, buffer_can_grow);
     
-    buffer_write(&ctx->buf, "ar rcs ");
+    buffer_write(&ctx->buf, "%sar rcs ",ctx->chosen_compiler);
     
     buffer_write(&ctx->buf, "%S",ctx->output);
     
@@ -618,7 +631,7 @@ void rebuild_self(bool emit_cc){
     
     quick_cred("build.redb", "build.c");
     
-    set_target(target_native);
+    set_target(target_native, true);
     set_package_type(package_bin);
     
     debug();
