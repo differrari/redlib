@@ -1,6 +1,6 @@
 #include "chunk_array.h"
 
-typedef chunk_array_t stack_t;
+typedef chunk_array_t arr_stack_t;
 
 #define stack_create_alloc chunk_array_create_alloc
 

@@ -27,7 +27,7 @@ typedef struct {
     size_t count;
 } text_format_arr;
 
-static inline text_format_arr stack_to_text_format(stack_t *s){
+static inline text_format_arr stack_to_text_format(arr_stack_t *s){
     return (text_format_arr){ .array_type = fmt_array_stack, .fmt = s, .count = stack_count(s) }; 
 }
 

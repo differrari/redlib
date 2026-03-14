@@ -7,7 +7,7 @@
 
 #define DIR_AS_FILE "#"
 
-static stack_t *entries;
+static arr_stack_t *entries;
 
 static u64 (*hashing_func)(const char *path);
 
