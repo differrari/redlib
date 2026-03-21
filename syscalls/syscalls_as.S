@@ -49,6 +49,7 @@ syscall_def closef, FILE_CLOSE_CODE
 syscall_def dir_list, DIR_LIST_CODE
 syscall_def sreadf, FILE_SIMPLE_READ_CODE
 syscall_def swritef, FILE_SIMPLE_WRITE_CODE
+syscall_def stat, STAT_CODE
 
 //syscall_def load_fsmodule, LOAD_FSMODULE_CODE
 //syscall_def unload_fsmodule, UNLOAD_FSMODULE_CODE 

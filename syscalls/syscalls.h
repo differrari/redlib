@@ -73,6 +73,8 @@ void *calloc(size_t nitems, size_t size);
 
 size_t dir_list(const char *path, void *buf, size_t size, u64 *offset);
 
+bool stat(const char *path, fs_stat *out_stat);
+
 int print(const char *fmt, ...);
 
 int system(const char *command);
