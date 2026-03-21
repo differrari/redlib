@@ -6,10 +6,19 @@
 #define FD_IN 1
 #define FD_OUT 2
 
+//TODO: implement these for multiple writes, but we need a way to do the syncing for follow
+typedef enum { 
+    cursor_sync_none, //Cursor won't move automatically
+    cursor_sync_follow, //External file writes will move the cursor accordingly
+    cursor_sync_head, //Cursor will always stay at the beginning of the file
+    cursor_sync_tail //Cursor will always stay at the end of the file
+} cursor_sync;
+
 typedef struct file {
     uint64_t id;
     size_t size;
     uint64_t cursor;
+    // cursor_sync sync_type;
 } file;
 
 typedef uint64_t file_offset;

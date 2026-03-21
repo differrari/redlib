@@ -78,6 +78,29 @@ size_t buffer_write_lim(buffer *buf, const char *lit, size_t lit_size){
     return lit_size;
 }
 
+#include "syscalls/syscalls.h"
+
+size_t buffer_write_to(buffer *buf, const char *lit, size_t size, uintptr_t cursor){
+    if (cursor >= buf->cursor) cursor = buf->cursor;
+    if ((int64_t)buf->limit - buf->cursor < size){
+        if (buf->options & buffer_can_grow){
+            buffer_resize(buf,size);
+        } else if (buf->options & buffer_circular){
+            return 0;//TODO: figure out circular buffer resizing
+        } else return 0;
+    }
+    size_t shift_amount = buf->cursor - cursor;
+    if (shift_amount)
+        for (uptr c = buf->cursor; c > cursor; c--){
+            print("%i <- %i",c+size,c);
+            ((char*)buf->buffer)[c + size - 1] = ((char*)buf->buffer)[c-1];
+        }
+    memcpy(buf->buffer + cursor, lit, size);
+    buf->cursor += size;
+    buf->buffer_size += size;
+    return size;
+}
+
 size_t buffer_write_space(buffer *buf){
     return buffer_write_lim(buf, " ", 1);
 }

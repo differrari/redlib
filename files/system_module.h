@@ -2,8 +2,12 @@
 
 #include "types.h"
 #include "fs.h"
+#include "files/buffer.h"
 
+typedef enum { backing_physical, backing_virtual } fs_backing_type;
 typedef enum { entry_invalid, entry_file, entry_directory } fs_entry_type;
+
+#define VERSION_NUM(major,minor,patch,build) (uint64_t)((((uint64_t)major) << 48) | (((uint64_t)minor) << 32) | (((uint64_t)patch) << 16) | ((uint64_t)build))
 
 typedef struct {
     size_t size;

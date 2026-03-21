@@ -23,6 +23,7 @@ size_t buffer_write(buffer *buf, char* fmt, ...);
 size_t buffer_write_va(buffer *buf, char* fmt, va_list args);
 size_t buffer_write_const(buffer *buf, const char *lit);
 size_t buffer_write_lim(buffer *buf, const char *lit, size_t size);
+size_t buffer_write_to(buffer *buf, const char *lit, size_t size, uintptr_t cursor);
 size_t buffer_write_space(buffer *buf);
 size_t buffer_read(buffer *buf, void *into, size_t size, uintptr_t cursor);
 void buffer_destroy(buffer *buf);
