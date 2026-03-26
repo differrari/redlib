@@ -1,0 +1,13 @@
+#pragma once
+
+#define SYSCALL_EPERM 1
+#define SYSCALL_ENOENT 2
+#define SYSCALL_ENOMEM 12
+#define SYSCALL_EFAULT 14
+#define SYSCALL_EBUSY 16
+#define SYSCALL_EEXIST 17
+#define SYSCALL_EINVAL 22
+#define SYSCALL_ENOSPC 28
+#define SYSCALL_ENAMETOOLONG 36
+
+#define SYSCALL_ERRNO(err) (-(int64_t)(err))

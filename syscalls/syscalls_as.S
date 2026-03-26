@@ -30,6 +30,8 @@ syscall_def resize_draw_ctx, RESIZE_DRAW_CTX_CODE
 syscall_def gpu_char_size, GPU_CHAR_SIZE_CODE
 
 syscall_def exec, EXEC_CODE
+syscall_def spawn, SPAWN_CODE
+syscall_def kill_process, KILL_PROCESS_CODE
 
 syscall_def get_time, GET_TIME_CODE
 

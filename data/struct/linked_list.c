@@ -21,7 +21,10 @@ void* linked_list_alloc(linked_list_t *list, size_t size){
 }
 
 void linked_list_free(linked_list_t *list, void*ptr, size_t size){
-    if (list->free) list->free(ptr);
+    if (list->free) {
+        list->free(ptr);
+        return;
+    }
     return release(ptr);
 }
 

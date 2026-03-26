@@ -1,5 +1,6 @@
 #include "page_index.h"
 #include "syscalls/syscalls.h"
+#include "std/memory.h"
 
 void register_page_alloc(page_index *index, void *ptr, size_t size, page_allocator fallback){
     if (!index) return;
@@ -16,6 +17,7 @@ void register_page_alloc(page_index *index, void *ptr, size_t size, page_allocat
     }
     if (index->header.size >= PAGE_INDEX_LIMIT){
         index->header.next = fallback(PAGE_SIZE);
+        if (!index->header.next) return;
         index = index->header.next;
     }
     index->ptrs[index->header.size].ptr = ptr;

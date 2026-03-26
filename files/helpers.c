@@ -4,6 +4,10 @@
 #ifndef CROSS
 
 void traverse_directory(const char *directory, bool recursive, dir_traverse func){//TODO: not yet capable of getting all data
+    if (recursive){
+        print("[FS implementation error] recursion is not supported on [REDACTED]");
+        return;
+    }
     size_t listsize = 0x1000;
     void *listptr = zalloc(listsize);
     uint64_t offset = 0;
@@ -16,14 +20,6 @@ void traverse_directory(const char *directory, bool recursive, dir_traverse func
             char *file = reader;
             if (*file){
                 func(directory, file);
-                if (recursive && !strstart(file,".")){
-                    string s = string_format("%s/%s",directory,file);
-                    fs_stat fsstat = {};
-                    stat(s.data, &fsstat);
-                    if (fsstat.type == entry_directory)
-                        traverse_directory(s.data, recursive, func);
-                    string_free(s);
-                }
                 while (*reader) reader++;
                 reader++;
             }
