@@ -19,7 +19,7 @@ void traverse_directory(const char *directory, bool recursive, dir_traverse func
                 if (recursive && !strstart(file,".")){
                     string s = string_format("%s/%s",directory,file);
                     fs_stat fsstat = {};
-                    stat(s.data, &fsstat);
+                    statf(s.data, &fsstat);
                     if (fsstat.type == entry_directory)
                         traverse_directory(s.data, recursive, func);
                     string_free(s);
