@@ -1,5 +1,9 @@
 #pragma once
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "types.h"
 #include "args.h"
 
@@ -29,3 +33,7 @@ size_t buffer_read(buffer *buf, void *into, size_t size, uintptr_t cursor);
 void buffer_destroy(buffer *buf);
 
 bool buffer_test();
+
+#ifdef __cplusplus
+}
+#endif
