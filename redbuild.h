@@ -60,8 +60,8 @@ typedef struct redb_ctx {
 static buffer ccbuf;
 static redb_ctx *ctx;
 
-// #define DEBUG
-#ifdef DEBUG
+#define REDBUILD_DEBUG
+#ifdef REDBUILD_DEBUG
 #define redbuild_debug(fmt, ...) print(fmt, ##__VA_ARGS__)
 #else 
 #define redbuild_debug(fmt, ...)
@@ -106,7 +106,6 @@ void cross_mod(){
     add_system_lib("c");
     add_system_lib("m");
     add_local_dependency("~/redlib", "~/redlib/clibshared.a", "~/redlib", true);
-    add_local_dependency("~/raylib/src", "~/raylib/src/libraylib.a", "", false);
     add_system_lib("glfw");
     add_system_lib("GL");
     add_precomp_flag("CROSS");
@@ -125,7 +124,7 @@ void cross_mod(){
     redbuild_debug("Platform specific setup done. Selecting compiler");
     ctx->chosen_compiler = "gcc";
     redbuild_debug("Compiler selected");
-    redbuild_debug("Compiler %s",chosen_compiler);
+    redbuild_debug("Compiler %s",ctx->chosen_compiler);
 }
 
 void red_mod(){
@@ -139,7 +138,7 @@ void red_mod(){
 void common(){
     redbuild_debug("Getting home dir");
     ctx->homedir = gethomedir();
-    redbuild_debug("Home dir %s",homedir);
+    redbuild_debug("Home dir %s",ctx->homedir);
     
     include_self();
     
@@ -152,7 +151,7 @@ void set_target(target t){
         ctx->compilation_target = native_target;
     else 
         ctx->compilation_target = t;
-    redbuild_debug("Target type %i",compilation_target);
+    redbuild_debug("Target type %i",ctx->compilation_target);
 }
 
 void set_name(const char *out_name){
@@ -265,8 +264,11 @@ void new_module(const char *name){
 
 bool source(const char *name){
     redbuild_debug("Adding %s",name);
-    if (!ctx->compile_list){ printf("Error: new_module not called"); return false; }
+    if (!ctx->compile_list || !ctx->out_files){ printf("Error: new_module not called"); return false; }
     push_lit(ctx->compile_list, name);
+    
+    string o = string_format("%v.o", make_string_slice(name,0,strlen(name)-2));
+    push_lit(ctx->out_files, o.data);
     return false;
 }
 
@@ -341,17 +343,7 @@ void process_comp_flags(void *data){
     buffer_write_space(&ctx->buf);
 }
 
-void prepare_command(){
-    redbuild_debug("Setting up output...");
-    prepare_output();
-    redbuild_debug("Target set. Common setup...");
-    common();
-    redbuild_debug("Common setup done. Platform-specific setup...");
-    
-    if (ctx->compilation_target == target_redacted) red_mod();
-    else cross_mod();
-    
-    redbuild_debug("Platform-specific setup done.");
+void prepare_command(char* source, char* out){
     redbuild_debug("Beginning compilation process");
     if (ctx->buf.buffer) buffer_destroy(&ctx->buf);
     ctx->buf = buffer_create(1024, buffer_can_grow);
@@ -366,21 +358,80 @@ void prepare_command(){
     
     linked_list_for_each(ctx->link_flags_list_f, list_strings);
     linked_list_for_each(ctx->includes, list_strings);
-    linked_list_for_each(ctx->compile_list, list_strings);
+    
+    if (source && out){
+        buffer_write(&ctx->buf,"-c %s", source);
+        buffer_write_space(&ctx->buf);
+    } else {
+        linked_list_for_each(ctx->compile_list, list_strings);
+    }
+    
     linked_list_for_each(ctx->link_libs, list_strings);
     linked_list_for_each(ctx->comp_flags_list, process_comp_flags);
     linked_list_for_each(ctx->link_flags_list_b, list_strings);
     
-    buffer_write(&ctx->buf, "-o %s",ctx->output);
+    if (source && out){
+        buffer_write(&ctx->buf, "-o %s",out);
+    } else {
+        buffer_write(&ctx->buf, "-o %S",ctx->output);
+    }
     redbuild_debug("Final compilation command:");
-    printl(ctx->buf.buffer);
+    redbuild_debug(ctx->buf.buffer);
 }
 
-//TODO: lib support
+void prepare_archive(){
+    if (ctx->buf.buffer) buffer_destroy(&ctx->buf);
+    ctx->buf = buffer_create(1024, buffer_can_grow);
+    
+    buffer_write(&ctx->buf, "ar rcs ");
+    
+    buffer_write(&ctx->buf, "%S",ctx->output);
+    
+    buffer_write_space(&ctx->buf);
+    
+    linked_list_for_each(ctx->out_files, list_strings);
+    
+    redbuild_debug("Final archive command:");
+    redbuild_debug(ctx->buf.buffer);
+}
+
 bool compile(){
-    prepare_command();
-    print("Compiling");
-    return system(ctx->buf.buffer) == 0;
+    redbuild_debug("Setting up output...");
+    prepare_output();
+    redbuild_debug("Target set. Common setup...");
+    common();
+    redbuild_debug("Common setup done. Platform-specific setup...");
+    
+    if (ctx->compilation_target == target_redacted) red_mod();
+    else cross_mod();
+    
+    redbuild_debug("Platform-specific setup done.");
+    
+    if (ctx->pkg_type == package_lib){
+        size_t file_count = linked_list_count(ctx->compile_list);
+        for (size_t i = 0; i < file_count; i++){
+            linked_list_node_t *srcn = linked_list_get(ctx->compile_list, i);
+            linked_list_node_t *dstn = linked_list_get(ctx->out_files, i);
+            if (!srcn || !dstn){
+                print("Missing file");
+                return false;
+            }
+            string* src = srcn->data;
+            string* dst = dstn->data;
+            if (!src || !dst){
+                print("Missing file");
+                return false;
+            }
+            prepare_command(src->data,dst->data);
+            if (system(ctx->buf.buffer) != 0) return false;
+        }
+        prepare_archive();
+        return system(ctx->buf.buffer) == 0;
+    } else {
+        prepare_command(0,0);
+        print("Compiling");
+        return system(ctx->buf.buffer) == 0;
+    }
 }
 
 void emit_argument(string_slice slice){
@@ -460,7 +511,7 @@ void handle_files(const char *directory, const char *name){
     string n = string_format("%s/%s",directory,name);
     push_lit(ctx->compile_list, n.data);
     
-    string o = string_format("%s/%v.o ", directory, make_string_slice(name,0,strlen(name)-2));
+    string o = string_format("%s/%v.o", directory, make_string_slice(name,0,strlen(name)-2));
     push_lit(ctx->out_files, o.data);
 }
 
