@@ -63,6 +63,8 @@ bool write_full_file(const char *path, void* buf, size_t size){
     
     size_t res = writef(&fd, buf, size);
     
+    truncatef(&fd, size);
+    
     closef(&fd);
     
     return res > 0;

@@ -42,14 +42,15 @@ syscall_def socket_send, SOCKET_SEND_CODE
 syscall_def socket_receive, SOCKET_RECEIVE_CODE
 syscall_def socket_close, SOCKET_CLOSE_CODE
 
-syscall_def openf, FILE_OPEN_CODE
-syscall_def readf, FILE_READ_CODE
-syscall_def writef, FILE_WRITE_CODE
-syscall_def closef, FILE_CLOSE_CODE
-syscall_def dir_list, DIR_LIST_CODE
-syscall_def sreadf, FILE_SIMPLE_READ_CODE
-syscall_def swritef, FILE_SIMPLE_WRITE_CODE
-syscall_def statf, FILE_STAT_CODE
+syscall_def openf,      FILE_OPEN_CODE
+syscall_def readf,      FILE_READ_CODE
+syscall_def writef,     FILE_WRITE_CODE
+syscall_def closef,     FILE_CLOSE_CODE
+syscall_def dir_list,   DIR_LIST_CODE
+syscall_def sreadf,     FILE_SIMPLE_READ_CODE
+syscall_def swritef,    FILE_SIMPLE_WRITE_CODE
+syscall_def statf,      FILE_STAT_CODE
+syscall_def truncatef,  FILE_TRNC_CODE
 
 //syscall_def load_fsmodule, LOAD_FSMODULE_CODE
 //syscall_def unload_fsmodule, UNLOAD_FSMODULE_CODE 

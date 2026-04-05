@@ -41,6 +41,7 @@
 #define FILE_SIMPLE_READ_CODE       64
 #define FILE_SIMPLE_WRITE_CODE      65
 #define FILE_STAT_CODE              66
+#define FILE_TRNC_CODE              67
 
 // #define LOAD_FSMODULE_CODE          67
 // #define UNLOAD_FSMODULE_CODE        68
