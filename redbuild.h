@@ -131,7 +131,7 @@ void cross_mod(){
 void red_mod(){
     ctx->chosen_compiler = "aarch64-none-elf-gcc";
     add_local_dependency("~/redlib", "~/redlib/libshared.a", "~/os/", true);
-    add_linker_flag("-Wl,-e,_start",false);
+    add_linker_flag("-Wl,-emain",false);
     add_linker_flag("-ffreestanding", false);
     add_linker_flag("-nostdlib", false);
 }
