@@ -89,16 +89,25 @@ size_t buffer_write_to(buffer *buf, const char *lit, size_t size, uintptr_t curs
             return 0;//TODO: figure out circular buffer resizing
         } else return 0;
     }
-    size_t shift_amount = buf->cursor - cursor;
+    size_t shift_amount = size;
     if (shift_amount)
-        for (uptr c = buf->cursor; c > cursor; c--){
-            print("%i <- %i",c+size,c);
+        for (uptr c = buf->buffer_size; c > cursor; c--){
             ((char*)buf->buffer)[c + size - 1] = ((char*)buf->buffer)[c-1];
         }
     memcpy(buf->buffer + cursor, lit, size);
     buf->cursor += size;
     buf->buffer_size += size;
     return size;
+}
+
+size_t buffer_delete(buffer *buf, size_t amount){
+    if (!buf || !amount) return 0;
+    amount = min(amount, buf->cursor);
+    for (uptr c = buf->cursor; c < buf->buffer_size; c++)
+        ((char*)buf->buffer)[c - amount] = ((char*)buf->buffer)[c];
+    buf->buffer_size -= amount;
+    buf->cursor -= amount;
+    return amount;
 }
 
 size_t buffer_write_space(buffer *buf){

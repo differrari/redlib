@@ -19,7 +19,7 @@ void traverse_directory(const char *directory, bool recursive, dir_traverse func
                 if (recursive && !strstart(file,".")){
                     string s = string_format("%s/%s",directory,file);
                     fs_stat fsstat = {};
-                    stat(s.data, &fsstat);
+                    statf(s.data, &fsstat);
                     if (fsstat.type == entry_directory)
                         traverse_directory(s.data, recursive, func);
                     string_free(s);
@@ -62,6 +62,8 @@ bool write_full_file(const char *path, void* buf, size_t size){
     if (openf(path, &fd) != FS_RESULT_SUCCESS) return false;
     
     size_t res = writef(&fd, buf, size);
+    
+    truncatef(&fd, size);
     
     closef(&fd);
     

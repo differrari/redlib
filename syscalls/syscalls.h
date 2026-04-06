@@ -9,9 +9,7 @@
 #include "ui/draw/draw.h"
 #include "files/fs.h"
 #include "net/socket_types.h"
-#ifndef CROSS
 #include "files/system_module.h"
-#endif
 
 #ifdef __cplusplus
 extern "C" {
@@ -67,7 +65,8 @@ extern size_t writef(file *descriptor, const char* buf, size_t size);
 extern size_t sreadf(const char* path, void* buf, size_t size);
 extern size_t swritef(const char* path, const void* buf, size_t size);
 extern void closef(file *descriptor);
-
+extern bool statf(const char *path, fs_stat *out_stat);
+extern bool truncatef(file*, size_t);
 // extern bool load_fsmodule(system_module *mod);
 // extern bool unload_fsmodule();
 
@@ -77,8 +76,6 @@ void* realloc_sized(void* old_ptr, size_t old_size, size_t new_size);
 void *calloc(size_t nitems, size_t size);
 
 size_t dir_list(const char *path, void *buf, size_t size, u64 *offset);
-
-bool stat(const char *path, fs_stat *out_stat);
 
 int print(const char *fmt, ...);
 

@@ -1,5 +1,9 @@
 #pragma once
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "types.h"
 #include "args.h"
 
@@ -26,6 +30,11 @@ size_t buffer_write_lim(buffer *buf, const char *lit, size_t size);
 size_t buffer_write_to(buffer *buf, const char *lit, size_t size, uintptr_t cursor);
 size_t buffer_write_space(buffer *buf);
 size_t buffer_read(buffer *buf, void *into, size_t size, uintptr_t cursor);
+size_t buffer_delete(buffer *buf, size_t amount);
 void buffer_destroy(buffer *buf);
 
 bool buffer_test();
+
+#ifdef __cplusplus
+}
+#endif

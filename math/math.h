@@ -82,10 +82,18 @@ static inline float lerpf(float a, float b, float t) {
 }
 
 static inline double ceil(double val){
-    int64_t whole = (uint64_t)val;
+    i64 whole = (i64)val;
     double frac = val - (double)whole;
 
     return frac > 0 ? whole + 1 : whole;
+}
+
+static inline i64 round_to_int(double val){
+    i64 whole = (i64)val;
+    double frac = val - (double)whole;
+    
+    if (frac <= -0.5) return whole - 1;
+    return frac >= 0.5 ? whole + 1 : whole;
 }
 
 static inline double floor(double val){

@@ -302,10 +302,27 @@ static const char hid_keycode_to_char[256] = {
     [0x34] = '\'', [0x35] = '`', [0x36] = ',', [0x37] = '.',
     [0x38] = '/', [0x58] = '\n',
 };
+
+static const char hid_keycode_to_shift_char[256] = {
+    [0x04] = 'A', [0x05] = 'B', [0x06] = 'C', [0x07] = 'D',
+    [0x08] = 'E', [0x09] = 'F', [0x0A] = 'G', [0x0B] = 'H',
+    [0x0C] = 'I', [0x0D] = 'J', [0x0E] = 'K', [0x0F] = 'L',
+    [0x10] = 'M', [0x11] = 'N', [0x12] = 'O', [0x13] = 'P',
+    [0x14] = 'Q', [0x15] = 'R', [0x16] = 'S', [0x17] = 'T',
+    [0x18] = 'U', [0x19] = 'V', [0x1A] = 'W', [0x1B] = 'X',
+    [0x1C] = 'Y', [0x1D] = 'Z',
+    [0x1E] = '!', [0x1F] = '@', [0x20] = '#', [0x21] = '$',
+    [0x22] = '%', [0x23] = '^', [0x24] = '&', [0x25] = '*',
+    [0x26] = '(', [0x27] = ')',
+    [0x28] = '\n',[0x2C] = ' ', [0x2D] = '_', [0x2E] = '+',
+    [0x2F] = '{', [0x30] = '}', [0x31] = '|', [0x33] = ':',
+    [0x34] = '"', [0x35] = '~', [0x36] = '<', [0x37] = '>',
+    [0x38] = '?', [0x58] = '\n',
+};
 #else
 extern "C" {
 #endif
-char hid_to_char(unsigned char c);
+char hid_to_char(unsigned char c, u8 modifier);
 
 static inline bool printable(unsigned char c){
     return c >= 'A' && c <='z';
