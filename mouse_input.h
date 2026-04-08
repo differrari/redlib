@@ -14,6 +14,8 @@ typedef struct {
     int8_t scroll;
 } mouse_input;
 
+enum { LMB, RMB, MMB };
+
 typedef struct {
     mouse_input raw;
     gpu_point position;
