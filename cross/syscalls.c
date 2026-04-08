@@ -67,7 +67,7 @@ void free_sized(void* ptr, size_t size)
     free(ptr);
 }
 
-void halt(int reason){
+__attribute__((noreturn)) void halt(int reason){
     exit(reason);
 }
 

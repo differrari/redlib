@@ -31,8 +31,12 @@ typedef struct allocator_header {
 page_index *p_index;
 
 static inline void* fallback_proxy(size_t size, page_allocator fallback){
-    if (!p_index) p_index = fallback(PAGE_SIZE);
+    if (!p_index) {
+        p_index = fallback(PAGE_SIZE);
+        if (!p_index) return 0;
+    }
     void *p = fallback(size);
+    if (!p) return 0;
     register_page_alloc(p_index, p, size, fallback);
     return p;
 }
@@ -48,69 +52,81 @@ void* allocate(void* page, size_t size, page_allocator fallback){
     }
     
     allocator_header *hdr = (allocator_header*)page;
-    
-    if (((int64_t)PAGE_SIZE - (int32_t)(hdr->used - sizeof(allocator_header))) >= (int64_t)size){
-        if (!hdr->free_mem) hdr->free_mem = (uintptr_t)hdr + sizeof(allocator_header);
+    while (hdr) {
+        if (hdr->used + size <= PAGE_SIZE - sizeof(allocator_header)){
+            if (!hdr->free_mem) hdr->free_mem = (uintptr_t)hdr + sizeof(allocator_header);
         
-        if (((int64_t)PAGE_SIZE - (int32_t)(hdr->free_mem - (uintptr_t)hdr)) >= (int64_t)size){
-            *(size_t*)hdr->free_mem = size;
-            void *addr = (void*)(hdr->free_mem + INDIVIDUAL_HDR);
-            hdr->free_mem += size;
-            hdr->used += size;
-            memset(addr, 0, size - INDIVIDUAL_HDR);
-            return addr;
+            if (hdr->free_mem + size <= (uintptr_t)hdr + PAGE_SIZE){
+                *(size_t*)hdr->free_mem = size;
+                void *addr = (void*)(hdr->free_mem + INDIVIDUAL_HDR);
+                hdr->free_mem += size;
+                hdr->used += size;
+                memset(addr, 0, size - INDIVIDUAL_HDR);
+                return addr;
+            }
+        
+            free_block **blk_ptr = &hdr->free_block;
+            while (*blk_ptr){
+                free_block *block = *blk_ptr;
+                if ((uintptr_t)block < (uintptr_t)hdr + sizeof(allocator_header) || (uintptr_t)block + sizeof(free_block) > (uintptr_t)hdr + PAGE_SIZE){
+                    print("[ALLOC] Wrong allocation, a free block points outside its page %llx + %llx >= %llx",(uintptr_t)block & ~(0xFFF), block->block_size,(uintptr_t)hdr & ~(0xFFF));
+                    return 0;
+                }
+                if ((uintptr_t)block + block->block_size > (uintptr_t)hdr + PAGE_SIZE) return 0;
+                free_block *next = block->next;
+                if (next && ((uintptr_t)next & ~(PAGE_SIZE - 1)) != ((uintptr_t)hdr & ~(PAGE_SIZE - 1))) return 0;
+                if (block->block_size >= size){
+                    if (block->block_size >= size + sizeof(free_block)){
+                        free_block *split = (free_block*)((uptr)block + size);
+                        split->block_size = block->block_size - size;
+                        split->next = next;
+                        next = split;
+                    }
+                    *blk_ptr = next;
+                    hdr->used += size;
+                    *(size_t*)block = size;
+                    void* addr = (void*)((uintptr_t)block + INDIVIDUAL_HDR);
+                    memset(addr, 0, size - INDIVIDUAL_HDR);
+                    return addr;
+                }
+                blk_ptr = &block->next;
+            }
         }
-        
-        // free_block *block = hdr->free_block;
-        // free_block **blk_ptr = &hdr->free_block;
-        // while (block && (uptr)block != 0xDEADBEEFDEADBEEF){
-        //     if ((uintptr_t)block + block->block_size >= (uintptr_t)hdr + 0x1000){
-        //         print("[ALLOC] Wrong allocation, a free block points outside its page %llx + %llx >= %llx",(uintptr_t)block & ~(0xFFF), block->block_size,(uintptr_t)hdr & ~(0xFFF));
-        //         return 0;
-        //     }
-        //     if (block->block_size >= size){
-        //         free_block *next = block->next;
-        //         if ((uptr)next == 0xDEADBEEFDEADBEEF) next = 0;
-        //         if (block->block_size > size){
-        //             next = (free_block*)((uptr)block + size);
-        //             next->block_size = block->block_size - size;
-        //         }
-        //         if (next && ((uintptr_t)next & ~0xFFF) != ((uintptr_t)hdr & ~0xFFF)){
-        //             print("[ALLOC] Wrong free block pointer, outside of current page %llx vs %llx",next,hdr);
-        //             return 0;
-        //         }
-        //         *blk_ptr = next;
-        //         hdr->used += size;
-        //         *(size_t*)block = size;
-        //         void* addr = (void*)((uintptr_t)block + INDIVIDUAL_HDR);
-        //         memset(addr, 0, size - INDIVIDUAL_HDR);
-        //         return addr;
-        //     }
-        //     blk_ptr = &block->next;
-        //     block = block->next;
-        // }
-    }
     
-    if (!hdr->next) hdr->next = fallback_proxy(PAGE_SIZE,fallback);
-    return allocate(hdr->next, size, fallback);
+        if (!hdr->next) {
+            hdr->next = fallback(PAGE_SIZE);
+            if (!hdr->next) return 0;
+        }
+        hdr = hdr->next;
+    }
+    return 0;
 }
 
 static void* zalloc_page = 0;
 
 void* zalloc(size_t size){
     if (!zalloc_page) zalloc_page = page_alloc(PAGE_SIZE);
-    return allocate(zalloc_page, size, page_alloc);
+    return zalloc_page ? allocate(zalloc_page, size, page_alloc) : 0;
 }
 
 void release(void* ptr){
-    if (!((uintptr_t)ptr & 0xFFF)){
+    if (!ptr) return;
+
+    size_t alloc_size = p_index ? get_alloc_size(p_index, ptr) : 0;
+    if (alloc_size) {
+        unregister_page_alloc(p_index, ptr);
+        page_free(ptr);
+        return;
+    }
+
+    if (!((uintptr_t)ptr & (PAGE_SIZE - 1))){
         alloc_print("[FREE] Page free %llx",ptr);
         page_free(ptr);
-        if (p_index) unregister_page_alloc(p_index, ptr);
+        //if (p_index) unregister_page_alloc(p_index, ptr);
         return;
     }
     
-    allocator_header *hdr = (allocator_header*)((uintptr_t)ptr & (~0xFFF));
+    allocator_header *hdr = (allocator_header*)((uintptr_t)ptr & (~(PAGE_SIZE - 1)));
     
     if (!hdr->used) return;
     
@@ -120,12 +136,18 @@ void release(void* ptr){
     
     alloc_print("[FREE] Freeing %llx at %llx",size,header);
     
-    if (size > 0x1000 - ((uintptr_t)ptr & 0xFFF)){
+    if (size < INDIVIDUAL_HDR || header + size > ((uintptr_t)hdr + PAGE_SIZE)){
         alloc_print("[FREE] allocated memory pointed outside of block");
         return;
     }
     
     memset32((void*)header, 0xDEADBEEF, size);
+    if (hdr->used < size) {
+        hdr->used = 0;
+        hdr->free_block = 0;
+        hdr->free_mem = 0;
+        return;
+    }
     
     hdr->used -= size;
     if (!hdr->used){
@@ -135,12 +157,12 @@ void release(void* ptr){
         free_block *block = (free_block*)header;
         block->block_size = size;
         block->next = hdr->free_block;
-        if (block->next && ((uintptr_t)block->next & ~0xFFF) != ((uintptr_t)hdr & ~0xFFF)){
+        if (block->next && ((uintptr_t)block->next & ~(PAGE_SIZE - 1)) != ((uintptr_t)hdr & ~(PAGE_SIZE - 1))){
             print("[FREE] block free now pointing to other page %llx vs %llx",block->next,hdr);
             return;
         }
         hdr->free_block = block;
-        if (((uintptr_t)block & ~0xFFF) != ((uintptr_t)hdr & ~0xFFF)){
+        if (((uintptr_t)block & ~(PAGE_SIZE - 1)) != ((uintptr_t)hdr & ~(PAGE_SIZE - 1))){
             print("[FREE] free list head now pointing to other page %llx vs %llx",block,hdr);
             return;
         }
@@ -156,26 +178,27 @@ void* reallocate(void* ptr, size_t new_size){
     //TODO: if possible, once we have a sentinel value in the extra 0x8, we can check if we can just take up more memory without reallocating entirely
     // allocator_header *hdr = (allocator_header*)((uintptr_t)ptr & (~0xFFF));
     
-    // if (!hdr->used) return 0;
+    if (!ptr) return 0;
     
     uintptr_t header = (uintptr_t)ptr - INDIVIDUAL_HDR;
     
-    size_t old_size;
-    if (!((uintptr_t)ptr & 0xFFF)){
-        old_size = get_alloc_size(p_index, ptr);
-        if (!old_size) {
-            print("[ALLOC error] Trying to reallocate non-owned memory");
-            return 0;
-        }
-    } else old_size = *(size_t*)header;
+    size_t old_size = p_index ? get_alloc_size(p_index, ptr) : 0;
+   if (old_size) {
+        old_size -= INDIVIDUAL_HDR;
+    } else {
+        old_size = *(size_t*)header;
+        if (old_size < INDIVIDUAL_HDR) return 0;
+        old_size -= INDIVIDUAL_HDR;
+    }
     
     // size_t diff = new_size > old_size ? new_size-old_size : size-old_size;
     
     // size_t next_val = *(size_t*)((uintptr_t)ptr + old_size);
     
     // if (next_val == 0 || next_val == 0xDEADBEEFDEADBEEF)
+    if (!zalloc_page) zalloc_page = page_alloc(PAGE_SIZE);
     
-    void *new_ptr = allocate((void*)((uintptr_t)ptr & (~0xFFF)), new_size, page_alloc);
+    void *new_ptr = zalloc_page ? allocate(zalloc_page, new_size, page_alloc) : 0;
     if (!new_ptr) return 0;
     memcpy(new_ptr, ptr, old_size < new_size ? old_size : new_size);
     release(ptr);

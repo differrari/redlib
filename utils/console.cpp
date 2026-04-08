@@ -13,7 +13,16 @@ static inline u32 line_len(const char* line, u32 max_cols){
 }
 
 Console::Console() : cursor_x(0), cursor_y(0), is_initialized(false){
-
+    last_drawn_cursor_x = -1;
+    last_drawn_cursor_y = -1;
+    columns = 0;
+    rows = 0;
+    scroll_row_offset = 0;
+    row_data = nullptr;
+    gap_start = 0;
+    gap_end = 0;
+    buffer_data_size = 0;
+    dctx = nullptr;
 }
 
 void Console::initialize(){
@@ -66,7 +75,7 @@ void Console::resize(){
         }
     }
 
-    if (old_data) free_sized(old_data, old_rows * old_cols);
+    if (old_data) release(old_data);
 
     row_data = new_data;
     rows = new_rows;

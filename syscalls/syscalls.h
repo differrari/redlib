@@ -14,6 +14,10 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+enum {
+    EXEC_MODE_DEFAULT = 0,
+    EXEC_MODE_KEEP_FOCUS = 1,
+};
 
 extern void printl(const char *str);
 
@@ -28,8 +32,9 @@ extern bool read_event(kbd_event *event);
 extern void get_mouse_status(mouse_data *in);
 
 extern void msleep(uint64_t time);
-extern void halt(int32_t exit_code);
-extern uint16_t exec(const char* prog_name, int argc, const char* argv[]);
+extern __attribute__((noreturn)) void halt(int32_t exit_code);
+extern int32_t exec(const char* prog_name, int argc, const char* argv[], uint32_t mode);
+extern int32_t kill_process(uint16_t pid);
 
 extern void request_draw_ctx(draw_ctx*);
 extern void begin_drawing(draw_ctx *);

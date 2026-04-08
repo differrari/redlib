@@ -120,8 +120,10 @@ void buffer_destroy(buffer *buf){
 }
 
 size_t buffer_read(buffer *buf, void *into, size_t size, uintptr_t cursor){
+    if (!buf || !into || !size) return 0;
     if (buf->options & buffer_static) cursor = 0;
     size = min(size, (buf->buffer_size < cursor ? 0 : buf->buffer_size - cursor));
+    if (!size || !buf->buffer) return 0;
     memcpy(into, (buf->buffer + cursor), size);
     return size;
 }
