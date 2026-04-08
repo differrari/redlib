@@ -122,6 +122,7 @@ bool read_event(kbd_event *out){
 
 void get_mouse_status(mouse_data *in){
     in->raw.scroll = (u8)(scroll * 127);
+    scroll = 0;
     in->raw.buttons = 0;
     for (int i = 0; i < 3; i++)
         in->raw.buttons |= (glfwGetMouseButton(_window, GLFW_MOUSE_BUTTON_LEFT) & 1) << i;

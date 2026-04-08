@@ -33,6 +33,12 @@ size_t buffer_read(buffer *buf, void *into, size_t size, uintptr_t cursor);
 size_t buffer_delete(buffer *buf, size_t amount);
 void buffer_destroy(buffer *buf);
 
+#include "string/slice.h"
+
+static inline string_slice slice_from_buffer(buffer *buf){
+    return (string_slice){ .data = (char*)buf->buffer, .length = buf->buffer_size };
+}
+
 bool buffer_test();
 
 #ifdef __cplusplus

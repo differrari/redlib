@@ -573,3 +573,10 @@ bool make_run(const char *directory, const char *command){
     redbuild_debug("Final make command %s",b.buffer);
     return system(b.buffer) == 0;
 }
+
+bool redbuild_run(const char *directory){
+    buffer b = buffer_create(256, buffer_can_grow);
+    buffer_write(&b, "(cd %s; ./build)",directory);
+    redbuild_debug("Final redc command %s",b.buffer);
+    return system(b.buffer) == 0;
+}
