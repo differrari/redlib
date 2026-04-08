@@ -1149,7 +1149,7 @@ uint64_t parse_int_u64(const char* str, size_t size){
 float parse_float(char *input,size_t length){//TODO: can probably be improved
     char *p = (char*)seek_to(input, '.');
     size_t l1 = p-input;
-    int64_t i = parse_int64(input, l1-1);
+    int64_t i = parse_int64(input, l1-(*p != 0));
     size_t l2 = length-l1;
     int64_t f = parse_int64(p, l2);
     int s = (i == 0 && *input == '-') ? -1 : sign(i);
