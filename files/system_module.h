@@ -28,9 +28,6 @@ typedef struct system_module {
     void (*close)(file *descriptor);
     
     bool (*truncate)(file*, size_t);
-
-    size_t (*sread)(const char*, void*, size_t);
-    size_t (*swrite)(const char*, const void*, size_t);
     
     bool   (*getstat)(const char*, fs_stat*);
 
