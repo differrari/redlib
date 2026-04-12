@@ -11,7 +11,8 @@ typedef enum {
     buffer_opt_none = 0,
     buffer_can_grow = 1 << 0,//Once full, expands
     buffer_circular = 1 << 1,//Once full, loops
-    buffer_static = 1 << 2,//Always read/write starting from 0, ignoring cursor
+    buffer_static = 1 << 2,//Always read/write starting from 0, ignoring cursor,
+    buffer_read_only = 1 << 3,//Forbid writes
 } buffer_options;
 
 typedef struct {

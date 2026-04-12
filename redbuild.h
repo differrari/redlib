@@ -16,6 +16,8 @@ typedef enum {
     target_windows,
     target_native,
 } target;
+//TODO: target must be choosable dynamically
+//TODO: can we make it rebuild itself before compiling?
 
 typedef enum { dep_local, dep_framework, dep_system } dependency_type;
 

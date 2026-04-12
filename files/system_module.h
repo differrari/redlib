@@ -4,10 +4,29 @@
 #include "fs.h"
 #include "files/buffer.h"
 
-typedef enum { backing_physical, backing_virtual } fs_backing_type;
+typedef enum { backing_physical, backing_virtual, backing_command } fs_backing_type;
 typedef enum { entry_invalid, entry_file, entry_directory } fs_entry_type;
 
 #define VERSION_NUM(major,minor,patch,build) (uint64_t)((((uint64_t)major) << 48) | (((uint64_t)minor) << 32) | (((uint64_t)patch) << 16) | ((uint64_t)build))
+
+typedef u64 (*cmd_fn)(void* ctx, size_t len);
+
+typedef struct module_file {
+    string name;
+    fs_backing_type backing_type;
+    fs_entry_type entry_type;
+    uint64_t fid;
+    uint64_t serial;
+    uptr buf;
+    void *private_data;
+    bool ignore_cursor;
+    bool read_only;
+    
+    size_t file_size;
+    buffer file_buffer;
+    uint64_t references;
+    cmd_fn function;
+} module_file;
 
 typedef struct {
     size_t size;

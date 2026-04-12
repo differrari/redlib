@@ -1,6 +1,7 @@
 #include "chunk_array.h"
 #include "alloc/allocate.h"
 #include "std/memory.h"
+#include "math/math.h"
 
 #define CHUNK_ARRAY_ITEM(index) (void*)((uptr)array + sizeof(chunk_array_t) + ((index) * array->item_size))
 
@@ -40,19 +41,18 @@ void* chunk_array_get(chunk_array_t *array, uint64_t index){
     } else return 0;
 }
 
-void* chunk_array_pop(chunk_array_t *array){
+int chunk_array_remove(chunk_array_t *array, int count){
     if (!array || !array->count) return 0;
+    int removed = 0;
     if (array->next){
-        void *result = chunk_array_pop(array->next);
-        if (result) return result;
-    }
-    if (array->count <= array->chunk_capacity){
-        void *result = CHUNK_ARRAY_ITEM(array->count-1);
-        array->count--;
-        return result;
+        removed = chunk_array_remove(array->next, count);
+        count -= removed;
     }
     
-    return 0;
+    count = min(count, array->count);
+    array->count -= count;
+    removed += count;
+    return removed;
 }
 
 size_t chunk_array_count(chunk_array_t *array){

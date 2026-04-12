@@ -1,6 +1,8 @@
 #pragma once
 
 #include "types.h"
+#include "data/struct/hashmap.h"
+#include "string/string.h"
 
 #define FD_INVALID 0
 #define FD_IN 1
@@ -33,3 +35,13 @@ typedef enum FS_RESULT {
     FS_RESULT_SUCCESS,
     FS_RESULT_NOTFOUND,
 } FS_RESULT;
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+static inline uint64_t reserve_fd_gid(const char *path){
+    return hash_map_fnv1a64(path, strlen(path));
+}
+#ifdef __cplusplus
+}
+#endif
