@@ -10,6 +10,7 @@
 #include "data/struct/linked_list.h"
 
 typedef enum {
+    target_none,
     target_redacted,
     target_linux,
     target_mac,
@@ -31,6 +32,8 @@ typedef struct {
 } dependency_t; 
 
 typedef enum { package_red, package_bin, package_lib } package_type;
+
+target global_target;
 
 typedef struct redb_ctx {
     linked_list_t *compile_list;
@@ -78,6 +81,47 @@ static redb_ctx *ctx;
 #else 
 #define native_target target_redacted
 #endif
+
+target parse_target(char* name){
+    if (strcmp(name,"native") == 0) return target_native;
+    if (strcmp(name,"linux") == 0) return target_linux;
+    if (strcmp(name,"mac") == 0) return target_mac;
+    if (strcmp(name,"windows") == 0) return target_windows;
+    if (strcmp(name,"redacted") == 0) return target_redacted;
+    return target_none;
+}
+
+literal target_to_string(target t){
+    switch (t) {
+        case target_none: return "none";
+        case target_redacted: return "redacted";
+        case target_linux: return "linux";
+        case target_mac: return "mac";
+        case target_windows: return "windows";
+        case target_native: return "native";
+      break;
+    }
+    return "none";
+}
+
+void parse_arguments(int argc, char* argv[]){
+    enum { arg_none, arg_target };
+    int next_argument = 0;
+    for (int i = 0; i < argc; i++){
+        if (strlen(argv[i]) && *argv[i] == '-'){
+            if (strcmp(argv[i],"-t") == 0)
+                next_argument = arg_target;
+            else 
+                next_argument = arg_none;
+        } else {
+            switch (next_argument) {
+                case arg_target: global_target = parse_target(argv[i]); break;
+                default: break;
+            }
+            next_argument = arg_none;
+        }
+    }
+}
 
 void free_strings(void *data){
     string *s = (string*)data;
@@ -148,7 +192,12 @@ void common(){
     add_compilation_flag("no-format-extra-args");
 }
 
+void set_global_target(target t){
+    global_target = t;
+}
+
 void set_target(target t){
+    if (global_target != target_none) ctx->compilation_target = global_target;
     if (t == target_native)
         ctx->compilation_target = native_target;
     else 
@@ -404,6 +453,8 @@ bool compile(){
     common();
     redbuild_debug("Common setup done. Platform-specific setup...");
     
+    if (global_target != target_none) ctx->compilation_target = global_target;
+    
     if (ctx->compilation_target == target_redacted) red_mod();
     else cross_mod();
     
@@ -469,7 +520,25 @@ bool emit_compile_commands(){
     return true;
 }
 
+bool make_run(const char *directory, const char *command){
+    buffer b = buffer_create(256, buffer_can_grow);
+    buffer_write(&b, "make -C %s %s",directory, command);
+    redbuild_debug("Final make command %s",b.buffer);
+    return system(b.buffer) == 0;
+}
+
+void install(const char *location){
+    string s = string_format("cp -r %s%s %s", ctx->output_name,ctx->pkg_type == package_red ? ".red" : "", location);
+    system(s.data);
+    string_free(s);
+}
+
 int run(){
+    if (global_target == target_redacted || ctx->compilation_target == target_redacted){
+        install("~/os_repo/applications");
+        make_run("~/os","run");
+        return 0;
+    }
     string s = string_format("./%s",ctx->output);
     int result = system(s.data);
     string_free(s);
@@ -539,17 +608,11 @@ bool source_all(const char *ext){
     return false;
 }
 
-void install(const char *location){
-    string s = string_format("cp -r %s%s %s", ctx->output_name,ctx->pkg_type == package_red ? ".red" : "", location);
-    system(s.data);
-    string_free(s);
-}
-
 void debug(){
     ctx->debug_syms = true;
 }
 
-void rebuild_self(){
+void rebuild_self(bool emit_cc){
     new_module("redbuild");
     set_name("build");
     
@@ -564,21 +627,14 @@ void rebuild_self(){
     
 	system("mv build build.old");
     if (compile()){
-	    gen_compile_commands("build.c");
+	    if (emit_cc) { gen_compile_commands("build.c"); }
 		system("rm -f build.old");
     } else system("mv build.old build");
 }
 
-bool make_run(const char *directory, const char *command){
-    buffer b = buffer_create(256, buffer_can_grow);
-    buffer_write(&b, "make -C %s %s",directory, command);
-    redbuild_debug("Final make command %s",b.buffer);
-    return system(b.buffer) == 0;
-}
-
 bool redbuild_run(const char *directory){
     buffer b = buffer_create(256, buffer_can_grow);
-    buffer_write(&b, "(cd %s; ./build)",directory);
+    buffer_write(&b, "(cd %s; ./build -t %s)",directory,target_to_string(global_target));
     redbuild_debug("Final redc command %s",b.buffer);
     return system(b.buffer) == 0;
 }

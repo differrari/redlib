@@ -47,6 +47,7 @@ typedef enum {
 } TokenizerError;
 
 typedef enum {
+    TOKENIZER_COMMENT_TYPE_NONE,
     TOKENIZER_COMMENT_TYPE_SLASH,
     TOKENIZER_COMMENT_TYPE_HASH,
 } TokenizerComment;
