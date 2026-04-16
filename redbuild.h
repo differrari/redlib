@@ -638,3 +638,7 @@ bool redbuild_run(const char *directory){
     redbuild_debug("Final redc command %s",b.buffer);
     return system(b.buffer) == 0;
 }
+
+bool git_sync(){
+    return system("git pull") == 0;
+}
