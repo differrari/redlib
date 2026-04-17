@@ -4,7 +4,7 @@
 #include "slice.h"
 #include "math/math.h"
 
-#define TRUNC_MARKER "[…]"
+#define TRUNC_MARKER "[...]"
 
 //TODO move these in a dedicated helper file
 static inline void append_char(char **p, size_t *rem, char c, int *truncated) {

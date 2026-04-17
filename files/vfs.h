@@ -10,7 +10,7 @@ static stack_t *entries;
 
 static u64 (*hashing_func)(const char *path);
 
-static inline bool make_entry(const char *name, fs_backing_type back_type, fs_entry_type ent_type, buffer buf){
+static inline module_file* make_entry(const char *name, fs_backing_type back_type, fs_entry_type ent_type, buffer buf){
     if (!entries) entries = stack_create(sizeof(module_file),32);
     stack_push(entries,&(module_file){
         .name = string_from_literal(name),
@@ -20,8 +20,9 @@ static inline bool make_entry(const char *name, fs_backing_type back_type, fs_en
         .references = 0,
         .read_only = false,
         .fid = hashing_func ? hashing_func(name): hash_map_fnv1a64(name, strlen(name)),
+        .serial = hashing_func ? hashing_func(name): hash_map_fnv1a64(name, strlen(name)),
     });
-    return true;
+    return stack_get(entries, stack_count(entries)-1);
 }
 
 static inline bool make_cmd_entry(const char *name, fs_backing_type back_type, fs_entry_type ent_type, cmd_fn func){
@@ -99,8 +100,12 @@ static inline bool vfs_stat(const char *path, fs_stat *out_stat){
     return false;
 }
 
-static inline size_t vfs_list(const char *path, void *buf, size_t size, file_offset *offset){
+static inline size_t vfs_readdir(const char *path, void *buf, size_t size, file_offset *offset){
     fs_dir_list_helper helper = create_dir_list_helper(buf, size);
     
     return list_entries(offset, &helper);
+}
+
+static inline size_t vfs_list(const char *path, void *buf, size_t size, file_offset *offset){
+    return vfs_readdir(path, buf, size, offset);
 }
