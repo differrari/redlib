@@ -106,6 +106,7 @@ typedef uint64_t uaddr_t;
 typedef uint64_t kaddr_t;
 
 typedef char* literal;
+typedef char** strarr;
 typedef size_t usize;
 
 typedef int32_t i32;
