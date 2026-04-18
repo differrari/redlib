@@ -37,12 +37,12 @@ static inline size_t stackfs_write(file *fd, const char *buf, size_t size, file_
 }
 
 static inline FS_RESULT stackfs_open_root(const char *path, file *fd){
-    module_file *mfile = eval_entry(!path || !strlen(path) ? DIR_AS_FILE : path+1);
+    module_file *mfile = eval_entry(!path || strcmp(DIR_AS_FILE,path) == 0 || !strlen(path) ? DIR_AS_FILE : path+1);
     if (!mfile) return FS_RESULT_NOTFOUND;
     mfile->references++;
     fd->id = mfile->fid;
     if (strcmp(mfile->name.data, DIR_AS_FILE) == 0){
-        string fmt = string_format("%i", stack_count(entries)-2);
+        string fmt = string_format("%i", stack_count(entries)-static_entries-1);
         module_file *file = eval_entry(fmt.data);
         if (file)
             fd->size = file->file_buffer.buffer_size;
@@ -99,7 +99,7 @@ static inline size_t stackfs_readdir(const char *path, void *buf, size_t size, f
 }
 
 static inline bool stackfs_stat_root(const char *path, fs_stat *out_stat){
-    module_file *file = eval_entry(!path || !strlen(path) ? DIR_AS_FILE : path+1);
+    module_file *file = eval_entry(!path || strcmp(DIR_AS_FILE,path) == 0 || !strlen(path) ? DIR_AS_FILE : path+1);
     if (file){
         out_stat->size = file->file_buffer.buffer_size;
         out_stat->type = file->entry_type;
