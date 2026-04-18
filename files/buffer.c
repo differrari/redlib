@@ -104,14 +104,15 @@ size_t buffer_write_to(buffer *buf, const char *lit, size_t size, uintptr_t curs
     return size;
 }
 
-size_t buffer_delete(buffer *buf, size_t amount){
-    if (buf->options & buffer_read_only) return 0;
+size_t buffer_delete(buffer *buf, uptr cursor, size_t amount){
     if (!buf || !amount) return 0;
-    amount = min(amount, buf->cursor);
-    for (uptr c = buf->cursor; c < buf->buffer_size; c++)
+    if (buf->options & buffer_read_only) return 0;
+    amount = min(amount, cursor);
+    for (uptr c = cursor; c < buf->buffer_size; c++)
         ((char*)buf->buffer)[c - amount] = ((char*)buf->buffer)[c];
     buf->buffer_size -= amount;
-    buf->cursor -= amount;
+    if (buf->cursor >= cursor)
+        buf->cursor -= amount;
     return amount;
 }
 
