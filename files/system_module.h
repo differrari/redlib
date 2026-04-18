@@ -3,6 +3,7 @@
 #include "types.h"
 #include "fs.h"
 #include "files/buffer.h"
+#include "data_signatures.h"
 
 typedef enum { backing_physical, backing_virtual, backing_command } fs_backing_type;
 typedef enum { entry_invalid, entry_file, entry_directory } fs_entry_type;
@@ -21,7 +22,7 @@ typedef struct module_file {
     void *private_data;
     bool ignore_cursor;
     bool read_only;
-    
+    data_signature data_type;
     size_t file_size;
     buffer file_buffer;
     uint64_t references;
@@ -31,6 +32,7 @@ typedef struct module_file {
 typedef struct {
     size_t size;
     fs_entry_type type;
+    data_signature data_type;
 } fs_stat;
 
 typedef struct system_module {

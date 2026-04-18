@@ -5,8 +5,8 @@
 static u64 static_entries = 0;
 
 static inline bool stackfs_init(){
-    static_entries += make_entry(DIR_AS_FILE, backing_virtual, entry_file, (buffer){}) != 0;
-    static_entries += make_entry("latest", backing_virtual, entry_directory, (buffer){}) != 0;
+    static_entries += make_entry(DIR_AS_FILE, backing_virtual, entry_file, 0, (buffer){}) != 0;
+    static_entries += make_entry("latest", backing_virtual, entry_directory, 0, (buffer){}) != 0;
     return true;
 }
 
@@ -27,7 +27,7 @@ static inline size_t stackfs_write(file *fd, const char *buf, size_t size, file_
     if (!mfile) return 0;
     if (strcmp(mfile->name.data, DIR_AS_FILE) == 0){
         string fmt = string_format("%i", stack_count(entries)-static_entries);
-        module_file *file = make_entry(fmt.data, backing_virtual, entry_file, buffer_create(size, buffer_can_grow));
+        module_file *file = make_entry(fmt.data, backing_virtual, entry_file, fd->data_type, buffer_create(size, buffer_can_grow));
         if (!file) return 0;
         size_t written = buffer_write_to(&file->file_buffer, buf, size, fd->cursor);
         return written;
@@ -103,6 +103,7 @@ static inline bool stackfs_stat_root(const char *path, fs_stat *out_stat){
     if (file){
         out_stat->size = file->file_buffer.buffer_size;
         out_stat->type = file->entry_type;
+        out_stat->data_type = file->data_type;
         return true;
     }
     return false;

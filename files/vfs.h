@@ -3,6 +3,7 @@
 #include "data/struct/stack.h"
 #include "files/dir_list.h"
 #include "data/struct/hashmap.h"
+#include "data_signatures.h"
 
 #define DIR_AS_FILE "#"
 
@@ -10,7 +11,7 @@ static stack_t *entries;
 
 static u64 (*hashing_func)(const char *path);
 
-static inline module_file* make_entry(const char *name, fs_backing_type back_type, fs_entry_type ent_type, buffer buf){
+static inline module_file* make_entry(const char *name, fs_backing_type back_type, fs_entry_type ent_type, data_signature data_type, buffer buf){
     if (!entries) entries = stack_create(sizeof(module_file),32);
     stack_push(entries,&(module_file){
         .name = string_from_literal(name),
@@ -19,6 +20,7 @@ static inline module_file* make_entry(const char *name, fs_backing_type back_typ
         .file_buffer = buf,
         .references = 0,
         .read_only = false,
+        .data_type = data_type,
         .fid = hashing_func ? hashing_func(name): hash_map_fnv1a64(name, strlen(name)),
         .serial = hashing_func ? hashing_func(name): hash_map_fnv1a64(name, strlen(name)),
     });
@@ -34,6 +36,7 @@ static inline bool make_cmd_entry(const char *name, fs_backing_type back_type, f
         .function = func,
         .references = 0,
         .read_only = false,
+        .data_type = DATA_SIG_CMD,
         .fid = hashing_func ? hashing_func(name): hash_map_fnv1a64(name, strlen(name)),
     });
     return true;
@@ -95,6 +98,7 @@ static inline bool vfs_stat(const char *path, fs_stat *out_stat){
     if (file){
         out_stat->size = file->file_buffer.buffer_size;
         out_stat->type = file->entry_type;
+        out_stat->data_type = file->data_type;
         return true;
     }
     return false;

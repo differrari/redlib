@@ -3,6 +3,7 @@
 #include "types.h"
 #include "data/struct/hashmap.h"
 #include "string/string.h"
+#include "data_signatures.h"
 
 #define FD_INVALID 0
 #define FD_IN 1
@@ -17,9 +18,10 @@ typedef enum {
 } cursor_sync;
 
 typedef struct file {
-    uint64_t id;
+    u64 id;
     size_t size;
-    uint64_t cursor;
+    u64 cursor;
+    data_signature data_type;
     // cursor_sync sync_type;
 } file;
 
