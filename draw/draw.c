@@ -328,7 +328,7 @@ gpu_size fb_draw_slice(draw_ctx *ctx, string_slice slice, uint32_t x0, uint32_t 
     const uint32_t start_y = y0;
     uint32_t rows = 1;
 
-    for (int i = 0; i < slice.length; ++i){    
+    for (size_t i = 0; i < slice.length; ++i){    
         char c = slice.data[i];
         if (c == '\n'){
             if (xRowSize > xSize)

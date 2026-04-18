@@ -21,6 +21,15 @@ typedef struct string_list {
     char array[];
 } string_list;
 
+static inline bool is_whitespace(char c){
+    return 
+    c == '\t' ||
+    c == '\n' ||
+    c ==  ' ' ||
+    c == '\r' ||
+    false;
+}
+
 static inline bool is_printable(char c){
     return (c >= ' ' && c <= '~') || (c >= '\t' && c <= '\r');
 }
