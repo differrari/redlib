@@ -91,6 +91,7 @@ static inline size_t vfs_write(file *fd, const char* buf, size_t size, file_offs
 }
 
 static inline bool vfs_stat(const char *path, fs_stat *out_stat){
+    if (!out_stat) return false;
     path = seek_to(path,'/');
     if (!strlen(path))
         return stat_dir(out_stat);

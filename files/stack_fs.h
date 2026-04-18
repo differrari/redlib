@@ -4,6 +4,16 @@
 
 static u64 static_entries = 0;
 
+static inline module_file* stackfs_resolve_path(const char *path){
+    if (path && *path == '/') path = seek_to(path,'/');
+    if (!path || !strlen(path) || strcmp(DIR_AS_FILE,path) == 0){
+        string fmt = string_format("%i", stack_count(entries)-static_entries-1);
+        return eval_entry(fmt.data);
+    } else {
+        return eval_entry(path);
+    }
+}
+
 static inline bool stackfs_init(){
     static_entries += make_entry(DIR_AS_FILE, backing_virtual, entry_file, 0, (buffer){}) != 0;
     static_entries += make_entry("latest", backing_virtual, entry_directory, 0, (buffer){}) != 0;
@@ -99,11 +109,11 @@ static inline size_t stackfs_readdir(const char *path, void *buf, size_t size, f
 }
 
 static inline bool stackfs_stat_root(const char *path, fs_stat *out_stat){
-    module_file *file = eval_entry(!path || strcmp(DIR_AS_FILE,path) == 0 || !strlen(path) ? DIR_AS_FILE : path+1);
-    if (file){
-        out_stat->size = file->file_buffer.buffer_size;
-        out_stat->type = file->entry_type;
-        out_stat->data_type = file->data_type;
+    module_file *mfile = stackfs_resolve_path(path);
+    if (mfile){
+        out_stat->size = mfile->file_buffer.buffer_size;
+        out_stat->type = mfile->entry_type;
+        out_stat->data_type = mfile->data_type;
         return true;
     }
     return false;
