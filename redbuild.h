@@ -443,6 +443,8 @@ void prepare_command(char* source, char* out){
     printl(ctx->buf.buffer);
 }
 
+bool gen_compile_commands(const char *file);
+
 void prepare_archive(){
     if (ctx->buf.buffer) buffer_destroy(&ctx->buf);
     ctx->buf = buffer_create(1024, buffer_can_grow);
@@ -450,6 +452,8 @@ void prepare_archive(){
     buffer_write(&ctx->buf, "%sar rcs ",ctx->chosen_compiler);
     
     buffer_write(&ctx->buf, "%S",ctx->output);
+    
+    gen_compile_commands(ctx->output.data);
     
     buffer_write_space(&ctx->buf);
     
@@ -490,6 +494,7 @@ bool compile(){
             }
             prepare_command(src->data,dst->data);
             if (system(ctx->buf.buffer) != 0) return false;
+            gen_compile_commands(src->data);
         }
         prepare_archive();
         return system(ctx->buf.buffer) == 0;
