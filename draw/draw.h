@@ -7,6 +7,7 @@ extern "C" {
 #include "types.h"
 #include "graphic_types.h"
 #include "string/slice.h"
+#include "textdraw.h"
 
 #define CHAR_SIZE 8
 

@@ -3,12 +3,26 @@
 #include "draw.h"
 #include "syscalls/syscalls.h"
 
-static inline text_format get_current_format(uptr cpos, text_format default_format, text_format *formats, size_t formats_count){
-    for (size_t i = 0; i < formats_count; i++){
-        text_format current = formats[i];
-        if (current.bounds.start <= cpos && current.bounds.start + current.bounds.size >= cpos){
-            if (current.color) default_format.color = current.color;
-            if (current.scale) default_format.scale = current.scale;
+static inline text_format* get_fmt_at(text_format_arr array, size_t index){
+    switch (array.array_type){
+        case fmt_array_stack:
+            return stack_get(array.fmt, index);
+        case fmt_array_static:
+            return &((text_format*)array.fmt)[index];
+        case fmt_array_none: return 0;
+    }
+}
+
+static inline text_format get_current_format(uptr cpos, text_format default_format, text_format_arr array){
+    if (array.array_type == fmt_array_stack){
+        array.count = stack_count(array.fmt);
+    }
+    for (size_t i = 0; i < array.count; i++){
+        text_format *current = get_fmt_at(array,i);
+        if (!current) continue;
+        if (current->bounds.start <= cpos && current->bounds.start + current->bounds.size >= cpos){
+            if (current->color) default_format.color = current->color;
+            if (current->scale) default_format.scale = current->scale;
         }
     }
     return default_format;
@@ -19,17 +33,23 @@ static inline void new_line(gpu_point *point, u32 line_size, int indent){
     point->y += line_size;
 }
 
-gpu_size fb_draw_text(draw_ctx *ctx, string_slice slice, gpu_rect bounds, text_format default_format, text_format *formats, size_t formats_count){
+gpu_size fb_draw_text(draw_ctx *ctx, string_slice slice, gpu_rect bounds, text_format default_format, text_format_arr array){
     gpu_point cursor = { .x = bounds.point.x, .y = bounds.point.y };
     int indent = 0;
     bool can_indent = true;
+    u32 char_width, line_height = 0;
     for (size_t i = 0; i < slice.length; i++){
-        text_format current_format = get_current_format(i, default_format, formats, formats_count);
+        text_format current_format = get_current_format(i, default_format, array);
         char c = slice.data[i];
-        u32 size = fb_get_char_size(current_format.scale);
+        size_t curr_char_width = fb_get_char_size(current_format.scale);
+        size_t curr_line_height = fb_get_char_size(current_format.scale);
+        if (char_width < curr_char_width) char_width = curr_char_width;
+        if (line_height < curr_line_height) line_height = curr_line_height;
         wrap_policy current_wrap = default_format.wrap;
         if (c == '\n'){
-            new_line(&cursor, size, 0);
+            new_line(&cursor, line_height, 0);
+            char_width = 0;
+            line_height = 0;
             indent = 0;
             can_indent = true;
         } else if (c == '\r'){
@@ -47,15 +67,15 @@ gpu_size fb_draw_text(draw_ctx *ctx, string_slice slice, gpu_rect bounds, text_f
                 if (is_whitespace(slice.data[lookahead])) break;
             }
             size_t word_size = lookahead-i;
-            if ((word_size * size) + cursor.x - bounds.point.x >= bounds.size.width){
-                new_line(&cursor, size, current_wrap == wrap_word_preserve_indent ? indent * size : 0);
+            if ((word_size * char_width) + cursor.x - bounds.point.x >= bounds.size.width){
+                new_line(&cursor, line_height, current_wrap == wrap_word_preserve_indent ? indent * char_width : 0);
             }
         }
         
         if (c != '\n' && cursor.x < (i32)bounds.size.width - bounds.point.x && 
             cursor.y < (i32)bounds.size.height - bounds.point.y){
             fb_draw_raw_char(ctx, cursor.x, cursor.y, c, current_format.scale, current_format.color);
-            cursor.x += size;
+            cursor.x += curr_char_width;
         }
     }
     
@@ -65,7 +85,7 @@ gpu_size fb_draw_text(draw_ctx *ctx, string_slice slice, gpu_rect bounds, text_f
 }
 
 gpu_size fb_draw_single_text(draw_ctx *ctx, string_slice slice, gpu_rect bounds, text_format format){
-    return fb_draw_text(ctx, slice, bounds, format, 0, 0);
+    return fb_draw_text(ctx, slice, bounds, format, (text_format_arr){});
 }
 
 u32 lin_col_to_pos(i32 line, i32 col, string_slice content){

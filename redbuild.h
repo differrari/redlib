@@ -60,6 +60,8 @@ typedef struct redb_ctx {
     buffer buf;
     char *extension;
     bool debug_syms;
+    
+    bool override_global;
 } redb_ctx;
 
 static buffer ccbuf;
@@ -208,8 +210,9 @@ void set_global_target(target t){
     global_target = t;
 }
 
-void set_target(target t, bool overwrite_global){
-    if (!overwrite_global && global_target != target_none) ctx->compilation_target = global_target;
+void set_target(target t, bool override_global){
+    ctx->override_global = override_global;
+    if (!override_global && global_target != target_none) ctx->compilation_target = global_target;
     if (t == target_native)
         ctx->compilation_target = native_target;
     else 
@@ -417,7 +420,9 @@ void prepare_command(char* source, char* out){
     linked_list_for_each(ctx->preproc_flags_list, process_preproc_flags);
     
     if (ctx->debug_syms){
-        buffer_write_const(&ctx->buf," -g -fsanitize=address ");
+        buffer_write_const(&ctx->buf," -g ");
+        if (!ctx->compilation_target == target_redacted)
+            buffer_write_const(&ctx->buf," -fsanitize=address ");
     }
     
     linked_list_for_each(ctx->link_flags_list_f, list_strings);
@@ -470,7 +475,7 @@ bool compile(){
     common();
     redbuild_debug("Common setup done. Platform-specific setup...");
     
-    if (global_target != target_none) ctx->compilation_target = global_target;
+    if (!ctx->override_global && global_target != target_none) ctx->compilation_target = global_target;
     
     if (ctx->compilation_target == target_redacted) red_mod();
     else cross_mod();
@@ -546,14 +551,22 @@ bool make_run(const char *directory, const char *command){
 }
 
 void install(const char *location){
-    string s = string_format("cp -r %s%s %s", ctx->output_name,ctx->pkg_type == package_red ? ".red" : "", location);
+    string s;
+    if (ctx->pkg_type == package_bin && ctx->compilation_target == target_redacted){
+        s = string_format("cp -r %s%s %s/%s.elf", ctx->output_name, ctx->pkg_type == package_red ? ".red" : "", location, ctx->output_name);
+    }
+    else s = string_format("cp -r %s%s %s", ctx->output_name, ctx->pkg_type == package_red ? ".red" : "", location);
     system(s.data);
     string_free(s);
 }
 
 int run(){
-    if (global_target == target_redacted || ctx->compilation_target == target_redacted){
-        install("~/os_repo/applications");
+    redbuild_debug("Running for target type %i",ctx->compilation_target);
+    if (ctx->compilation_target == target_redacted){
+        if (ctx->pkg_type == package_bin)
+            install("~/os/fs/redos/tools");    
+        else
+            install("~/os_repo/applications");
         make_run("~/os","run");
         return 0;
     }
