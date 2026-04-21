@@ -38,9 +38,7 @@ static void wave_generate(sound_defn* sound, audio_sample_t* sample, size_t coun
     float freq_delta = (sound->end_freq - sound->start_freq) / count;
     uint32_t phase = 0;
     rng_t rng;
-    // TODO: rng_init_random(&rng);
-    rng.s0 = get_time();
-    rng.s1 = (uint64_t)&wave_generate ^ rng.s0;
+    rng_seed(&rng, get_time());
     while (count--){
         uint32_t phase_incr = (uint32_t)(freq * PHASE_MAX / 44100.f);
         *sample++ = wave_sample(sound->waveform, phase, &rng);

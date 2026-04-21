@@ -1146,7 +1146,7 @@ uint64_t parse_int_u64(const char* str, size_t size){
     return result;
 }
 
-float parse_float(char *input,size_t length){//TODO: can probably be improved
+float parse_float(char *input,size_t length){
     char *p = (char*)seek_to(input, '.');
     size_t l1 = p-input;
     int64_t i = parse_int64(input, l1-(*p != 0));

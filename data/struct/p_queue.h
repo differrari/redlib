@@ -2,7 +2,7 @@
 
 #include "types.h"
 
-//TODO: completely unoptimized. Heap?
+//TODO: replace with new version
 
 //lower number = higher priority
 typedef struct p_queue_item {

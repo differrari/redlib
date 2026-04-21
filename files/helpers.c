@@ -3,7 +3,7 @@
 
 #ifndef CROSS
 
-void traverse_directory(const char *directory, bool recursive, dir_traverse func){//TODO: not yet capable of getting all data
+void traverse_directory(const char *directory, bool recursive, dir_traverse func){
     size_t listsize = 0x1000;
     void *listptr = zalloc(listsize);
     uint64_t offset = 0;
