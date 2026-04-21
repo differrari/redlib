@@ -75,9 +75,54 @@ void* calloc(size_t nitems, size_t size){
     return zalloc(nitems * size);
 }
 
-int system(const char *command){
-    print("[SYS implementation error] system not implemented");
-    return -1;
+const char** parse_arguments(char *args, int *count){
+    *count = 0;
+    const char **argv = (const char**)zalloc(16 * sizeof(uintptr_t));
+    char* p = args;
+
+    while (*p && *count < 16){
+        while (*p == ' ' || *p == '\t') p++;
+        if (!*p) break;
+
+        char* start = p;
+        while (*p && *p != ' ' && *p != '\t') p++;
+        if (*p) { *p = '\0'; p++; }
+
+        argv[*count] = start;
+        (*count)++;
+    }
+    return argv;
+}
+
+int system_focus(const char *command, u32 focus_mode){
+    const char* args = command;
+    while (*args && *args != ' ' && *args != '\t') args++;
+
+    string cmd;
+    int argc = 0;
+    const char** argv = 0;
+    string args_copy = {};
+
+    if (*args == '\0')
+        cmd = string_from_literal(command);
+    else
+        cmd = string_from_literal_length(command, (size_t)(args - command));
+    
+    const char* argstart = command;
+    
+    while (*argstart && (*argstart == ' ' || *argstart == '\t')) argstart++;
+
+    args_copy = string_from_literal(argstart);
+    argv = parse_arguments(args_copy.data, &argc);
+    int res = exec(cmd.data, argc, argv, focus_mode);
+    string_free(args_copy);
+    string_free(cmd);
+    if (argv) release((void*)argv);
+    return res;
+}
+
+int system(const char *cmd){
+    return system_focus(cmd, EXEC_MODE_DEFAULT);
 }
 
 #endif
