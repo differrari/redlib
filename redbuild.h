@@ -421,7 +421,7 @@ void prepare_command(char* source, char* out){
     
     if (ctx->debug_syms){
         buffer_write_const(&ctx->buf," -g ");
-        if (!ctx->compilation_target == target_redacted)
+        if (ctx->compilation_target != target_redacted)
             buffer_write_const(&ctx->buf," -fsanitize=address ");
     }
     

@@ -75,7 +75,7 @@ void* calloc(size_t nitems, size_t size){
     return zalloc(nitems * size);
 }
 
-const char** parse_arguments(char *args, int *count){
+static const char** parse_arguments(char *args, int *count){
     *count = 0;
     const char **argv = (const char**)zalloc(16 * sizeof(uintptr_t));
     char* p = args;
