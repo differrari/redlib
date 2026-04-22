@@ -35,7 +35,7 @@ static inline void new_line(gpu_point *point, u32 line_size, int indent){
 }
 
 gpu_size fb_draw_text(draw_ctx *ctx, string_slice slice, gpu_rect bounds, text_format default_format, text_format_arr array){
-    gpu_point cursor = { .x = bounds.point.x, .y = bounds.point.y };
+    gpu_point cursor = { .x = 0, .y = 0 };
     int indent = 0;
     bool can_indent = true;
     u32 char_width = 0, line_height = 0;
@@ -74,22 +74,22 @@ gpu_size fb_draw_text(draw_ctx *ctx, string_slice slice, gpu_rect bounds, text_f
                 for (; lookahead < slice.length; lookahead++) if (is_whitespace(slice.data[lookahead])) break;
                 size_t word_size = lookahead-i;
                 current_lookahead = word_size-1;
-                if ((word_size * char_width) + cursor.x - bounds.point.x >= bounds.size.width){
+                if ((word_size * char_width) + cursor.x > bounds.size.width){
                     new_line(&cursor, line_height, current_wrap == wrap_word_preserve_indent ? indent * char_width : 0);
                 }
             }
         }
         
-        if (c != '\n' && cursor.x < (i32)bounds.size.width - bounds.point.x && 
-            cursor.y < (i32)bounds.size.height - bounds.point.y){
-            fb_draw_raw_char(ctx, cursor.x, cursor.y, c, current_format.scale, current_format.color);
+        if (c != '\n' && cursor.x < (i32)bounds.size.width && 
+            cursor.y < (i32)bounds.size.height){
+            fb_draw_raw_char(ctx, cursor.x + bounds.point.x, cursor.y + bounds.point.y, c, current_format.scale, current_format.color);
             cursor.x += curr_char_width;
         }
     }
     
     mark_dirty(ctx, bounds.point.x, bounds.point.y, bounds.size.width, bounds.size.height);
     
-    return (gpu_size){0,0};
+    return (gpu_size){bounds.size.width, bounds.size.height};
 }
 
 gpu_size fb_draw_single_text(draw_ctx *ctx, string_slice slice, gpu_rect bounds, text_format format){
