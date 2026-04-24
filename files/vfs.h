@@ -27,13 +27,13 @@ static inline module_file* make_entry(const char *name, fs_backing_type back_typ
     return stack_get(entries, stack_count(entries)-1);
 }
 
-static inline bool make_cmd_entry(const char *name, fs_backing_type back_type, fs_entry_type ent_type, cmd_fn func){
+static inline bool make_complex_entry(const char *name, fs_backing_type back_type, fs_entry_type ent_type, file_actions actions){
     if (!entries) entries = stack_create(sizeof(module_file),32);
     stack_push(entries,&(module_file){
         .name = string_from_literal(name),
         .backing_type = back_type,
         .entry_type = ent_type,
-        .function = func,
+        .actions = actions,
         .references = 0,
         .read_only = false,
         .data_type = DATA_SIG_CMD,
@@ -71,6 +71,7 @@ static inline size_t list_entries(u64 *offset, fs_dir_list_helper *helper){
 static inline FS_RESULT vfs_open(const char *path, file *fd){
     module_file *mfile = eval_entry(!path || !strlen(path) ? DIR_AS_FILE : path+1);
     if (!mfile) return FS_RESULT_NOTFOUND;
+    if (mfile->actions.open) mfile->actions.open(path,fd);
     mfile->references++;
     fd->id = mfile->fid;
     return FS_RESULT_SUCCESS;
@@ -79,14 +80,14 @@ static inline FS_RESULT vfs_open(const char *path, file *fd){
 static inline size_t vfs_read(file *fd, char* buf, size_t size, file_offset offset){
     module_file *mfile = find_entry(fd->id);
     if (!mfile) return 0;
-    if (mfile->function) return 0;
+    if (mfile->actions.read) return mfile->actions.read(fd, buf, size, offset);
     return buffer_read(&mfile->file_buffer, buf, size, offset);
 }
 
 static inline size_t vfs_write(file *fd, const char* buf, size_t size, file_offset offset){
     module_file *mfile = find_entry(fd->id);
     if (!mfile) return 0;
-    if (mfile->function) return mfile->function((void*)buf, size);
+    if (mfile->actions.write) return mfile->actions.write(fd, (void*)buf, size, offset);
     return buffer_write_to(&mfile->file_buffer, buf, size, fd->cursor);
 }
 
@@ -97,6 +98,7 @@ static inline bool vfs_stat(const char *path, fs_stat *out_stat){
         return stat_dir(out_stat);
     module_file *file = eval_entry(path);
     if (file){
+        if (file->actions.getstat) file->actions.getstat(path, out_stat);
         out_stat->size = file->file_buffer.buffer_size;
         out_stat->type = file->entry_type;
         out_stat->data_type = file->data_type;
@@ -104,6 +106,15 @@ static inline bool vfs_stat(const char *path, fs_stat *out_stat){
     }
     return false;
 }
+
+static inline void vfs_close(file *fd){
+    module_file *mfile = find_entry(fd->id);
+    if (!mfile) return;
+    if (mfile->actions.close){
+        mfile->actions.close(fd);
+        return;
+    }
+} 
 
 static inline size_t vfs_readdir(const char *path, void *buf, size_t size, file_offset *offset){
     fs_dir_list_helper helper = create_dir_list_helper(buf, size);
