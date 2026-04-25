@@ -38,6 +38,10 @@ typedef struct {
 
 typedef struct module_file {
     string name;
+    struct {
+        string alias_path;
+        file alias_fd;
+    } alias_info;
     fs_backing_type backing_type;
     fs_entry_type entry_type;
     uint64_t fid;
