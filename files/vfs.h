@@ -54,10 +54,10 @@ static inline bool make_complex_entry(const char *name, fs_backing_type back_typ
     return true;
 }
 
-static inline module_file* eval_entry(const char *path){
+static inline module_file* eval_entry(string_slice path){
     for (u32 i = 0; i < stack_count(entries); i++){
         module_file *file = stack_get(entries,i);
-        if (strcmp(path, file->name.data) == 0) return file;
+        if (slice_lit_match(path, file->name.data, true)) return file;
     }
     return 0;
 }
@@ -85,13 +85,27 @@ static inline size_t list_entries(u64 *offset, fs_dir_list_helper *helper){
     return dir_buf_size(helper);
 }
 
+static inline string_slice first_path_component(const char *path){
+    const char *next = seek_to(path, '/');
+    return (string_slice){ .data = (char*)path, .length = next - path - (*next ? 1 : 0)};
+}
+
 static inline FS_RESULT vfs_open(const char *path, file *fd){
-    module_file *mfile = eval_entry(!path || !strlen(path) ? DIR_AS_FILE : path+1);
+    string_slice first = first_path_component(!path || !strlen(path) ? DIR_AS_FILE : path+1);
+    module_file *mfile = eval_entry(first);
     if (!mfile) return FS_RESULT_NOTFOUND;
     mfile->references++;
     
     if (mfile->alias_info.alias_path.length){
-        FS_RESULT result = openf(mfile->alias_info.alias_path.data, &mfile->alias_info.alias_fd);
+        string fullpath = mfile->alias_info.alias_path;
+        string additional = (string){};
+        if (mfile->entry_type == entry_directory){
+            string_slice next = slice_from_literal(first.data + first.length);
+            additional = string_format("%S/%s",fullpath,next);
+            fullpath = additional;
+        }
+        FS_RESULT result = openf(fullpath.data, &mfile->alias_info.alias_fd);
+        string_free(additional);
         if (result != FS_RESULT_SUCCESS){
             return result;
         }
@@ -99,6 +113,11 @@ static inline FS_RESULT vfs_open(const char *path, file *fd){
         fd->id = mfile->fid;
         //TODO: where do transforms fit in this
         return FS_RESULT_SUCCESS;
+    }
+    
+    if (mfile->entry_type == entry_directory){
+        print("Subdirectory contents not yet supported by vanilla vfs");
+        return FS_RESULT_DRIVER_ERROR;
     }
     
     if (mfile->actions.open) mfile->actions.open(path,fd);
@@ -135,13 +154,25 @@ static inline size_t vfs_write(file *fd, const char* buf, size_t size, file_offs
 
 static inline bool vfs_stat(const char *path, fs_stat *out_stat){
     if (!out_stat) return false;
-    path = seek_to(path,'/');
-    if (!strlen(path))
-        return stat_dir(out_stat);
-    module_file *file = eval_entry(path);
-    if (!file) return false;
+    string_slice first = first_path_component(!path || !strlen(path) ? DIR_AS_FILE : path+1);
+    string_slice next = slice_from_literal(first.data + first.length);
+    module_file *file = eval_entry(first);
+    if (!file){
+        if (next.length == 0)
+            return stat_dir(out_stat);
+        return 0;
+    }
     if (file->alias_info.alias_path.length){
-        return statf(file->alias_info.alias_path.data, out_stat);
+        string fullpath = file->alias_info.alias_path;
+        string additional = (string){};
+        if (file->entry_type == entry_directory){
+            string_slice next = slice_from_literal(first.data + first.length);
+            additional = string_format("%S/%s",fullpath,next);
+            fullpath = additional;
+        }
+        size_t res = statf(fullpath.data, out_stat);
+        string_free(additional);
+        return res;
     } 
     if (file->actions.getstat) file->actions.getstat(path, out_stat);
     out_stat->size = file->file_buffer.buffer_size;
@@ -164,8 +195,28 @@ static inline void vfs_close(file *fd){
 
 static inline size_t vfs_readdir(const char *path, void *buf, size_t size, file_offset *offset){
     fs_dir_list_helper helper = create_dir_list_helper(buf, size);
-    
-    return list_entries(offset, &helper);
+    string_slice first = first_path_component(!path || !strlen(path) ? DIR_AS_FILE : path+1);
+    if (*(path + first.length) == 0)
+        return list_entries(offset, &helper);
+    module_file *file = eval_entry(first);
+    if (file->entry_type != entry_directory){
+        print("%s is not a directory",path);
+        return 0;
+    }
+    if (file->alias_info.alias_path.data){
+        string fullpath = file->alias_info.alias_path;
+        string additional = (string){};
+        if (file->entry_type == entry_directory){
+            string_slice next = slice_from_literal(first.data + first.length);
+            additional = string_format("%S/%s",fullpath,next);
+            fullpath = additional;
+        }
+        size_t res = dir_list(fullpath.data, buf, size, offset);
+        string_free(additional);
+        return res;
+    }
+    print("Subdirectory listing not yet supported by vanilla VFS");
+    return 0;
 }
 
 static inline size_t vfs_list(const char *path, void *buf, size_t size, file_offset *offset){

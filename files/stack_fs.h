@@ -8,9 +8,9 @@ static inline module_file* stackfs_resolve_path(const char *path){
     if (path && *path == '/') path = seek_to(path,'/');
     if (!path || !strlen(path) || strcmp(DIR_AS_FILE,path) == 0){
         string fmt = string_format("%i", stack_count(entries)-static_entries-1);
-        return eval_entry(fmt.data);
+        return eval_entry(slice_from_string(fmt));
     } else {
-        return eval_entry(path);
+        return eval_entry(slice_from_literal(path));
     }
 }
 
@@ -25,7 +25,7 @@ static inline size_t stackfs_read(file *fd, char *buf, size_t size, file_offset 
     if (!mfile) return 0;
     if (strcmp(mfile->name.data, DIR_AS_FILE) == 0){
         string fmt = string_format("%i", stack_count(entries)-static_entries-1);
-        module_file *file = eval_entry(fmt.data);
+        module_file *file = eval_entry(slice_from_string(fmt));
         if (!file) return 0;
         return buffer_read(&file->file_buffer, buf, size, fd->cursor);
     }
@@ -47,13 +47,14 @@ static inline size_t stackfs_write(file *fd, const char *buf, size_t size, file_
 }
 
 static inline FS_RESULT stackfs_open_root(const char *path, file *fd){
-    module_file *mfile = eval_entry(!path || strcmp(DIR_AS_FILE,path) == 0 || !strlen(path) ? DIR_AS_FILE : path+1);
+    string_slice first = first_path_component(!path || strcmp(DIR_AS_FILE,path) == 0 || !strlen(path) ? DIR_AS_FILE : path+1);
+    module_file *mfile = eval_entry(first);
     if (!mfile) return FS_RESULT_NOTFOUND;
     mfile->references++;
     fd->id = mfile->fid;
     if (strcmp(mfile->name.data, DIR_AS_FILE) == 0){
         string fmt = string_format("%i", stack_count(entries)-static_entries-1);
-        module_file *file = eval_entry(fmt.data);
+        module_file *file = eval_entry(slice_from_string(fmt));
         if (file)
             fd->size = file->file_buffer.buffer_size;
     } else 
