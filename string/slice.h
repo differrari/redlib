@@ -33,3 +33,7 @@ static inline bool slice_lit_match(string_slice sl, const char *lit, bool case_i
 }
 
 void string_split(const char *str, char seek, void (*perform)(string_slice slice));
+
+static inline sizedptr slice_to_sizedptr(string_slice slice){
+    return (sizedptr){.ptr = (uptr)slice.data,.size = slice.length};
+}
