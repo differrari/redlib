@@ -32,8 +32,36 @@ static inline bool slice_lit_match(string_slice sl, const char *lit, bool case_i
     return slices_equal(sl, make_string_slice(lit,0,strlen(lit)), case_insensitive);
 }
 
-void string_split(const char *str, char seek, void (*perform)(string_slice slice));
-
 static inline sizedptr slice_to_sizedptr(string_slice slice){
     return (sizedptr){.ptr = (uptr)slice.data,.size = slice.length};
+}
+
+typedef struct {
+    char seek;
+    char *str;
+    size_t length;
+    string_slice current;
+    uptr pointer;
+    bool allow_empty;
+} string_splitter;
+
+void string_split(const char *str, char seek, void (*perform)(string_slice slice));
+
+static inline string_splitter make_string_splitter(const char *str, char seek, bool allow_empty){
+    return (string_splitter){
+        .seek = seek,
+        .str = (char*)str,
+        .length = strlen(str),
+        .current = (string_slice){},
+        .pointer = 0,
+        .allow_empty = allow_empty
+    };
+}
+
+bool string_splitter_advance(string_splitter *splitter);
+
+bool string_quick_split(char *str, char seek, string_slice *lhs, string_slice *rhs);
+
+static inline string_slice string_splitter_remaining(string_splitter *splitter){
+    return (string_slice){.data = splitter->str + splitter->pointer, .length = splitter->length - splitter->pointer};
 }

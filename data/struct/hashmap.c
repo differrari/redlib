@@ -1,6 +1,7 @@
 #include "types.h"
 #include "hashmap.h"
 #include "std/memory.h"
+#include "string/string.h"
 
 static int chm_bytewise_eq(const void* a, uint64_t alen, const void* b, uint64_t blen){
     if (alen!= blen) return 0;
@@ -189,8 +190,12 @@ void* hash_map_get(const chashmap_t* map, const void* key, uint64_t key_len){
     return 0;
 }
 
-int hash_map_remove(chashmap_t* map, const void* key, uint64_t key_len, void** out_value){
-    if (!map) return 0;
+void* hash_map_get_dictionary(const hash_map_t *map, const char *str){
+    return hash_map_get(map, str, strlen(str));
+}
+
+bool hash_map_remove(chashmap_t* map, const void* key, uint64_t key_len, void** out_value){
+    if (!map) return false;
 
     uint64_t h = map->hash_fn(key, key_len);
     uint64_t idx = h & (map->capacity-1);
@@ -208,13 +213,30 @@ int hash_map_remove(chashmap_t* map, const void* key, uint64_t key_len, void** o
             if (e->key_len>0 && e->key) chm_free(map, e->key, e->key_len);
             chm_free(map, e, (uint64_t)sizeof(chashmap_entry_t));
             map->size--;
-            return 1;
+            return true;
         }
         prev = e;
         e = e->next;
     }
 
-    return 0;
+    return false;
+}
+
+void hash_map_empty(chashmap_t* map){
+    if (!map) return;
+
+    for (uint64_t i = 0; i < map->capacity; i++){
+        chashmap_entry_t* e = map->buckets[i];
+        while(e){
+            chashmap_entry_t* next = e->next;
+            if (e->key_len>0 && e->key) chm_free(map, e->key, e->key_len);
+            if(map->value_dispose && e->value) map->value_dispose(e->value);
+            // chm_free(map, e, (uint64_t)sizeof(chashmap_entry_t));
+            e = next;
+        }
+    }
+    
+    map->size = 0;
 }
 
 uint64_t hash_map_size(const chashmap_t* map){

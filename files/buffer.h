@@ -6,6 +6,7 @@ extern "C" {
 
 #include "types.h"
 #include "args.h"
+#include "data_signatures.h"
 
 typedef enum {
     buffer_opt_none = 0,
@@ -21,6 +22,7 @@ typedef struct {
     size_t limit;
     buffer_options options;
     uintptr_t cursor;
+    data_signature data_type;
 } buffer;
 
 buffer buffer_create(size_t size, buffer_options options);

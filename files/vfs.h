@@ -12,8 +12,6 @@
 
 static arr_stack_t *entries;
 
-static hash_map_t *alias_map;
-
 static u64 (*hashing_func)(const char *path);
 
 static inline u64 hash_filename(const char *name){
@@ -70,16 +68,23 @@ static inline module_file* find_entry(u64 fid){
     return 0;
 }
 
-static inline file* find_alias(u64 fid){
-    if (!alias_map) return 0;
-    return hash_map_get(alias_map, &fid, sizeof(u64));
-}
-
-static inline size_t list_entries(u64 *offset, fs_dir_list_helper *helper){
+static inline size_t list_entries(u64 *offset, const char *prefix, fs_dir_list_helper *helper){
+    size_t pref_len = strlen(prefix);
+    if (pref_len && *prefix == '/'){
+        prefix++;
+        pref_len--;
+    }
     for (u64 i = offset ? *offset : 0; i < stack_count(entries); i++){
-        if (!dir_list_fill(helper, STACK_GET(module_file,entries,i).name.data)){
-            if (offset) *offset = i;
-            return dir_buf_size(helper);
+        char *entry_name = STACK_GET(module_file,entries,i).name.data;
+        if ((size_t)strstart(prefix, entry_name) == pref_len){
+            entry_name += pref_len;
+            if (strlen(entry_name) && *entry_name == '/') entry_name++;
+            if (!strlen(entry_name)) continue;
+            if (str_has_char(entry_name, strlen(entry_name), '/') >= 0) continue;
+            if (!dir_list_fill(helper, entry_name)){
+                if (offset) *offset = i;
+                return dir_buf_size(helper);
+            }
         }
     }
     return dir_buf_size(helper);
@@ -196,7 +201,7 @@ static inline size_t vfs_readdir(const char *path, void *buf, size_t size, file_
     fs_dir_list_helper helper = create_dir_list_helper(buf, size);
     string_slice first = first_path_component(!path || !strlen(path) ? DIR_AS_FILE : path+1);
     if (*(path + first.length) == 0)
-        return list_entries(offset, &helper);
+        return list_entries(offset, (char*)(path + first.length), &helper);
     module_file *file = eval_entry(first);
     if (!file) return 0;
     if (file->actions.readdir) return file->actions.readdir(path, buf, size, offset);
