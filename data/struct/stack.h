@@ -1,3 +1,4 @@
+#pragma once
 #include "chunk_array.h"
 
 typedef chunk_array_t arr_stack_t;

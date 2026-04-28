@@ -1,5 +1,4 @@
-#pragma once
-
+#define SKIP_ROUTER_FNS
 #include "vfs.h"
 #include "router.h"
 
@@ -176,7 +175,7 @@ bool argument_match(const char *value, const char *temp){
 }
 
 static file_offset *out_offset;
-file_offset current_offset;
+static file_offset current_offset;
 
 static void emit_route_contents(path_resolution resolution){
     if (!out_offset || *out_offset <= current_offset){
@@ -209,7 +208,7 @@ static void emit_route_contents(path_resolution resolution){
 
 static inline size_t stackfs_readdir(const char *path, void *buf, size_t size, file_offset *offset){
     fs_dir_list_helper helper = create_dir_list_helper(buf, size);
-    
+    out_offset = offset;
     return list_route_directory_contents(entries, path, &helper);
 }
 

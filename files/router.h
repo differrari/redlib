@@ -7,19 +7,30 @@
 typedef struct {
     module_file *file;
     hash_map_t *params;
+    string_slice forwarded;
+    string_slice path;
 } path_resolution;
 
 static bool match_param(string_slice slice, string_slice param);
 
-void print_args(void *key, uint64_t keylen, void *val){
+typedef enum { 
+    path_resolution_none, 
+    path_resolution_forward, // Match a path to a shorter module file path, put the remainder in forwarded (/foo/bar matches /foo and forwards bar)
+    path_resolution_partial // Match the path to a longer module file path, including any non-matched arguments as null values (/foo matches /foo/:bar with bar as an argument with null value)
+} path_resolution_policy;
+
+static void print_args(void *key, uint64_t keylen, void *val){
     print("Argument %v>%s",(string_slice){key,keylen},val);
 }
 
-static path_resolution parse_path(arr_stack_t *entries, const char *path, bool allow_partial, void (*multiple)(path_resolution file)){
+static path_resolution parse_path(arr_stack_t *entries, const char *path, path_resolution_policy policy, void (*multiple)(path_resolution file)){
+    if (strlen(path) && *path == '/') path++;
     path_resolution res = {
         .file = 0,
-        .params = hash_map_create(16)
+        .params = hash_map_create(16),
+        .path = slice_from_literal(path)
     };
+    if (res.path.length && res.path.data[res.path.length-1] == '/') res.path.length--;
     size_t arr_size = stack_count(entries);
     for (size_t i = 0; i < arr_size; i++){
         module_file *file = stack_get(entries,i);
@@ -27,17 +38,18 @@ static path_resolution parse_path(arr_stack_t *entries, const char *path, bool a
         string_splitter template_split = make_string_splitter(pattern, '/', false);
         string_splitter path_splitter = make_string_splitter(path, '/', false);
         bool found = true;
-        // print("Checking path %s",pattern);
+        print("Checking path %s against %s",path,pattern);
         while (string_splitter_advance(&template_split)){
             if (!string_splitter_advance(&path_splitter)){
-                if (!allow_partial) found &= false;
-                if (template_split.pointer < template_split.length){
-                    found &= false;
-                    // print("Failed as the string contains a / after the current partial");
-                } else if (template_split.current.length && *template_split.current.data == ':'){
-                    hash_map_put(res.params, template_split.current.data + 1, template_split.current.length - 1, string_from_literal("").data);
-                    found &= true;
-                } 
+                if (!strlen(path) || (policy & path_resolution_partial)){
+                    if (template_split.pointer < template_split.length){
+                        found &= false;
+                        // print("Failed as the string contains a / after the current partial");
+                    } else if (template_split.current.length && *template_split.current.data == ':'){
+                        hash_map_put(res.params, template_split.current.data + 1, template_split.current.length - 1, string_from_literal("").data);
+                        found &= true;
+                    } 
+                } else found &= false;
             } else {
                 if (slices_equal(template_split.current, path_splitter.current, true)){
                     found &= true;
@@ -50,9 +62,13 @@ static path_resolution parse_path(arr_stack_t *entries, const char *path, bool a
                 }
             }
         }
-        if (found && !string_splitter_advance(&path_splitter)){
-            // print("Result ?%i",found);
+        print("Result ?%i",found);
+        if (found && ((policy & path_resolution_forward) || !string_splitter_advance(&path_splitter))){
             res.file = file;
+            if (policy & path_resolution_forward){
+                res.forwarded = string_splitter_remaining(&path_splitter);
+                print("Forwarding %v off %s",res.forwarded,pattern);
+            }
             // print("Path %s matched pattern %s",path, pattern);
             // print("***ARGS***");
             // hash_map_for_each(res.params, print_args);
@@ -65,6 +81,7 @@ static path_resolution parse_path(arr_stack_t *entries, const char *path, bool a
         if (!multiple)
             hash_map_destroy(res.params);
         res.params = hash_map_create(16);
+        res.forwarded = (string_slice){};
     }
     hash_map_destroy(res.params);
     return res;
@@ -77,6 +94,6 @@ static void emit_route_contents(path_resolution resolution);
 static size_t list_route_directory_contents(arr_stack_t *entries, const char *subdirectory, fs_dir_list_helper *helper){
     if (!helper) return 0;
     router_fs_dir_helper = helper;
-    parse_path(entries, subdirectory, true, emit_route_contents);
+    parse_path(entries, subdirectory, path_resolution_partial, emit_route_contents);
     return dir_buf_size(helper);
 }

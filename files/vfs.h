@@ -1,5 +1,3 @@
-#pragma once
-
 #include "data/struct/stack.h"
 #include "files/dir_list.h"
 #include "data/struct/hashmap.h"
@@ -7,6 +5,7 @@
 #include "memory/memory.h"
 #include "data/struct/hashmap.h"
 #include "syscalls/syscalls.h"
+#include "router.h"
 
 #define DIR_AS_FILE "#"
 
@@ -95,40 +94,68 @@ static inline string_slice first_path_component(const char *path){
     return (string_slice){ .data = (char*)path, .length = next - path - (*(next-1) == '/' ? 1 : 0)};
 }
 
+static inline FS_RESULT vfs_open_aliased(module_file *mfile, path_resolution resolution, file *fd){
+    string fullpath = mfile->alias_info.alias_path;
+    string additional = (string){};
+    if (mfile->entry_type == entry_directory){
+        string_slice next = resolution.forwarded;
+        additional = string_format("%S/%s",fullpath,next);
+        fullpath = additional;
+    }
+    FS_RESULT result = openf(fullpath.data, &mfile->alias_info.alias_fd);
+    string_free(additional);
+    if (result != FS_RESULT_SUCCESS){
+        return result;
+    }
+    memcpy(fd, &mfile->alias_info.alias_fd, sizeof(file));
+    fd->id = mfile->fid;
+    return FS_RESULT_SUCCESS;
+}
+
 static inline FS_RESULT vfs_open(const char *path, file *fd){
-    string_slice first = first_path_component(!path || !strlen(path) ? DIR_AS_FILE : path+1);
-    module_file *mfile = eval_entry(first);
+    if (path && *path == '/') path++;
+    if (!path || !strlen(path)) path = DIR_AS_FILE;
+    path_resolution resolution = parse_path(entries, path, path_resolution_forward, 0);
+    module_file *mfile = resolution.file;
     if (!mfile) return FS_RESULT_NOTFOUND;
     if (mfile->actions.open) return mfile->actions.open(path,fd);
     mfile->references++;
     
-    if (mfile->alias_info.alias_path.length){
-        string fullpath = mfile->alias_info.alias_path;
-        string additional = (string){};
-        if (mfile->entry_type == entry_directory){
-            string_slice next = slice_from_literal(first.data + first.length);
-            additional = string_format("%S/%s",fullpath,next);
-            fullpath = additional;
-        }
-        FS_RESULT result = openf(fullpath.data, &mfile->alias_info.alias_fd);
-        string_free(additional);
-        if (result != FS_RESULT_SUCCESS){
-            return result;
-        }
-        memcpy(fd, &mfile->alias_info.alias_fd, sizeof(file));
-        fd->id = mfile->fid;
-        return FS_RESULT_SUCCESS;
-    }
-    
-    if (mfile->entry_type == entry_directory){
-        print("Subdirectory contents not yet supported by vanilla vfs");
-        return FS_RESULT_DRIVER_ERROR;
-    }
+    if (mfile->alias_info.alias_path.length)
+        return vfs_open_aliased(mfile, resolution, fd);
     
     //TODO: bindings for aliases
     fd->id = mfile->fid;
     return FS_RESULT_SUCCESS;
 }
+
+#ifndef SKIP_ROUTER_FNS
+static file_offset *out_offset;
+static file_offset current_offset;
+
+static void emit_route_contents(path_resolution resolution){
+    if (!out_offset || *out_offset <= current_offset){
+        if (slice_lit_match(resolution.path,resolution.file->name.data, true) && resolution.file->alias_info.alias_path.length){
+            string fullpath = string_format("%S/%v",resolution.file->alias_info.alias_path,resolution.forwarded);
+            dir_list(fullpath.data, router_fs_dir_helper->list, router_fs_dir_helper->limit, out_offset);
+            return;
+        }
+        if (resolution.file->actions.readdir){
+            resolution.file->actions.readdir(resolution.forwarded.data, router_fs_dir_helper->list, router_fs_dir_helper->limit, out_offset);
+            return;
+        }
+        if (!dir_list_fill(router_fs_dir_helper, resolution.file->name.data)){
+            if (out_offset) *out_offset = current_offset;
+        }
+    }
+    current_offset++;
+}
+
+static bool match_param(string_slice slice, string_slice param){
+    return false;
+}
+
+#endif
 
 static inline size_t vfs_read(file *fd, char* buf, size_t size, file_offset offset){
     module_file *mfile = find_entry(fd->id);
@@ -158,11 +185,12 @@ static inline size_t vfs_write(file *fd, const char* buf, size_t size, file_offs
 
 static inline bool vfs_stat(const char *path, fs_stat *out_stat){
     if (!out_stat) return false;
-    string_slice first = first_path_component(!path || !strlen(path) ? DIR_AS_FILE : path+1);
-    string_slice next = slice_from_literal(first.data + first.length);
-    module_file *file = eval_entry(first);
+    if (path && *path == '/') path++;
+    if (!path || !strlen(path)) path = DIR_AS_FILE;
+    path_resolution resolution = parse_path(entries, path, path_resolution_forward, 0);
+    module_file *file = resolution.file;
     if (!file){
-        if (next.length == 0)
+        if (resolution.forwarded.length == 0)
             return stat_dir(out_stat);
         return 0;
     }
@@ -171,8 +199,7 @@ static inline bool vfs_stat(const char *path, fs_stat *out_stat){
         string fullpath = file->alias_info.alias_path;
         string additional = (string){};
         if (file->entry_type == entry_directory){
-            string_slice next = slice_from_literal(first.data + first.length);
-            additional = string_format("%S/%s",fullpath,next);
+            additional = string_format("%S/%s",fullpath,resolution.forwarded);
             fullpath = additional;
         }
         size_t res = statf(fullpath.data, out_stat);
@@ -199,30 +226,10 @@ static inline void vfs_close(file *fd){
 
 static inline size_t vfs_readdir(const char *path, void *buf, size_t size, file_offset *offset){
     fs_dir_list_helper helper = create_dir_list_helper(buf, size);
-    string_slice first = first_path_component(!path || !strlen(path) ? DIR_AS_FILE : path+1);
-    if (*(path + first.length) == 0)
-        return list_entries(offset, (char*)(path + first.length), &helper);
-    module_file *file = eval_entry(first);
-    if (!file) return 0;
-    if (file->actions.readdir) return file->actions.readdir(path, buf, size, offset);
-    if (file->entry_type != entry_directory){
-        print("%s is not a directory",path);
-        return 0;
-    }
-    if (file->alias_info.alias_path.data){
-        string fullpath = file->alias_info.alias_path;
-        string additional = (string){};
-        if (file->entry_type == entry_directory){
-            string_slice next = slice_from_literal(first.data + first.length);
-            additional = string_format("%S/%s",fullpath,next);
-            fullpath = additional;
-        }
-        size_t res = dir_list(fullpath.data, buf, size, offset);
-        string_free(additional);
-        return res;
-    }
-    print("Subdirectory listing not yet supported by vanilla VFS");
-    return 0;
+#ifndef SKIP_ROUTER_FNS
+    out_offset = offset;
+#endif
+    return list_route_directory_contents(entries, path, &helper);
 }
 
 static inline size_t vfs_list(const char *path, void *buf, size_t size, file_offset *offset){
