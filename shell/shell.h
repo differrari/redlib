@@ -10,12 +10,12 @@ typedef struct {
     // void (*fn2)(kbd_event event);
 } shell_bindings;
  
-typedef struct shell_handle {
+struct shell_handle {
     buffer out_buffer;
     shell_bindings bindings;
     void *ctx;
     bool (*cmd_input)(shell_handle*, string_slice input);
-} shell_handle;
+};
 
 #ifdef __cplusplus
 extern "C" {

@@ -1,9 +1,10 @@
 #include "sheldon.h"
 #include "builtins.h"
+#include "builtin_handler.h"
 
 void sheldon_init(shell_handle *handle){
     register_sheldon_builtins();
-    shell_print(handle, "Bazinga");
+    shell_print(handle, "$heldon");
 }
 
 bool sheldon_run_cmd(shell_handle *handle, string_slice fullcmd){
