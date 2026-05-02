@@ -176,6 +176,10 @@ int hash_map_put(chashmap_t* map, const void* key, uint64_t key_len, void* value
     return 1;
 }
 
+int hash_map_put_dictionary(hash_map_t* map, const char* str, void* value){
+    return hash_map_put(map, str, strlen(str), value);
+}
+
 void* hash_map_get(const chashmap_t* map, const void* key, uint64_t key_len){
     if (!map) return 0;
 

@@ -21,6 +21,8 @@ static inline string_slice slice_from_literal(const char* lit){
     return (string_slice){.data = (char*)lit, .length = strlen(lit)};
 }
 
+#define SLICE_LIT(lit) ((string_slice){.data = (char*)lit, .length = sizeof(lit)-1})
+
 static inline bool slices_equal(string_slice sl1, string_slice sl2, bool case_insensitive){
     if (sl1.length != sl2.length) return false;
     for (size_t i = 0; i < sl1.length; i++)
@@ -58,9 +60,26 @@ static inline string_splitter make_string_splitter(const char *str, char seek, b
     };
 }
 
+static inline string_splitter make_string_splitter_slice(string_slice slice, char seek, bool allow_empty){
+    return (string_splitter){
+        .seek = seek,
+        .str = slice.data,
+        .length = slice.length,
+        .current = (string_slice){},
+        .pointer = 0,
+        .allow_empty = allow_empty
+    };
+}
+
 bool string_splitter_advance(string_splitter *splitter);
 
 bool string_quick_split(char *str, char seek, string_slice *lhs, string_slice *rhs);
+
+static inline string_slice string_splitter_get_current(string_splitter *splitter){
+    string_slice ret = splitter->current;
+    if (ret.length && ret.data[ret.length-1] == splitter->seek) ret.length--;
+    return ret;
+}
 
 static inline string_slice string_splitter_remaining(string_splitter *splitter){
     return (string_slice){.data = splitter->str + splitter->pointer, .length = splitter->length - splitter->pointer};

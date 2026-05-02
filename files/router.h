@@ -38,7 +38,6 @@ static path_resolution parse_path(arr_stack_t *entries, const char *path, path_r
         string_splitter template_split = make_string_splitter(pattern, '/', false);
         string_splitter path_splitter = make_string_splitter(path, '/', false);
         bool found = true;
-        print("Checking path %s against %s",path,pattern);
         while (string_splitter_advance(&template_split)){
             if (!string_splitter_advance(&path_splitter)){
                 if (!strlen(path) || (policy & path_resolution_partial)){
@@ -62,12 +61,10 @@ static path_resolution parse_path(arr_stack_t *entries, const char *path, path_r
                 }
             }
         }
-        print("Result ?%i",found);
         if (found && ((policy & path_resolution_forward) || !string_splitter_advance(&path_splitter))){
             res.file = file;
             if (policy & path_resolution_forward){
                 res.forwarded = string_splitter_remaining(&path_splitter);
-                print("Forwarding %v off %s",res.forwarded,pattern);
             }
             // print("Path %s matched pattern %s",path, pattern);
             // print("***ARGS***");

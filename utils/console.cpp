@@ -152,10 +152,14 @@ void Console::draw_cursor(){
     last_drawn_cursor_y = (i32)cursor_y;
 }
 
-void Console::put_string(const char* str){
+void Console::put_slice(string_slice slice){
     if (!check_ready()) return;
-    for (u32 i = 0; str[i]; i++) put_char(str[i]);
+    for (u32 i = 0; i < slice.length; i++) put_char(slice.data[i]);
     flush(dctx);
+}
+
+void Console::put_string(const char* str){
+    put_slice(slice_from_literal(str));
 }
 
 void Console::newline(){
