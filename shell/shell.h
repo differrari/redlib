@@ -9,17 +9,24 @@ typedef struct {
     void (*console_output)(shell_handle*, string_slice output);
     // void (*fn2)(kbd_event event);
 } shell_bindings;
+
+typedef struct {
+    string current_directory;
+} shell_ctx;
  
 struct shell_handle {
     buffer out_buffer;
     shell_bindings bindings;
-    void *ctx;
+    shell_ctx *common_ctx;
+    void *local_ctx;
     bool (*cmd_input)(shell_handle*, string_slice input);
 };
 
 #ifdef __cplusplus
 extern "C" {
 #endif
+extern shell_handle* current_shell;
+
 void new_shell(shell_handle *, shell_bindings bindings, void (*init_shell)(shell_handle *handle));
 void register_func();
 bool run_cmd(shell_handle *, string_slice);
@@ -37,6 +44,14 @@ static inline void shell_print_specify_newline(shell_handle *handle, bool newlin
     va_end(args);
     if (!handle->bindings.console_output) return;
     handle->bindings.console_output(handle, (string_slice){ .data = (char*)((uptr)handle->out_buffer.buffer + cursor), .length = size});
+}
+
+static inline void current_shell_print(char *lit){
+    if (current_shell) shell_print_specify_newline(current_shell, true, lit);
+}
+
+static inline void current_shell_put(char *lit){
+    if (current_shell) shell_print_specify_newline(current_shell, false, lit);
 }
 
 #define shell_print(handle, fmt, ...) shell_print_specify_newline(handle, true, fmt, ##__VA_ARGS__)

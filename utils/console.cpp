@@ -94,7 +94,8 @@ void Console::resize(){
 
 void Console::put_char(char c){
     if (!check_ready()) return;
-
+    last_char = c;
+    
     if (c == '\r'){
         cursor_x = 0;
         draw_cursor();

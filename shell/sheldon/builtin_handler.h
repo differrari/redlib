@@ -3,8 +3,6 @@
 #include "sheldon.h"
 #include "memory/memory.h"
 
-hash_map_t *sheldon_builtin_hashmap;
-
 cmd_arg* find_option(string_slice option, cmd_def *def){
     for (int i = 0; i < def->argc; i++){
         if (!def->arguments[i].indicator.use_option) continue;
@@ -81,6 +79,10 @@ hash_map_t* argument_parser(shell_handle *handle, cmd_def *def, string_slice arg
                 hash_map_destroy(arg_values);
                 return false;
             }
+            if (argument->indicator.ignore_spaces){
+                size_t len = string_splitter_remaining(&splitter).length;
+                current_arg.length += len + (len ? 1 : 0);
+            }
             hash_map_put(arg_values, argument->name.data, argument->name.length, string_from_slice(current_arg).data);
             if (argument->indicator.ignore_spaces) break;
         }
@@ -89,17 +91,26 @@ hash_map_t* argument_parser(shell_handle *handle, cmd_def *def, string_slice arg
     return arg_values;
 }
 
-void register_builtin(char *name, cmd_def *def){
+void register_builtin(shell_handle *handle, char *name, cmd_def *def){
+    if (!handle || !handle->local_ctx)
+        return;
+    hash_map_t *builtins = ((sheldon_ctx*)handle->local_ctx)->builtins;
+    if (!builtins)
+        return;
     if (def->argc < 0 || def->argc > 64) return;
     size_t full_size = sizeof(cmd_def) + (sizeof(cmd_arg) * def->argc);
     cmd_def *new_def = zalloc(full_size);
     memcpy(new_def, def, full_size);
-    hash_map_put_dictionary(sheldon_builtin_hashmap, name, new_def);
+    hash_map_put_dictionary(builtins, name, new_def);
 }
 
+#include "syscalls/syscalls.h"
+
 bool call_sheldon_builtin(shell_handle *handle, string_slice cmd, string_slice arg, cmd_returns *out_state){
-    if (!sheldon_builtin_hashmap) return false;
-    cmd_def *definition = hash_map_get(sheldon_builtin_hashmap, cmd.data, cmd.length);
+    if (!handle || !handle->local_ctx) return false;
+    hash_map_t *builtins = ((sheldon_ctx*)handle->local_ctx)->builtins;
+    if (!builtins) return false;
+    cmd_def *definition = hash_map_get(builtins, cmd.data, cmd.length);
     if (!definition || !definition->entry_point) return false;
     hash_map_t *args = argument_parser(handle, definition, arg);
     if (!args)

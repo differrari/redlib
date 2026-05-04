@@ -4,11 +4,11 @@
 #include "shell/sheldon/scripting.h"
 #include "syscalls/syscalls.h"
 
-#define READ_ARGS {\
-    SHELLEY_ARG_POS(path, false, 0),\
-    SHELLEY_ARG_POS(size, true, 1),\
-}
-SHELLEY_CMD(read, 2, READ_ARGS, {
+SHELLEY_CMD_PRINT(pwd, get_current_dir);
+SHELLEY_CMD_FWD_1ARG(cd, change_current_dir, path);
+
+SHELLEY_CMD(read, 
+{
     SHELLEY_GET_ARG_PARSE(size, size_t, 0, parse_int64);
     SHELLEY_GET_ARG(path);
     char *buf;
@@ -20,27 +20,18 @@ SHELLEY_CMD(read, 2, READ_ARGS, {
     }
     shell_print(handle, buf);
     release(buf);
-    shell_put(handle, "that's the file bro");
     return exit_return_success;
-});
-
-SHELLEY_CMD(pwd, 0, {}, {
-    shell_put(handle, "Shell has no directories");
-    return exit_implementation_error;
-});
-
-static shell_handle *print_handler;
+}, 
+SHELLEY_ARG_POS(path, false, 0),
+SHELLEY_ARG_POS(size, true, 1)
+);
 
 static void print_dir_traverse(const char *directory, const char* name){
-    shell_print(print_handler,(char*)name);
+    print((char*)name);
 }
 
-#define LS_ARGS {\
-    SHELLEY_ARG_POS(path, false, 0),\
-}
-SHELLEY_CMD(ls, 1, LS_ARGS, {
-    SHELLEY_GET_ARG(path);
-    print_handler = handle;
+SHELLEY_CMD(ls, {
+    SHELLEY_GET_ARG_OR_DEFAULT(path, handle->common_ctx->current_directory.data);
     traverse_directory(path, false, print_dir_traverse);
-    return exit_implementation_error;
-});
+    return exit_return_success;
+}, SHELLEY_ARG_POS(path, true, 0));

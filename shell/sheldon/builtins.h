@@ -4,22 +4,16 @@
 #include "files/scripting.h"
 #include "sheldon.h"
 
-extern hash_map_t *sheldon_builtin_hashmap;
+SHELLEY_CMD_FWD_1ARG(echo, print, string);
 
-SHELLEY_CMD(echo, 1, { SHELLEY_ARG_POS_ALL(string, false, 0) }, {
-    SHELLEY_GET_ARG(string);
-    shell_put(handle, "%s", string);
-    return exit_return_success;
-});
+extern void register_builtin(shell_handle *handle, char *name, cmd_def *def);
 
-extern void register_builtin(char *name, cmd_def *def);
+#define REG_BUILTIN(fn) register_builtin(handle, #fn,&fn##_def);
 
-#define REG_BUILTIN(fn) register_builtin(#fn,&fn##_def);
-
-void register_sheldon_builtins(){
-    sheldon_builtin_hashmap = hash_map_create(256);
+void register_sheldon_builtins(shell_handle *handle){
     REG_BUILTIN(echo);
     REG_BUILTIN(pwd);
     REG_BUILTIN(read);
     REG_BUILTIN(ls);
+    REG_BUILTIN(cd);
 }

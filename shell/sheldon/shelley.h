@@ -1,5 +1,11 @@
 #pragma once
 
+#include "syscalls/syscalls.h"
+
+#define NARGS_I(_0,_1,_2,_3,_4,_5,_6,_7,N,...) N
+#define EXPAND(x,...) x
+#define NARGS(...) EXPAND(NARGS_I(_,##__VA_ARGS__,7,6,5,4,3,2,1,0))
+
 #define SHELLEY_ARG(_name, _use_option, _position, _ignore_spaces, _option, _use_value, _optional) ((cmd_arg){\
     .name = (SLICE_LIT(#_name)),\
     .indicator = {\
@@ -16,13 +22,33 @@
 #define SHELLEY_ARG_OPT(name, optional, option, value) SHELLEY_ARG(name, true, 0, false, option, value, optional)
 #define SHELLEY_ARG_OPT_ALL(name, optional, position) SHELLEY_ARG(name, true, 0, true, option, value, optional)
 
-#define SHELLEY_CMD(_name, _argc, _arguments, execute) static cmd_returns _name(shell_handle *handle, hash_map_t *arguments){ execute }\
+#define SHELLEY_CMD(_name, execute, ...) static cmd_returns _name(shell_handle *handle, hash_map_t *arguments){ execute }\
 cmd_def _name##_def = {\
     .name = SLICE_LIT(#_name),\
     .entry_point = _name,\
-    .argc = _argc,\
-    .arguments = _arguments,\
+    .argc = NARGS(__VA_ARGS__),\
+    .arguments = {__VA_ARGS__},\
 }
 
+#define SHELLEY_CMD_PRINT(_name, _func) \
+SHELLEY_CMD(_name, {\
+    print(_func());\
+    return exit_return_success;\
+})
+
+#define SHELLEY_CMD_FWD(_name, _func) \
+SHELLEY_CMD(_name, {\
+    _func();\
+    return exit_return_success;\
+})
+
+#define SHELLEY_CMD_FWD_1ARG(_name, _func, _arg) \
+SHELLEY_CMD(_name, {\
+    SHELLEY_GET_ARG(_arg);\
+    _func(_arg);\
+    return exit_return_success;\
+}, SHELLEY_ARG_POS_ALL(_arg, false, 0))
+
 #define SHELLEY_GET_ARG(argument) char* argument = hash_map_get_dictionary(arguments, #argument)
+#define SHELLEY_GET_ARG_OR_DEFAULT(argument,default) char* argument = hash_map_get_dictionary(arguments, #argument); if (!argument) argument = default
 #define SHELLEY_GET_ARG_PARSE(argument,type,default,parser) char* str_##argument = hash_map_get_dictionary(arguments, #argument); type argument = !str_##argument ? default : parser(str_##argument,strlen(str_##argument));

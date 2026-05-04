@@ -2,6 +2,7 @@
 #include "string/string.h"
 #include "math/math.h"
 #include "std/memory.h"
+#include "shell/shell.h"
 
 static char log_buf[1024];
 
@@ -15,6 +16,7 @@ int print(const char *fmt, ...){
 #ifndef CROSS
     file fd2 = { .id = 2 };
     writef(&fd2, log_buf, strlen(log_buf));
+    current_shell_print(log_buf);
 #endif
     return 0;
 }
@@ -30,6 +32,7 @@ int printf(const char *fmt, ...){
 #ifndef CROSS
     file fd2 = { .id = 2 };
     writef(&fd2, li, strlen(li));
+    current_shell_print(li);
 #endif
     return 0;
 }

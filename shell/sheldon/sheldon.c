@@ -3,7 +3,6 @@
 #include "builtin_handler.h"
 
 void sheldon_init(shell_handle *handle){
-    register_sheldon_builtins();
     shell_print(handle, "$heldon");
 }
 
@@ -17,9 +16,15 @@ bool sheldon_run_cmd(shell_handle *handle, string_slice fullcmd){
     return false;
 }
 
-shell_handle* create_sheldon(shell_bindings bindings){
-    shell_handle *handle = zalloc(sizeof(shell_handle));
-    handle->ctx = 0;
+shell_handle* create_sheldon(shell_bindings bindings, void (*register_builtins)(shell_handle *handle)){
+    shell_handle *handle = zalloc(sizeof(shell_handle) + sizeof(shell_ctx) + sizeof(sheldon_ctx));
+    shell_ctx *shctx = (shell_ctx*)((uptr)handle + sizeof(shell_handle));
+    sheldon_ctx* loctx = (sheldon_ctx*)((uptr)shctx + sizeof(shell_ctx));
+    handle->local_ctx = loctx;
+    handle->common_ctx = shctx;
+    loctx->builtins = hash_map_create(256);
+    if (!register_builtins) register_builtins = register_sheldon_builtins;
+    register_builtins(handle);
     handle->cmd_input = sheldon_run_cmd;
     new_shell(handle, bindings, sheldon_init);
     return handle;

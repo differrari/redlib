@@ -2,13 +2,13 @@
 
 #include "types.h"
 #include "string/slice.h"
+#include "shell/sheldon/scripting.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 #define COMMAND(name, ...) //const char *function_name_##name = #name; 
-#define ALIAS(new_name, old_name)
 #define REQUIRE(argument, type, shorthand) 
 #define OPTIONAL(argument, type, shorthand, default)
 #define HARDCODED(argument, type, shorthand, default)
@@ -18,8 +18,7 @@ typedef void (*dir_traverse)(const char *directory, const char* name);
 void traverse_directory(const char *directory, bool recursive, dir_traverse func);
 
 char* get_current_dir();
-COMMAND(get_current_dir);
-ALIAS(pwd,get_current_dir);
+void change_current_dir(const char *path);
 
 char* gethomedir();
 

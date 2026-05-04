@@ -16,6 +16,8 @@ public:
     void put_string(const char* str);
     void put_slice(string_slice slice);
 
+    char last_char;
+
     void newline();
     void scroll();
     void clear();
