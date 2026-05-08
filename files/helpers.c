@@ -89,10 +89,10 @@ void read_lines(char *file, void *ctx, void (*handle_line)(void *ctx, string_sli
 void replace_directory(shell_ctx *ctx, string s){
     string_free(ctx->current_directory);
     ctx->current_directory = s;
-    print("New directory now %S",ctx->current_directory);
 }
 
 void append_directory(shell_ctx *ctx, string s){
+    if (s.length && *s.data == '/' && ctx->current_directory.length && ctx->current_directory.data[ctx->current_directory.length-1] == '/') ctx->current_directory.length--;
     replace_directory(ctx, string_concat(ctx->current_directory, s));
 }
 
@@ -112,7 +112,6 @@ void change_current_dir(const char *path){
         }
         return;
     }
-    print("Appending %S/%s",current_shell->common_ctx->current_directory,path);
     string tmp = string_format("/%s",path);
     append_directory(current_shell->common_ctx, tmp);
     string_free(tmp);

@@ -104,8 +104,6 @@ void register_builtin(shell_handle *handle, char *name, cmd_def *def){
     hash_map_put_dictionary(builtins, name, new_def);
 }
 
-#include "syscalls/syscalls.h"
-
 bool call_sheldon_builtin(shell_handle *handle, string_slice cmd, string_slice arg, cmd_returns *out_state){
     if (!handle || !handle->local_ctx) return false;
     hash_map_t *builtins = ((sheldon_ctx*)handle->local_ctx)->builtins;

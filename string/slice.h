@@ -82,5 +82,6 @@ static inline string_slice string_splitter_get_current(string_splitter *splitter
 }
 
 static inline string_slice string_splitter_remaining(string_splitter *splitter){
+    if (splitter->pointer >= splitter->length) return (string_slice){};
     return (string_slice){.data = splitter->str + splitter->pointer, .length = splitter->length - splitter->pointer};
 }

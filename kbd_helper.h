@@ -5,6 +5,10 @@
 
 static u8 current_modifier;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 static inline bool handle_modifier(kbd_event *event){
     switch (event->type) {
         case MOD_PRESS:
@@ -32,3 +36,7 @@ static inline bool handle_paste(kbd_event *ev, void (*on_paste)(void *ctx)){
     }
     return false;
 }
+
+#ifdef __cplusplus
+}
+#endif

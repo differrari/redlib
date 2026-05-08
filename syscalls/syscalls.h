@@ -84,6 +84,8 @@ int system_focus(const char *command, u32 focus_mode);
 
 void in_case_of_js_break_glass();
 
+void register_behavior();
+
 static inline void yield(){
     msleep(0);
 }

@@ -29,7 +29,7 @@ bool string_splitter_advance(string_splitter *splitter){
     if (*current == 0) return false;
     char *new_point = (char*)seek_to(current, splitter->seek);
     if (new_point == current) return false;
-    size_t size = new_point-current-(*new_point || *(new_point-1) == '/' ? 1 : 0);
+    size_t size = new_point-current-(*new_point || *(new_point-1) == splitter->seek ? 1 : 0);
     splitter->current = (string_slice){.data = (char*)splitter->str + splitter->pointer, size};
     splitter->pointer += size+1;
     if (!size && !splitter->allow_empty) return string_splitter_advance(splitter);

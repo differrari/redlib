@@ -284,6 +284,38 @@
 #define KEY_MEDIA_REFRESH 0xfa
 #define KEY_MEDIA_CALC 0xfb
 
+#define ASCII_CMD_NUL 0x00
+#define ASCII_CMD_SOH 0x01
+#define ASCII_CMD_ETX 0x03
+#define ASCII_CMD_EOT 0x04
+#define ASCII_CMD_ENQ 0x05
+#define ASCII_CMD_ACK 0x06
+#define ASCII_CMD_BEL 0x07
+#define ASCII_CMD_BS 0x08
+#define ASCII_CMD_HT 0x09
+#define ASCII_CMD_LF 0x0A
+#define ASCII_CMD_VT 0x0B
+#define ASCII_CMD_FF 0x0C
+#define ASCII_CMD_CR 0x0D
+#define ASCII_CMD_SO 0x0E
+#define ASCII_CMD_SI 0x0F
+#define ASCII_CMD_DLE 0x10
+#define ASCII_CMD_DC1 0x11
+#define ASCII_CMD_DC2 0x12
+#define ASCII_CMD_DC3 0x13
+#define ASCII_CMD_DC4 0x14
+#define ASCII_CMD_NAK 0x15
+#define ASCII_CMD_SYN 0x16
+#define ASCII_CMD_ETB 0x17
+#define ASCII_CMD_CAN 0x18
+#define ASCII_CMD_EM 0x19
+#define ASCII_CMD_SUB 0x1A
+#define ASCII_CMD_ESC 0x1B
+#define ASCII_CMD_FS 0x1C
+#define ASCII_CMD_GS 0x1D
+#define ASCII_CMD_RS 0x1E
+#define ASCII_CMD_US 0x1F
+
 #ifndef __cplusplus
 //TODO: properly handle keypad
 static const char hid_keycode_to_char[256] = {
