@@ -1135,9 +1135,11 @@ uint64_t parse_hex_u64(const char* str, size_t size){
 }
 
 uint64_t parse_int_u64(const char* str, size_t size){
+    if (!str) return 0;
     uint64_t result = 0;
-    for (uint32_t i = 0; i < size; i++){
+    for (u32 i = 0; i < size && str[i]; i++){
         char c = str[i];
+        if (!c || !is_digit(c)) break;
         uint8_t digit = 0;
         if (c >= '0' && c <= '9') digit = c - '0';
         else break;

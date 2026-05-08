@@ -2,6 +2,7 @@
 #include "data/struct/hashmap.h"
 #include "syscalls/syscalls.h"
 #include "files/scripting.h"
+#include "signals/scripting.h"
 #include "sheldon.h"
 
 SHELLEY_CMD_FWD_1ARG(echo, print, string);
@@ -16,4 +17,5 @@ void register_sheldon_builtins(shell_handle *handle){
     REG_BUILTIN(read);
     REG_BUILTIN(ls);
     REG_BUILTIN(cd);
+    REG_BUILTIN(kill);
 }

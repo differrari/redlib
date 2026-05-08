@@ -10,6 +10,7 @@
 #include "files/fs.h"
 #include "net/socket_types.h"
 #include "files/system_module.h"
+#include "signals/signal_types.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -70,6 +71,9 @@ extern bool statf(const char *path, fs_stat *out_stat);
 extern bool truncatef(file*, size_t);
 // extern bool load_fsmodule(system_module *mod);
 // extern bool unload_fsmodule();
+
+extern bool send_signal(signal_types type, u16 proc_id);
+extern bool handle_signal(signal_types type, signal_handler handler);
 
 void seek(file *descriptor, int64_t offset, SEEK_TYPE type);
 void* realloc_sized(void* old_ptr, size_t old_size, size_t new_size);
