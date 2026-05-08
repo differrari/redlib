@@ -121,6 +121,13 @@ size_t buffer_write_space(buffer *buf){
     return buffer_write_lim(buf, " ", 1);
 }
 
+void buffer_wipe(buffer *buf){
+    if (!buf || !buf->buffer || buf->options & buffer_read_only) return;
+    memset(buf->buffer, 0, buf->limit);
+    buf->buffer_size = 0;
+    buf->cursor = 0;
+}
+
 void buffer_destroy(buffer *buf){
     release(buf->buffer);
     *buf = (buffer){};

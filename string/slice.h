@@ -23,6 +23,10 @@ static inline string_slice slice_from_literal(const char* lit){
 
 #define SLICE_LIT(lit) ((string_slice){.data = (char*)lit, .length = sizeof(lit)-1})
 
+static inline string_slice ptr_to_slice(sizedptr parent){
+    return (string_slice){.data = (char*)parent.ptr, .length = parent.size};
+}
+
 static inline bool slices_equal(string_slice sl1, string_slice sl2, bool case_insensitive){
     if (sl1.length != sl2.length) return false;
     for (size_t i = 0; i < sl1.length; i++)
