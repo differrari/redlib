@@ -34,7 +34,7 @@ typedef struct hash_map {
     uint64_t resize_threshold;
 } hash_map_t;
 
-typedef hash_map_t chashmap_t;
+typedef hash_map_t hash_map_t;
 
 hash_map_t* hash_map_create(uint64_t initial_capacity);
 hash_map_t* hash_map_create_alloc(uint64_t initial_capacity, void* (*alloc)(size_t size),void (*mfree)(void* ptr, size_t size));
@@ -48,7 +48,7 @@ void* hash_map_get(const hash_map_t* map, const void* key, uint64_t key_len);
 
 void* hash_map_get_dictionary(const hash_map_t *map, const char *str);
 bool hash_map_remove(hash_map_t* map, const void* key, uint64_t key_len, void** out_value);
-void hash_map_empty(chashmap_t* map);
+void hash_map_empty(hash_map_t* map);
 uint64_t hash_map_size(const hash_map_t* map);
 uint64_t hash_map_capacity(const hash_map_t* map);
 void hash_map_for_each(const hash_map_t* map, void (*func)(void* key, uint64_t key_len, void* value));

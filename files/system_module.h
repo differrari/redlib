@@ -36,12 +36,14 @@ typedef struct {
     file_readdir_fn readdir;
 } file_actions;
 
+typedef struct {
+    string alias_path;
+    file alias_fd;
+} alias_info_t;
+
 typedef struct module_file {
     string name;
-    struct {
-        string alias_path;
-        file alias_fd;
-    } alias_info;
+    alias_info_t alias_info;
     fs_backing_type backing_type;
     fs_entry_type entry_type;
     uint64_t fid;
@@ -62,7 +64,7 @@ typedef struct system_module {
     const char* mount;
     uint64_t version;
 
-    bool (*init)();
+    bool (*init)(struct system_module *);
     bool (*fini)();
 
     file_open_fn open;
@@ -75,5 +77,7 @@ typedef struct system_module {
     file_getstat_fn getstat;
 
     file_readdir_fn readdir;
+
+    alias_info_t alias_info; 
 
 } system_module;
