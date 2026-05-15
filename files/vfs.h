@@ -90,8 +90,11 @@ static inline size_t list_entries(u64 *offset, const char *prefix, fs_dir_list_h
 }
 
 static inline string_slice first_path_component(const char *path){
+    if (!strlen(path)) return (string_slice){};
     const char *next = seek_to(path, '/');
-    return (string_slice){ .data = (char*)path, .length = next - path - (*(next-1) == '/' ? 1 : 0)};
+    string_slice slice = (string_slice){ .data = (char*)path, .length = next - path - (*(next-1) == '/' ? 1 : 0)};
+    if (!slice.length) return (string_slice){};
+    return slice;
 }
 
 static inline FS_RESULT vfs_open_aliased(module_file *mfile, path_resolution resolution, file *fd){
