@@ -19,9 +19,7 @@ int32_t cring_push(CRingBuffer* rb, const void* item) {
     uint8_t* base = (uint8_t*)rb->buffer;
     void* dest = base + (rb->head * rb->element_size);
 
-    for (uint64_t i = 0; i < rb->element_size; ++i) {
-        ((uint8_t*)dest)[i] = ((const uint8_t*)item)[i];
-    }
+    memcpy(dest, item, rb->element_size);
 
     rb->head = (rb->head + 1) % rb->capacity;
     rb->full = (rb->head == rb->tail);

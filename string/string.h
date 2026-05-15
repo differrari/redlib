@@ -20,6 +20,20 @@ typedef struct string_list {
     uint32_t count;
     char array[];
 } string_list;
+
+static inline bool is_whitespace(char c){
+    return 
+    c == '\t' ||
+    c == '\n' ||
+    c ==  ' ' ||
+    c == '\r' ||
+    false;
+}
+
+static inline bool is_printable(char c){
+    return (c >= ' ' && c <= '~') || (c >= '\t' && c <= '\r');
+}
+
 static inline bool is_alpha(char c) {
     return ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z'));
 }

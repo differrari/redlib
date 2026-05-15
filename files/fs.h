@@ -1,6 +1,9 @@
 #pragma once
 
 #include "types.h"
+#include "data/struct/hashmap.h"
+#include "string/string.h"
+#include "data_signatures.h"
 
 #define FD_INVALID 0
 #define FD_IN 1
@@ -15,9 +18,10 @@ typedef enum {
 } cursor_sync;
 
 typedef struct file {
-    uint64_t id;
+    u64 id;
     size_t size;
-    uint64_t cursor;
+    u64 cursor;
+    data_signature data_type;
     // cursor_sync sync_type;
 } file;
 
@@ -33,3 +37,13 @@ typedef enum FS_RESULT {
     FS_RESULT_SUCCESS,
     FS_RESULT_NOTFOUND,
 } FS_RESULT;
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+static inline uint64_t reserve_fd_gid(const char *path){
+    return hash_map_fnv1a64(path, strlen(path));
+}
+#ifdef __cplusplus
+}
+#endif

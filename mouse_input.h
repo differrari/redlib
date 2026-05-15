@@ -1,7 +1,7 @@
 #pragma once
 
 #include "types.h"
-#include "ui/graphic_types.h"
+#include "graphic_types.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -13,6 +13,8 @@ typedef struct {
     int8_t y;
     int8_t scroll;
 } mouse_input;
+
+enum { LMB, RMB, MMB };
 
 typedef struct {
     mouse_input raw;

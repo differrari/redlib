@@ -1,7 +1,7 @@
 #pragma once
 
 #include "types.h"
-#include "ui/graphic_types.h"
+#include "graphic_types.h"
 #include "keyboard_input.h"
 #include "mouse_input.h"
 #include "string/string.h"
@@ -10,6 +10,7 @@
 #include "files/fs.h"
 #include "net/socket_types.h"
 #include "files/system_module.h"
+#include "signals/signal_types.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -33,13 +34,14 @@ extern void get_mouse_status(mouse_data *in);
 
 extern void msleep(uint64_t time);
 extern __attribute__((noreturn)) void halt(int32_t exit_code);
-extern int32_t exec(const char* prog_name, int argc, const char* argv[], uint32_t mode);
+extern int32_t exec(const char* prog_name, int argc, const char* argv[], u32 mode);
 extern int32_t kill_process(uint16_t pid);
 
 extern void request_draw_ctx(draw_ctx*);
+static inline void request_app_ctx(draw_ctx* ctx){ request_draw_ctx(ctx); }
 extern void begin_drawing(draw_ctx *);
 extern void commit_draw_ctx(draw_ctx*);
-extern void resize_draw_ctx(draw_ctx*, uint32_t width, uint32_t height);
+extern void resize_draw_ctx(draw_ctx*, u32 width, u32 height);
 extern void destroy_draw_ctx(draw_ctx *ctx);
 
 extern bool should_close_ctx();
@@ -70,6 +72,9 @@ extern bool truncatef(file*, size_t);
 // extern bool load_fsmodule(system_module *mod);
 // extern bool unload_fsmodule();
 
+extern bool send_signal(signal_types type, u16 proc_id);
+extern bool handle_signal(signal_types type, signal_handler handler);
+
 void seek(file *descriptor, int64_t offset, SEEK_TYPE type);
 void* realloc_sized(void* old_ptr, size_t old_size, size_t new_size);
 
@@ -80,8 +85,11 @@ size_t dir_list(const char *path, void *buf, size_t size, u64 *offset);
 int print(const char *fmt, ...);
 
 int system(const char *command);
+int system_focus(const char *command, u32 focus_mode);
 
 void in_case_of_js_break_glass();
+
+void register_behavior();
 
 static inline void yield(){
     msleep(0);

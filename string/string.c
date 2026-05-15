@@ -4,7 +4,7 @@
 #include "slice.h"
 #include "math/math.h"
 
-#define TRUNC_MARKER "[…]"
+#define TRUNC_MARKER "[...]"
 
 //TODO move these in a dedicated helper file
 static inline void append_char(char **p, size_t *rem, char c, int *truncated) {
@@ -1135,9 +1135,11 @@ uint64_t parse_hex_u64(const char* str, size_t size){
 }
 
 uint64_t parse_int_u64(const char* str, size_t size){
+    if (!str) return 0;
     uint64_t result = 0;
-    for (uint32_t i = 0; i < size; i++){
+    for (u32 i = 0; i < size && str[i]; i++){
         char c = str[i];
+        if (!c || !is_digit(c)) break;
         uint8_t digit = 0;
         if (c >= '0' && c <= '9') digit = c - '0';
         else break;
@@ -1146,10 +1148,10 @@ uint64_t parse_int_u64(const char* str, size_t size){
     return result;
 }
 
-float parse_float(char *input,size_t length){//TODO: can probably be improved
+float parse_float(char *input,size_t length){
     char *p = (char*)seek_to(input, '.');
     size_t l1 = p-input;
-    int64_t i = parse_int64(input, l1-1);
+    int64_t i = parse_int64(input, l1-(*p != 0));
     size_t l2 = length-l1;
     int64_t f = parse_int64(p, l2);
     int s = (i == 0 && *input == '-') ? -1 : sign(i);

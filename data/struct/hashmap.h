@@ -34,7 +34,7 @@ typedef struct hash_map {
     uint64_t resize_threshold;
 } hash_map_t;
 
-typedef hash_map_t chashmap_t;
+typedef hash_map_t hash_map_t;
 
 hash_map_t* hash_map_create(uint64_t initial_capacity);
 hash_map_t* hash_map_create_alloc(uint64_t initial_capacity, void* (*alloc)(size_t size),void (*mfree)(void* ptr, size_t size));
@@ -43,8 +43,12 @@ void hash_map_set_allocator(hash_map_t* map, void* (*alloc)(size_t), void (*deal
 void hash_map_set_hash(hash_map_t* map, chashmap_hash_fn hash_fn, chashmap_keyeq_fn keyeq_fn);
 void hash_map_set_value_dispose(hash_map_t* map, void (*dispose_fn)(void*));
 int hash_map_put(hash_map_t* map, const void* key, uint64_t key_len, void* value);
+int hash_map_put_dictionary(hash_map_t* map, const char* key, void* value);
 void* hash_map_get(const hash_map_t* map, const void* key, uint64_t key_len);
-int hash_map_remove(hash_map_t* map, const void* key, uint64_t key_len, void** out_value);
+
+void* hash_map_get_dictionary(const hash_map_t *map, const char *str);
+bool hash_map_remove(hash_map_t* map, const void* key, uint64_t key_len, void** out_value);
+void hash_map_empty(hash_map_t* map);
 uint64_t hash_map_size(const hash_map_t* map);
 uint64_t hash_map_capacity(const hash_map_t* map);
 void hash_map_for_each(const hash_map_t* map, void (*func)(void* key, uint64_t key_len, void* value));

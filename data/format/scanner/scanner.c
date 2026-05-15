@@ -40,8 +40,6 @@ void scan_skip_ws(Scanner *s, bool skip_nl) {
     }
 }
 
-#include "syscalls/syscalls.h"
-
 string_slice scan_to(Scanner *s, char seek){
     uint32_t initial = s->pos;
     while (!scan_eof(s)) {

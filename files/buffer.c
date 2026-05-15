@@ -15,6 +15,7 @@ buffer buffer_create(size_t size, buffer_options options){
 }
 
 size_t buffer_write(buffer *buf, char* fmt, ...){
+    if (!buf || buf->options & buffer_read_only) return 0;
     __attribute__((aligned(16))) va_list args;
     va_start(args, fmt); 
     size_t n = buffer_write_va(buf, fmt, args);
@@ -23,12 +24,14 @@ size_t buffer_write(buffer *buf, char* fmt, ...){
 }
 
 void buffer_resize(buffer *buf, size_t amount){
+    if (!buf || buf->options & buffer_read_only || !(buf->options & buffer_can_grow)) return;
     size_t new_size = amount ? buf->limit + amount : buf->limit * 2;
     buf->buffer = reallocate(buf->buffer, new_size);
     buf->limit = new_size;
 }
 
 size_t buffer_write_va(buffer *buf, char* fmt, va_list args){
+    if (!buf || buf->options & buffer_read_only) return 0;
     if (strlen(fmt) > buf->limit-buf->cursor-256){
         if (buf->options & buffer_can_grow){
             buffer_resize(buf,strlen(fmt)*2);
@@ -53,11 +56,13 @@ size_t buffer_write_va(buffer *buf, char* fmt, va_list args){
 }
 
 size_t buffer_write_const(buffer *buf, const char *lit){
+    if (!buf || buf->options & buffer_read_only) return 0;
     size_t lit_size = strlen(lit);
     return buffer_write_lim(buf, lit, lit_size);
 }
 
 size_t buffer_write_lim(buffer *buf, const char *lit, size_t lit_size){
+    if (!buf || buf->options & buffer_read_only) return 0;
     if ((int64_t)buf->limit - buf->cursor < lit_size){
         if (buf->options & buffer_can_grow){
             buffer_resize(buf,lit_size*2);
@@ -78,9 +83,8 @@ size_t buffer_write_lim(buffer *buf, const char *lit, size_t lit_size){
     return lit_size;
 }
 
-#include "syscalls/syscalls.h"
-
 size_t buffer_write_to(buffer *buf, const char *lit, size_t size, uintptr_t cursor){
+    if (!buf || buf->options & buffer_read_only) return 0;
     if (cursor >= buf->cursor) cursor = buf->cursor;
     if ((int64_t)buf->limit - buf->cursor < size){
         if (buf->options & buffer_can_grow){
@@ -100,18 +104,28 @@ size_t buffer_write_to(buffer *buf, const char *lit, size_t size, uintptr_t curs
     return size;
 }
 
-size_t buffer_delete(buffer *buf, size_t amount){
+size_t buffer_delete(buffer *buf, uptr cursor, size_t amount){
     if (!buf || !amount) return 0;
-    amount = min(amount, buf->cursor);
-    for (uptr c = buf->cursor; c < buf->buffer_size; c++)
+    if (buf->options & buffer_read_only) return 0;
+    amount = min(amount, cursor);
+    for (uptr c = cursor; c < buf->buffer_size; c++)
         ((char*)buf->buffer)[c - amount] = ((char*)buf->buffer)[c];
     buf->buffer_size -= amount;
-    buf->cursor -= amount;
+    if (buf->cursor >= cursor)
+        buf->cursor -= amount;
     return amount;
 }
 
 size_t buffer_write_space(buffer *buf){
+    if (buf->options & buffer_read_only) return 0;
     return buffer_write_lim(buf, " ", 1);
+}
+
+void buffer_wipe(buffer *buf){
+    if (!buf || !buf->buffer || buf->options & buffer_read_only) return;
+    memset(buf->buffer, 0, buf->limit);
+    buf->buffer_size = 0;
+    buf->cursor = 0;
 }
 
 void buffer_destroy(buffer *buf){

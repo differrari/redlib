@@ -63,7 +63,7 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
     uint32_t next_index = (kbd_event_write + 1) % INPUT_BUFFER_CAPACITY;
 
     event_queue[kbd_event_write] = (kbd_event){
-        .type = action == GLFW_PRESS ? KEY_PRESS : KEY_RELEASE,
+        .type = action == GLFW_PRESS || action == GLFW_REPEAT ? KEY_PRESS : KEY_RELEASE,
         .key = glfw_to_redacted[key],
         .modifier = mods
     };
@@ -121,10 +121,11 @@ bool read_event(kbd_event *out){
 }
 
 void get_mouse_status(mouse_data *in){
-    in->raw.scroll = (u8)(scroll * 127);
+    in->raw.scroll = (u8)scroll;
+    scroll = 0;
     in->raw.buttons = 0;
     for (int i = 0; i < 3; i++)
-        in->raw.buttons |= (glfwGetMouseButton(_window, GLFW_MOUSE_BUTTON_LEFT) & 1) << i;
+        in->raw.buttons |= (glfwGetMouseButton(_window, i) & 1) << i;
     in->raw.x = x_pos - old_x;
     in->raw.y = y_pos - old_y;
     in->position.x = x_pos;

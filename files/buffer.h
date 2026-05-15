@@ -6,12 +6,14 @@ extern "C" {
 
 #include "types.h"
 #include "args.h"
+#include "data_signatures.h"
 
 typedef enum {
-    buffer_opt_none = 0,
-    buffer_can_grow = 1 << 0,//Once full, expands
-    buffer_circular = 1 << 1,//Once full, loops
-    buffer_static = 1 << 2,//Always read/write starting from 0, ignoring cursor
+    buffer_opt_none =   0,
+    buffer_can_grow =   1 << 0,//Once full, expands 
+    buffer_circular =   1 << 1,//Once full, loops 
+    buffer_static =     1 << 2,//Always read/write starting from 0, ignoring cursor, 
+    buffer_read_only =  1 << 3,//Forbid writes 
 } buffer_options;
 
 typedef struct {
@@ -20,6 +22,7 @@ typedef struct {
     size_t limit;
     buffer_options options;
     uintptr_t cursor;
+    data_signature data_type;
 } buffer;
 
 buffer buffer_create(size_t size, buffer_options options);
@@ -30,8 +33,15 @@ size_t buffer_write_lim(buffer *buf, const char *lit, size_t size);
 size_t buffer_write_to(buffer *buf, const char *lit, size_t size, uintptr_t cursor);
 size_t buffer_write_space(buffer *buf);
 size_t buffer_read(buffer *buf, void *into, size_t size, uintptr_t cursor);
-size_t buffer_delete(buffer *buf, size_t amount);
+size_t buffer_delete(buffer *buf, uptr cursor, size_t amount);
+void buffer_wipe(buffer *buf);
 void buffer_destroy(buffer *buf);
+
+#include "string/slice.h"
+
+static inline string_slice slice_from_buffer(buffer *buf){
+    return (string_slice){ .data = (char*)buf->buffer, .length = buf->buffer_size };
+}
 
 bool buffer_test();
 

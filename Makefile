@@ -6,6 +6,12 @@ CPPFLAGS := -I.
 CFLAGS   += $(CFLAGS_BASE) $(CPPFLAGS) $(ADDFLAGS)
 CXXFLAGS := $(CXXFLAGS_BASE) $(CPPFLAGS)
 
+UNAME_S := $(shell uname -s)
+
+ifeq ($(UNAME_S),Darwin)
+	CPPFLAGS += -I/opt/homebrew/include
+endif 
+
 CLEAN_OBJS := $(shell find . -name "*.o")
 CLEAN_DEPS := $(shell find . -name "*.d")
 C_SRC   := $(shell find . -name "*.c")
@@ -41,7 +47,7 @@ $(BUILD_DIR)/%.o: %.cpp
 	$(VCXX) $(CXXFLAGS) $(SH_FLAGS) -c -MMD -MP $< -o $@
 	
 cross: 
-	$(MAKE) ARCH= SH_FLAGS=-DCROSS BUILD_DIR=./.cbuild ADDFLAGS=-std=c99\ -I../raylib/src TARGET=clibshared.a
+	$(MAKE) ARCH= SH_FLAGS=-DCROSS BUILD_DIR=./.cbuild ADDFLAGS=-std=c99 TARGET=clibshared.a
 	
 kern:
 	$(MAKE) SH_FLAGS=-DKERNEL BUILD_DIR=./.kbuild TARGET=klibshared.a

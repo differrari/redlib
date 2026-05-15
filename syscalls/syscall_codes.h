@@ -44,9 +44,13 @@
 #define FILE_STAT_CODE              66
 #define FILE_TRNC_CODE              67
 
+
 // #define LOAD_FSMODULE_CODE          67
 // #define UNLOAD_FSMODULE_CODE        68
 
 #define DIR_LIST_CODE               70
+
+#define SIGNAL_SEND_CODE            80
+#define SIGNAL_HANDLER_CODE         81
 
 #define IN_CASE_OF_JS_CODE          99

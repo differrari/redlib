@@ -3,7 +3,7 @@
 
 #ifndef CROSS
 
-void traverse_directory(const char *directory, bool recursive, dir_traverse func){//TODO: not yet capable of getting all data
+void traverse_directory(const char *directory, bool recursive, dir_traverse func){
     size_t listsize = 0x1000;
     void *listptr = zalloc(listsize);
     uint64_t offset = 0;
@@ -33,7 +33,8 @@ void traverse_directory(const char *directory, bool recursive, dir_traverse func
 }
 
 char* get_current_dir(){
-    print("[FS implementation error] Current directory not implemented for [REDACTED]");
+    if (current_shell && current_shell->common_ctx)
+        return current_shell->common_ctx->current_directory.data;
     return 0;
 }
 
@@ -83,4 +84,35 @@ void read_lines(char *file, void *ctx, void (*handle_line)(void *ctx, string_sli
         point = new_point;
     } while(point);
     
+}
+
+void replace_directory(shell_ctx *ctx, string s){
+    string_free(ctx->current_directory);
+    ctx->current_directory = s;
+}
+
+void append_directory(shell_ctx *ctx, string s){
+    if (s.length && *s.data == '/' && ctx->current_directory.length && ctx->current_directory.data[ctx->current_directory.length-1] == '/') ctx->current_directory.length--;
+    replace_directory(ctx, string_concat(ctx->current_directory, s));
+}
+
+void change_current_dir(const char *path){
+    if (!current_shell || !current_shell->common_ctx) return;
+    if (strlen(path) && *path == '/'){
+        replace_directory(current_shell->common_ctx, string_from_literal(path));
+        return;
+    }
+    if (!strlen(path) || *path == '~'){
+        replace_directory(current_shell->common_ctx, string_from_literal("/home"));
+        if (strlen(path) > 1){
+            path++;
+            string tmp = string_from_literal(path);
+            append_directory(current_shell->common_ctx, tmp);
+            string_free(tmp);
+        }
+        return;
+    }
+    string tmp = string_format("/%s",path);
+    append_directory(current_shell->common_ctx, tmp);
+    string_free(tmp);
 }

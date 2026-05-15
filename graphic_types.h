@@ -38,6 +38,18 @@ typedef struct {
     gpu_size size;
 } gpu_rect;
 
+#define MAX_DIRTY_RECTS 64
+
+typedef struct draw_ctx {
+    gpu_rect dirty_rects[MAX_DIRTY_RECTS];
+    uint32_t* fb;
+    uint32_t stride;
+    uint32_t width;
+    uint32_t height;
+    uint32_t dirty_count;
+    bool full_redraw;
+} draw_ctx;
+
 #ifdef __cplusplus
 }
 #endif

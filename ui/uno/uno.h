@@ -1,7 +1,7 @@
 #pragma once
 
 #include "types.h"
-#include "../graphic_types.h"
+#include "graphic_types.h"
 #include "../draw/draw.h"
 
 typedef enum HorizontalAlignment {
