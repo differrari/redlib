@@ -1,10 +1,39 @@
 #include "memory.h"
 
 int memcmp(const void *s1, const void *s2, size_t count) {
-    const unsigned char *a = s1;
-    const unsigned char *b = s2;
-    for (size_t i = 0; i < count; i++) {
-        if (a[i] != b[i]) return a[i] - b[i];
+    const uint8_t *a = s1;
+    const uint8_t *b = s2;
+
+    if ((((uintptr_t)a ^ (uintptr_t)b) & 7) == 0) {
+        while (((uintptr_t)a & 7) && count > 0) {
+            if (*a != *b) return *a - *b;
+            a++;
+            b++;
+            count--;
+        }
+
+        const uint64_t *a64 = (const uint64_t*)a;
+        const uint64_t *b64 = (const uint64_t*)b;
+        while (count >= 8) {
+            uint64_t va = *a64++;
+            uint64_t vb = *b64++;
+            if (va != vb) {
+                a = (const uint8_t*)(a64 - 1);
+                b = (const uint8_t*)(b64 - 1);
+                for (size_t i = 0; i < 8; i++) if (a[i] != b[i]) return a[i] - b[i];
+            }
+            count -= 8;
+        }
+
+        a = (const uint8_t*)a64;
+        b = (const uint8_t*)b64;
+    }
+
+    while (count > 0) {
+        if (*a != *b) return *a - *b;
+        a++;
+        b++;
+        count--;
     }
     return 0;
 }
@@ -15,7 +44,7 @@ void* memset32(void* dest, uint32_t val, size_t count) {
     while (((uintptr_t)d8 & 7) && count > 0) {
         *d8++ = (uint8_t)(val & 0xFF);
         count--;
-        val = (val << 24) | (val >> 8);
+        val = (val >> 8) | (val << 24);
     }
 
     uint64_t pattern = ((uint64_t)val << 32) | val;
@@ -50,13 +79,11 @@ void* memset32(void* dest, uint32_t val, size_t count) {
         d8 += 4;
         count -= 4;
     }
-    if (count >= 2) {
-        *((uint16_t *)d8) = (uint16_t)val;
-        d8 += 2;
-        count -= 2;
+    while (count > 0) {
+        *d8++ = (uint8_t)(val & 0xFF);
+        val = (val >> 8) | (val << 24);
+        count--;
     }
-    if (count == 1)
-        *d8 = val & 0xFF;
 
     return dest;
 }
@@ -103,18 +130,18 @@ void* memset(void* dest, int byte, size_t count) {
     return dest;
 }
 
-void* memcpy(void *restrict dest, const void *restrict src, size_t count) {
-    uint8_t *d8 = dest;
-    const uint8_t *s8 = src;
-
+void* memcpy(void *dest, const void *src, size_t count) { //TODO in memmove call memcpy only when source and destination do not overlap (restrict)
     if (count == 0 || dest == src) return dest;
-    if ((((uintptr_t)d8 ^ (uintptr_t)s8) & 7) == 0) {
-        while (((uintptr_t)d8 & 7) && count > 0) {
-            *d8++ = *s8++;
-            count--;
-        }
+    uint8_t *d8 = (uint8_t*)dest;
+    const uint8_t *s8 = (const uint8_t*)src;
 
-        uint64_t *d64 = (uint64_t *)d8;
+    while (((uintptr_t)d8 & 7) && count > 0) {
+        *d8++ = *s8++;
+        count--;
+    }
+
+    uint64_t *d64 = (uint64_t *)d8;
+    if (((uintptr_t)s8 & 7) == 0) {
         const uint64_t *s64 = (const uint64_t *)s8;
         while (count >= 128) {
             *d64++ = *s64++;
@@ -150,6 +177,21 @@ void* memcpy(void *restrict dest, const void *restrict src, size_t count) {
         }
         d8 = (uint8_t *)d64;
         s8 = (const uint8_t *)s64;
+    } else if (count >= 16) {
+        size_t shift = ((uintptr_t)s8 & 7) * 8;
+        size_t rshift = 64 - shift;
+        const uint64_t *s64 = (const uint64_t*)((uintptr_t)s8 & ~(uintptr_t)7);
+        uint64_t lo = *s64++;
+
+        while (count >= 16 - (shift >> 3)) {
+            uint64_t hi = *s64++;
+            *d64++ = (lo >> shift) | (hi << rshift);
+            lo = hi;
+            s8 += 8;
+            count -= 8;
+        }
+
+        d8 = (uint8_t *)d64;
     }
 
     while (count >= 16) {
@@ -181,31 +223,55 @@ void memreverse(void *ptr, size_t n) {
 
     uint8_t *l = (uint8_t*)ptr;
     uint8_t *r = l + n - 1;
+    size_t left = (uintptr_t)l & 7;
+    size_t right = (uintptr_t)(r+1) & 7;
+    size_t align_left = (8 - left) & 7;
 
-    while (((uintptr_t)l & 7) &&l < r) {
-        uint8_t t = *l;
-        *l++ = *r;
-        *r-- = t;
-    }
+    if (right == align_left) {
+        while (align_left-- && l < r) {
+            uint8_t t = *l;
+            *l++ = *r;
+            *r-- = t;
+        }
 
-    while (((uintptr_t)r & 7) && l < r) {
-        uint8_t t = *l;
-        *l++ = *r;
-        *r-- = t;
-    }
+        while ((size_t)(r - l + 1) >= 16) {
+            uint64_t *pl = (uint64_t*)l;
+            uint64_t *pr = (uint64_t*)(r-7);
 
-    while ((size_t)(r - l + 1) >= 16) {
-        uint64_t *pl = (uint64_t*)l;
-        uint64_t *pr = (uint64_t*)(r-7);
+            uint64_t vl = *pl;
+            uint64_t vr = *pr;
 
-        uint64_t vl = *pl;
-        uint64_t vr = *pr;
+            *pl = bswap64(vr);
+            *pr = bswap64(vl);
 
-        *pl = bswap64(vr);
-        *pr = bswap64(vl);
+            l += 8;
+            r -= 8;
+        }
+    } else {
+        while (align_left-- && l< r) {
+            uint8_t t = *l;
+            *l++ = *r;
+            *r-- = t;
+        }
 
-        l += 8;
-        r -= 8;
+        while ((size_t)(r - l + 1) >= 16) {
+            uint64_t vl = *(uint64_t*)l;
+            uint64_t vr = (uint64_t)r[0] | ((uint64_t)r[-1] << 8) | ((uint64_t)r[-2] << 16) | ((uint64_t)r[-3] << 24) | ((uint64_t)r[-4] << 32) | ((uint64_t)r[-5] << 40) | ((uint64_t)r[-6] << 48) | ((uint64_t)r[-7] << 56);
+            uint64_t out = bswap64(vl);
+
+            *(uint64_t*)l = vr;
+            r[-7] = (uint8_t)out;
+            r[-6] = (uint8_t)(out >> 8);
+            r[-5] = (uint8_t)(out >> 16);
+            r[-4] = (uint8_t)(out >> 24);
+            r[-3] = (uint8_t)(out >> 32);
+            r[-2] = (uint8_t)(out >> 40);
+            r[-1] = (uint8_t)(out >> 48);
+            r[0] = (uint8_t)(out >> 56);
+
+            l += 8;
+            r -= 8;
+        }
     }
 
     while (l < r) {
@@ -214,6 +280,7 @@ void memreverse(void *ptr, size_t n) {
         *r-- = t;
     }
 }
+
 void* memmove(void *dest, const void *src, size_t count) {
     if (dest == src || count == 0) return dest;
 
@@ -226,74 +293,63 @@ void* memmove(void *dest, const void *src, size_t count) {
     d8 += count;
     s8 += count;
 
-    if ((((uintptr_t)d8 ^(uintptr_t)s8) & 7) != 0) {
-        while (count >= 16) {
-            *--d8 = *--s8;
-            *--d8 = *--s8;
-            *--d8 = *--s8;
-            *--d8 = *--s8;
-            *--d8 = *--s8;
-            *--d8 = *--s8;
-            *--d8 = *--s8;
-            *--d8 = *--s8;
-            *--d8 = *--s8;
-            *--d8 = *--s8;
-            *--d8 = *--s8;
-            *--d8 = *--s8;
-            *--d8 = *--s8;
-            *--d8 = *--s8;
-            *--d8 = *--s8;
-            *--d8 = *--s8;
-            count -= 16;
-        }
-
-        while (count--) *--d8 = *--s8;
-        return dest;
-    }
-
-    while (count > 0 && ((uintptr_t)d8 & 7)) {
+    while (((uintptr_t)d8 & 7) && count > 0) {
         *--d8 = *--s8;
         count--;
     }
 
     uint64_t *d64 = (uint64_t *)d8;
-    const uint64_t *s64 = (const uint64_t *)s8;
+    if (((uintptr_t)s8 & 7) == 0) {
+        const uint64_t *s64 = (const uint64_t *)s8;
+        while (count >= 128) {
+            *--d64 = *--s64;
+            *--d64 = *--s64;
+            *--d64 = *--s64;
+            *--d64 = *--s64;
+            *--d64 = *--s64;
+            *--d64 = *--s64;
+            *--d64 = *--s64;
+            *--d64 = *--s64;
+            *--d64 = *--s64;
+            *--d64 = *--s64;
+            *--d64 = *--s64;
+            *--d64 = *--s64;
+            *--d64 = *--s64;
+            *--d64 = *--s64;
+            *--d64 = *--s64;
+            *--d64 = *--s64;
+            count -= 128;
+        }
 
-    while (count >= 128) {
-        *--d64 = *--s64;
-        *--d64 = *--s64;
-        *--d64 = *--s64;
-        *--d64 = *--s64;
-        *--d64 = *--s64;
-        *--d64 = *--s64;
-        *--d64 = *--s64;
-        *--d64 = *--s64;
-        *--d64 = *--s64;
-        *--d64 = *--s64;
-        *--d64 = *--s64;
-        *--d64 = *--s64;
-        *--d64 = *--s64;
-        *--d64 = *--s64;
-        *--d64 = *--s64;
-        *--d64 = *--s64;
-        count -= 128;
+        while (count >= 32) {
+            *--d64 = *--s64;
+            *--d64 = *--s64;
+            *--d64 = *--s64;
+            *--d64 = *--s64;
+            count -= 32;
+        }
+
+        while (count >= 8) {
+            *--d64 = *--s64;
+            count -= 8;
+        }
+
+        d8 = (uint8_t *)d64;
+        s8 = (const uint8_t *)s64;
+    } else {
+        while (count >= 8) {
+            const uint8_t *p = s8 - 8;
+            size_t shift = ((uintptr_t)p & 7) * 8;
+            size_t rshift = 64 - shift;
+            const uint64_t *s64 = (const uint64_t*)((uintptr_t)p & ~(uintptr_t)7);
+            uint64_t v = (s64[0] >> shift) | (s64[1] << rshift);
+            *--d64 = v;
+            s8 -= 8;
+            count -= 8;
+        }
+
+        d8 = (uint8_t*)d64;
     }
-
-    while (count >= 32) {
-        *--d64 = *--s64;
-        *--d64 = *--s64;
-        *--d64 = *--s64;
-        *--d64 = *--s64;
-        count -= 32;
-    }
-
-    while (count >= 8) {
-        *--d64 = *--s64;
-        count -= 8;
-    }
-
-    d8 = (uint8_t *)d64;
-    s8 = (const uint8_t *)s64;
 
     while (count--) *--d8 = *--s8;
     return dest;
@@ -307,7 +363,7 @@ void* memmem(const void* haystack, size_t haystack_len, const void* needle, size
 	const uint8_t* h = haystack;
 	const uint8_t* n = needle;
 
-	if (haystack_len == 1) {
+	if (needle_len == 1) {
         uint8_t c = n[0];
         for (size_t i = 0; i < haystack_len; i++) if (h[i] == c) return (void*)(h + i);
         return 0;
