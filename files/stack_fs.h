@@ -146,7 +146,7 @@ static inline size_t list_reverse_entries(u64 *offset, fs_dir_list_helper *helpe
     return dir_buf_size(helper);
 }
 
-size_t list_argument(string_slice prefix, string_slice slice, fs_dir_list_helper *helper){
+static size_t list_argument(string_slice prefix, string_slice slice, fs_dir_list_helper *helper){
     if (slice_lit_match(slice, ":id", true)){
         size_t count = stack_count(data);
         for (u64 i = 0; i < count; i++){//TODO: i should start at offset, but offset is no longer just for files
@@ -167,7 +167,7 @@ size_t list_argument(string_slice prefix, string_slice slice, fs_dir_list_helper
     return 0;
 }
 
-bool argument_match(const char *value, const char *temp){
+static bool argument_match(const char *value, const char *temp){
     if (strstart(temp, ":sort") == 5){
         return strcmp(value, "latest") == 0;
     }
