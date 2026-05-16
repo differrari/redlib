@@ -9,6 +9,7 @@ static char log_buf[1024];
 int print(const char *fmt, ...){
     __attribute__((aligned(16))) va_list args;
     va_start(args, fmt); 
+    memset(log_buf, 0, 1024);
     size_t n = string_format_va_buf(fmt, log_buf, sizeof(log_buf), args);
     va_end(args);
     if (n >= sizeof(log_buf)) log_buf[sizeof(log_buf)-1] = '\0';
@@ -16,23 +17,8 @@ int print(const char *fmt, ...){
 #ifndef CROSS
     file fd2 = { .id = 2 };
     writef(&fd2, log_buf, strlen(log_buf));
+    writef(&fd2, "\r\n", 2);
     current_shell_print(log_buf);
-#endif
-    return 0;
-}
-
-int printf(const char *fmt, ...){
-    __attribute__((aligned(16))) va_list args;
-    va_start(args, fmt);
-    char li[256]; 
-    size_t n = string_format_va_buf(fmt, li, sizeof(li), args);
-    va_end(args);
-    if (n >= sizeof(li)) li[sizeof(li)-1] = '\0';
-    printl(li);
-#ifndef CROSS
-    file fd2 = { .id = 2 };
-    writef(&fd2, li, strlen(li));
-    current_shell_print(li);
 #endif
     return 0;
 }

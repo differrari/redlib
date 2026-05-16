@@ -59,7 +59,7 @@ void* load_image(char *path, image_info *info, IMAGE_FORMATS format){
     void *img_file = read_full_file(path, &file_size);
     image_info img_info;
     if (!img_file || !file_size){
-        printf("Failed to open image");
+        print("Failed to open image");
         *info = (image_info){0, 0};
         return 0;
     }
@@ -73,7 +73,7 @@ void* load_image(char *path, image_info *info, IMAGE_FORMATS format){
         //Unknown can be handled by reading magic bytes
     }
     if (!img_info.width || !img_info.height){
-        printf("Wrong image size %i",img_info.width,img_info.height);
+        print("Wrong image size %i",img_info.width,img_info.height);
         *info = (image_info){0, 0};
         return 0;
     }
@@ -99,7 +99,7 @@ void* load_image_resized(char *path, image_info *info, IMAGE_FORMATS format, uin
     info->height = new_height;
     void *new_img = malloc(new_width * new_height * sizeof(uint32_t));
     if (new_width < old_info.width || new_height < old_info.height){
-        printf("[IMG warning] image downscaling is not properly implemented or tested. Use at your own risk");
+        print("[IMG warning] image downscaling is not properly implemented or tested. Use at your own risk");
     }
     rescale_image(old_info.width, old_info.height, new_width, new_height, old_img, new_img);
     free_sized(old_img, old_info.width * old_info.height * sizeof(uint32_t));

@@ -25,13 +25,13 @@ typedef struct png_ihdr {
 image_info png_get_info(void * file, size_t size){
     uint64_t header = *(uint64_t*)file;
     if (header != 0xA1A0A0D474E5089){
-        printf("Wrong PNG header %x",header);
+        print("Wrong PNG header %x",header);
         return (image_info){0,0};
     }
     uintptr_t p = (uintptr_t)file + sizeof(uint64_t);
     png_chunk_hdr *hdr = (png_chunk_hdr*)p;
     if (strstart_case(hdr->type, "IHDR",true) != 4){
-        printf("Couldn't find png IHDR");
+        print("Couldn't find png IHDR");
         return (image_info){0,0};
     }
     p += sizeof(png_chunk_hdr);
@@ -128,10 +128,10 @@ uint16_t png_decode_bpp(png_ihdr *ihdr){
 void png_read_image(void *file, size_t size, uint32_t *buf){
     uint64_t header = *(uint64_t*)file;
     if (header != 0xA1A0A0D474E5089){
-        printf("Wrong PNG header %x",header);
+        print("Wrong PNG header %x",header);
         return;
     }
-    printf("File size %x",size);
+    print("File size %x",size);
     uintptr_t p = (uintptr_t)file + sizeof(uint64_t);
     png_chunk_hdr *hdr;
     image_info info = {};
@@ -150,7 +150,7 @@ void png_read_image(void *file, size_t size, uint32_t *buf){
         }
         if (strstart_case(hdr->type, "IDAT",true) == 4){
             if (info.width == 0 || info.height == 0){
-                printf("Wrong image size");
+                print("Wrong image size");
                 return;
             }
             if (!out_buf){ 
@@ -178,12 +178,12 @@ void* load_png(char *path, image_info *info){
     readf(&descriptor, file_img, descriptor.size);
     if (res != FS_RESULT_SUCCESS){ 
         closef(&descriptor);
-        printf("Couldn't open image");
+        print("Couldn't open image");
         return 0;
     }
     closef(&descriptor);
     *info = png_get_info(file_img, descriptor.size);
-    printf("info %ix%i",info->width,info->height);
+    print("info %ix%i",info->width,info->height);
     img = malloc(info->width*info->height*system_bpp);
     png_read_image(file_img, descriptor.size, img);
     return img;

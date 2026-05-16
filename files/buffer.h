@@ -26,6 +26,14 @@ typedef struct {
 } buffer;
 
 buffer buffer_create(size_t size, buffer_options options);
+static inline void buffer_map_value(buffer *buf, void* value, size_t size, data_signature signature){
+    if (!buf || !value || !size) return;
+    buf->buffer = value;
+    buf->buffer_size = size;
+    buf->limit = size;
+    buf->options = buffer_static;
+    buf->data_type = signature;
+}
 size_t buffer_write(buffer *buf, char* fmt, ...);
 size_t buffer_write_va(buffer *buf, char* fmt, va_list args);
 size_t buffer_write_const(buffer *buf, const char *lit);

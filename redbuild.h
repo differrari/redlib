@@ -234,14 +234,14 @@ void prepare_output(){
         case package_red: {
             //TODO: %s feel dangerous here
             string d = string_format("mkdir -p %s/%s.red",cwd,ctx->output_name);
-            printf("Making %s/%s.red",cwd,ctx->output_name);
+            print("Making %s/%s.red",cwd,ctx->output_name);
             system(d.data);
             //TODO: create copy recursive functions for copying directories (ffs)
             string cmd1 = string_format("cp -rf package.info %s.red/package.info",ctx->output_name);
             string cmd2 = string_format("cp -rf resources %s.red/resources",ctx->output_name);
-            printf("%s",cmd1.data);
+            print("%s",cmd1.data);
             system(cmd1.data);
-            printf("%s",cmd2.data);
+            print("%s",cmd2.data);
             system(cmd2.data);
             string_free(d);
             string_free(cmd2);
@@ -313,7 +313,7 @@ void destroy_module(redb_ctx *old_ctx){
 }
 
 void new_module(const char *name){
-    printf("Compiling target %s",name);
+    print("Compiling target %s",name);
     ctx = (redb_ctx*)zalloc(sizeof(redb_ctx));
     
     ctx->compile_list = linked_list_create();
@@ -331,7 +331,7 @@ void new_module(const char *name){
 
 bool source(const char *name){
     redbuild_debug("Adding %s",name);
-    if (!ctx->compile_list || !ctx->out_files){ printf("Error: new_module not called"); return false; }
+    if (!ctx->compile_list || !ctx->out_files){ print("Error: new_module not called"); return false; }
     push_lit(ctx->compile_list, name);
     
     string o = string_format("%v.o", make_string_slice(name,0,strlen(name)-2));
@@ -622,7 +622,7 @@ void find_files(char *ext){
     redbuild_debug("Adding all non-ignored files with %s extension",ext);
     
     char *cwd = get_current_dir();
-    if (!cwd) { printf("No path"); return; }
+    if (!cwd) { print("No path"); return; }
     
     traverse_directory(cwd, true, handle_files);
 }

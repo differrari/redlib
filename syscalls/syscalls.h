@@ -59,8 +59,6 @@ extern size_t socket_send(SocketHandle *handle, SockDstKind dst_kind, const void
 extern bool socket_receive(SocketHandle *handle, void *packet, size_t size, net_l4_endpoint* out_src);
 extern int32_t socket_close(SocketHandle *handle);
 
-int printf(const char *fmt, ...);
-
 extern FS_RESULT openf(const char* path, file* descriptor);
 extern size_t readf(file *descriptor, char* buf, size_t size);
 extern size_t writef(file *descriptor, const char* buf, size_t size);
