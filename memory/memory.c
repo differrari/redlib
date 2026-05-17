@@ -4,7 +4,52 @@ int memcmp(const void *s1, const void *s2, size_t count) {
     const uint8_t *a = s1;
     const uint8_t *b = s2;
 
-    if ((((uintptr_t)a ^ (uintptr_t)b) & 7) == 0) {
+    if ((((uintptr_t)a ^ (uintptr_t)b) & 15) == 0) {
+        while (((uintptr_t)a & 15) && count > 0) {
+            if (*a != *b) return *a - *b;
+            a++;
+            b++;
+            count--;
+        }
+
+        const uint128_t *a128 = (const uint128_t*)a;
+        const uint128_t *b128 = (const uint128_t*)b;
+        while (count >= 32) {
+            uint128_t va0 = a128[0];
+            uint128_t vb0 = b128[0];
+            uint128_t va1 = a128[1];
+            uint128_t vb1 = b128[1];
+
+            if (va0 != vb0) {
+                a = (const uint8_t*)a128;
+                b = (const uint8_t*)b128;
+                for (size_t i = 0; i < 16; i++) if (a[i] != b[i]) return a[i] - b[i];
+            }
+            if (va1 != vb1) {
+                a = (const uint8_t*)(a128 + 1);
+                b = (const uint8_t*)(b128 + 1);
+                for (size_t i = 0; i < 16; i++) if (a[i] != b[i]) return a[i] - b[i];
+            }
+
+            a128 += 2;
+            b128 += 2;
+            count -= 32;
+        }
+
+        while (count >= 16) {
+            uint128_t va = *a128++;
+            uint128_t vb = *b128++;
+            if (va != vb) {
+                a = (const uint8_t*)(a128 - 1);
+                b = (const uint8_t*)(b128 - 1);
+                for (size_t i = 0; i < 16; i++) if (a[i] != b[i]) return a[i] - b[i];
+            }
+            count -= 16;
+        }
+
+        a = (const uint8_t*)a128;
+        b = (const uint8_t*)b128;
+    } else if ((((uintptr_t)a ^ (uintptr_t)b) & 7) == 0) {
         while (((uintptr_t)a & 7) && count > 0) {
             if (*a != *b) return *a - *b;
             a++;
@@ -288,24 +333,14 @@ void memreverse(void *ptr, size_t n) {
         }
 
         while ((size_t)(r - l + 1) >= 32) {
-            //__int128
-            uint64_t *pl1 = (uint64_t*)l;
-            uint64_t *pl2 = (uint64_t*)(l + 8);
+            uint128_t *pl = (uint128_t*)l;
+            uint128_t *pr = (uint128_t*)(r - 15);
 
-            uint64_t *pr1 = (uint64_t*)(r - 15);
-            uint64_t *pr2 = (uint64_t*)(r - 7);
+            uint128_t vl = *pl;
+            uint128_t vr = *pr;
 
-            uint64_t vl1 = *pl1;
-            uint64_t vl2 = *pl2;
-
-            uint64_t vr1 = *pr1;
-            uint64_t vr2 = *pr2;
-
-            *pl1 = bswap64(vr2);
-            *pl2 = bswap64(vr1);
-
-            *pr1 = bswap64(vl2);
-            *pr2 = bswap64(vl1);
+            *pl = bswap128(vr);
+            *pr = bswap128(vl);
 
             l += 16;
             r -= 16;
@@ -321,6 +356,26 @@ void memreverse(void *ptr, size_t n) {
             uint8_t t = *l;
             *l++ = *r;
             *r-- = t;
+        }
+
+        while ((size_t)(r - l + 1) >= 32) {
+            uint64_t *pl1 = (uint64_t*)l;
+            uint64_t *pl2 = (uint64_t*)(l + 8);
+            uint64_t *pr1 = (uint64_t*)(r - 15);
+            uint64_t *pr2 = (uint64_t*)(r-7);
+
+            uint64_t vl1 = *pl1;
+            uint64_t vl2 = *pl2;
+            uint64_t vr1 = *pr1;
+            uint64_t vr2 = *pr2;
+
+            *pl1 = bswap64(vr2);
+            *pl2 = bswap64(vr1);
+            *pr1 = bswap64(vl2);
+            *pr2 = bswap64(vl1);
+
+            l += 16;
+            r -= 16;
         }
 
         while ((size_t)(r - l + 1) >= 16) {
@@ -341,6 +396,40 @@ void memreverse(void *ptr, size_t n) {
             uint8_t t = *l;
             *l++ = *r;
             *r-- = t;
+        }
+
+        while ((size_t)(r - l + 1) >= 32) {
+            uint64_t *pl1 = (uint64_t*)l;
+            uint64_t *pl2 = (uint64_t*)(l + 8);
+
+            uint64_t vl1 = *pl1;
+            uint64_t vl2 = *pl2;
+            uint64_t vr1 = (uint64_t)r[0] | ((uint64_t)r[-1] << 8) | ((uint64_t)r[-2] << 16) | ((uint64_t)r[-3] << 24) | ((uint64_t)r[-4] << 32) | ((uint64_t)r[-5] << 40) | ((uint64_t)r[-6] << 48) | ((uint64_t)r[-7] << 56);
+            uint64_t vr2 = (uint64_t)r[-8] | ((uint64_t)r[-9] << 8) | ((uint64_t)r[-10] << 16) | ((uint64_t)r[-11] << 24) | ((uint64_t)r[-12] << 32) | ((uint64_t)r[-13] << 40) | ((uint64_t)r[-14] << 48) | ((uint64_t)r[-15] << 56);
+            uint64_t out1 = bswap64(vl1);
+            uint64_t out2 = bswap64(vl2);
+
+            *pl1 = vr1;
+            *pl2 = vr2;
+            r[-15] = (uint8_t)out2;
+            r[-14] = (uint8_t)(out2 >> 8);
+            r[-13] = (uint8_t)(out2 >> 16);
+            r[-12] = (uint8_t)(out2 >> 24);
+            r[-11] = (uint8_t)(out2 >> 32);
+            r[-10] = (uint8_t)(out2 >> 40);
+            r[-9] = (uint8_t)(out2 >> 48);
+            r[-8] = (uint8_t)(out2 >> 56);
+            r[-7] = (uint8_t)out1;
+            r[-6] = (uint8_t)(out1 >> 8);
+            r[-5] = (uint8_t)(out1 >> 16);
+            r[-4] = (uint8_t)(out1 >> 24);
+            r[-3] = (uint8_t)(out1 >> 32);
+            r[-2] = (uint8_t)(out1 >> 40);
+            r[-1] = (uint8_t)(out1 >> 48);
+            r[0] = (uint8_t)(out1 >> 56);
+
+            l += 16;
+            r -= 16;
         }
 
         while ((size_t)(r - l + 1) >= 16) {
@@ -367,6 +456,40 @@ void memreverse(void *ptr, size_t n) {
             uint8_t t = *l;
             *l++ = *r;
             *r-- = t;
+        }
+
+        while ((size_t)(r - l+1) >= 32) {
+            uint64_t *pr1 = (uint64_t*)(r - 15);
+            uint64_t *pr2 = (uint64_t*)(r - 7);
+
+            uint64_t vr1 = *pr1;
+            uint64_t vr2 = *pr2;
+            uint64_t vl1 = (uint64_t)l[7] | ((uint64_t)l[6] << 8) | ((uint64_t)l[5] << 16) | ((uint64_t)l[4] << 24) | ((uint64_t)l[3] << 32) | ((uint64_t)l[2] << 40) | ((uint64_t)l[1] << 48) | ((uint64_t)l[0] << 56);
+            uint64_t vl2 = (uint64_t)l[15] | ((uint64_t)l[14] << 8) | ((uint64_t)l[13] << 16) | ((uint64_t)l[12] << 24) | ((uint64_t)l[11] << 32) | ((uint64_t)l[10] << 40) | ((uint64_t)l[9] << 48) | ((uint64_t)l[8] << 56);
+            uint64_t out1 = bswap64(vr1);
+            uint64_t out2 = bswap64(vr2);
+
+            l[0] = (uint8_t)out2;
+            l[1] = (uint8_t)(out2 >> 8);
+            l[2] = (uint8_t)(out2 >> 16);
+            l[3] = (uint8_t)(out2 >> 24);
+            l[4] = (uint8_t)(out2 >> 32);
+            l[5] = (uint8_t)(out2 >> 40);
+            l[6] = (uint8_t)(out2 >> 48);
+            l[7] = (uint8_t)(out2 >> 56);
+            l[8] = (uint8_t)out1;
+            l[9] = (uint8_t)(out1 >> 8);
+            l[10] = (uint8_t)(out1 >> 16);
+            l[11] = (uint8_t)(out1 >> 24);
+            l[12] = (uint8_t)(out1 >> 32);
+            l[13] = (uint8_t)(out1 >> 40);
+            l[14] = (uint8_t)(out1 >> 48);
+            l[15] = (uint8_t)(out1 >> 56);
+            *pr1 = vl2;
+            *pr2 = vl1;
+
+            l += 16;
+            r -= 16;
         }
 
         while ((size_t)(r - l+1) >= 16) {
@@ -512,6 +635,43 @@ void* memmove(void *dest, const void *src, size_t count) {
     d8 += count;
     s8 += count;
 
+    if ((((uintptr_t)d8 ^ (uintptr_t)s8) & 15) == 0) {
+        while (((uintptr_t)d8 & 15) && count > 0) {
+            *--d8 = *--s8;
+            count--;
+        }
+
+        uint128_t *d128 = (uint128_t*)d8;
+        const uint128_t *s128 = (const uint128_t*)s8;
+        while (count >= 128) {
+            *--d128 = *--s128;
+            *--d128 = *--s128;
+            *--d128 = *--s128;
+            *--d128 = *--s128;
+            *--d128 = *--s128;
+            *--d128 = *--s128;
+            *--d128 = *--s128;
+            *--d128 = *--s128;
+            count -= 128;
+        }
+
+        while (count >= 32) {
+            *--d128 = *--s128;
+            *--d128 = *--s128;
+            count -= 32;
+        }
+
+        while (count >= 16) {
+            *--d128 = *--s128;
+            count -= 16;
+        }
+
+        d8 = (uint8_t*)d128;
+        s8 = (const uint8_t*)s128;
+        while (count--) *--d8 = *--s8;
+        return dest;
+    }
+
     while (((uintptr_t)d8 & 7) && count > 0) {
         *--d8 = *--s8;
         count--;
@@ -555,6 +715,37 @@ void* memmove(void *dest, const void *src, size_t count) {
 
         d8 = (uint8_t *)d64;
         s8 = (const uint8_t*)s64;
+    } else if (count >= 16 && (((uintptr_t)d8 & 15) == 0)) {
+        uint128_t *d128 = (uint128_t*)d8;
+        const uint8_t *p = s8 - 16;
+        size_t shift = ((uintptr_t)p & 7) * 8;
+        size_t rshift = 64 - shift;
+        const uint64_t *s64 = (const uint64_t*)((uintptr_t)p & ~(uintptr_t)7);
+
+        while (count >= 32) {
+            uint64_t v0 = (s64[0] >> shift) | (s64[1] << rshift);
+            uint64_t v1 = (s64[1] >> shift) | (s64[2] << rshift);
+            uint64_t v2 = (s64[-2] >> shift) | (s64[-1] << rshift);
+            uint64_t v3 = (s64[-1] >> shift) | (s64[0] << rshift);
+
+            *--d128 = ((uint128_t)v1 << 64) | v0;
+            *--d128 = ((uint128_t)v3 << 64) | v2;
+
+            s64 -= 4;
+            s8 -= 32;
+            count -= 32;
+        }
+
+        while (count >= 16) {
+            uint64_t v0 = (s64[0] >> shift) | (s64[1] << rshift);
+            uint64_t v1 = (s64[1] >> shift) | (s64[2] << rshift);
+            *--d128 = ((uint128_t)v1 << 64) | v0;
+            s64 -= 2;
+            s8 -= 16;
+            count -= 16;
+        }
+
+        d8 = (uint8_t*)d128;
     } else if (count >= 8) {
         const uint8_t *p = s8 - 8;
         size_t shift = ((uintptr_t)p & 7) * 8;
