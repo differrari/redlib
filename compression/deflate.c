@@ -19,11 +19,10 @@ typedef union zlib_hdr {
 }__attribute__((packed)) zlib_hdr;
 
 huff_tree_node* deflate_decode_codes(uint8_t max_code_length, uint16_t alphabet_length, uint16_t lengths[]){
-    uint16_t bl_count[max_code_length] = {};
-    for (int i = 0; i < max_code_length; i++){
-        bl_count[i] = 0;
-    }
-    for (int i = 0; i < max_code_length; i++){
+    uint16_t bl_count[max_code_length+1];
+    memset(bl_count, 0, sizeof(bl_count));
+
+    for (int i = 0; i <= max_code_length; i++){
         for (int j = 0; j < alphabet_length; j++){
             if (lengths[j] == i){
                 bl_count[i]++;
@@ -31,7 +30,8 @@ huff_tree_node* deflate_decode_codes(uint8_t max_code_length, uint16_t alphabet_
         }
         // printf("%i appears %i times",i,bl_count[i]);
     }
-    uint16_t next_code[max_code_length+1] = {}; 
+    uint16_t next_code[max_code_length+1];
+    memset(next_code, 0, sizeof(next_code));
     uint16_t code = 0;
     bl_count[0] = 0;
     for (int bits = 1; bits <= max_code_length; bits++) {
@@ -192,7 +192,7 @@ size_t deflate_decode(void* ptr, size_t size, deflate_read_ctx *ctx){
         memcpy(ctx->output_buf + ctx->out_cursor, ptr, amount);
         ctx->out_cursor += amount;
         ctx->cur_block -= amount;
-        printf("Reduced current block by %x to %x",amount, ctx->cur_block);
+        printf("Reduced current block by %zx to %zx",amount, ctx->cur_block);
         if (amount >= size || ctx->final_block)
             return size;
         ptr += amount;
@@ -231,7 +231,7 @@ size_t deflate_decode(void* ptr, size_t size, deflate_read_ctx *ctx){
                 return 0;
             }
             ctx->cur_block -= read_size;
-            printf("Got new block and read %x with %x remaining",read_size, ctx->cur_block);
+            printf("Got new block and read %zx with %zx remaining",read_size, ctx->cur_block);
             if (final || ctx->cur_block) return ctx->out_cursor;
             continue;
         }
@@ -341,7 +341,7 @@ size_t deflate_decode(void* ptr, size_t size, deflate_read_ctx *ctx){
             // printf("**** DISTANCE ****");
             // huffman_viz(dist_tree, 0, 0);
         } else {
-            printf("Unknown btype %.3b",btype);
+            printf("Unknown btype %u",(unsigned)btype);
             return 0;
         }
         
