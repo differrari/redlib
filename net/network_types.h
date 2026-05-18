@@ -11,7 +11,7 @@ typedef enum {
     IP_VER6 = 6
 } ip_version_t;
 
-typedef struct net_l4_endpoint {
+typedef struct __attribute__((aligned(8))) net_l4_endpoint {
     ip_version_t ver;
     uint8_t ip[16];
     uint16_t port;
