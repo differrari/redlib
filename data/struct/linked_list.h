@@ -26,8 +26,9 @@ void linked_list_push_front(linked_list_t *list, void *data);
 void* linked_list_pop_front(linked_list_t *list);
 linked_list_node_t* linked_list_insert_after(linked_list_t *list, linked_list_node_t *node, void *data);
 
-static inline void linked_list_push(linked_list_t *list, void *data){
-    if (list) linked_list_insert_after(list, list->tail, data);
+static inline linked_list_node_t* linked_list_push(linked_list_t *list, void *data){
+    if (list) return linked_list_insert_after(list, list->tail, data);
+    return 0;
 }
 
 void* linked_list_get(linked_list_t *list, uint64_t index);

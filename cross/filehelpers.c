@@ -24,7 +24,7 @@ void traverse_directory(const char *directory, bool recursive, dir_traverse func
     DIR *dir;
     struct dirent *ent;
     if ((dir = opendir (directory)) == 0) {
-        printf("Failed to open path %s",directory);
+        print("Failed to open path %s",directory);
         return;
     }
     

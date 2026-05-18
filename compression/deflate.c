@@ -111,12 +111,12 @@ size_t deflate_uncommpressed(deflate_read_ctx *ctx, size_t max_size) {
     // printf("Actual read values %x %x",len, nlen);
 
     if (len != (uint16_t)(~nlen)) {
-        printf("Wrong checksum %.16b %.16b %.16b\n", len, nlen, (uint16_t)(~nlen));
+        print("Wrong checksum %.16b %.16b %.16b\n", len, nlen, (uint16_t)(~nlen));
         return 0;
     }
 
     ctx->cur_block = len;
-    printf("Found new block with %x len", len);
+    print("Found new block with %x len", len);
 
     max_size -= 4;
 
@@ -140,7 +140,7 @@ bool deflate_block(huff_tree_node *litlen_tree, huff_tree_node *dist_tree, defla
         // printf("%x",next_bit);
         tree_root = huffman_traverse(tree_root, next_bit);
         if (!tree_root) {
-            printf("DEFLATE ERROR: no tree found");
+            print("DEFLATE ERROR: no tree found");
             return false;
         }
         if (!tree_root->left && !tree_root->right){
@@ -162,7 +162,7 @@ bool deflate_block(huff_tree_node *litlen_tree, huff_tree_node *dist_tree, defla
                     READ_BITS(ctx->bytes, next_bit, 1, ctx->bs, ctx->c);
                     dist_node = huffman_traverse(dist_node, next_bit);
                     if (!dist_node){
-                        printf("DEFLATE ERROR: no tree found");
+                        print("DEFLATE ERROR: no tree found");
                         return false;
                     }
                 }
@@ -200,7 +200,7 @@ size_t deflate_decode(void* ptr, size_t size, deflate_read_ctx *ctx){
     } else {
         zlib_hdr hdr = *(zlib_hdr*)ptr;
         if (hdr.cm != 8){
-            printf("Error. Non-DEFLATE block");
+            print("Error. Non-DEFLATE block");
             return 0;
         }
         ptr += sizeof(zlib_hdr);
@@ -268,7 +268,7 @@ size_t deflate_decode(void* ptr, size_t size, deflate_read_ctx *ctx){
             READ_BITS(ctx->bytes, next_bit, 1, ctx->bs, ctx->c);
             tree_root = huffman_traverse(tree_root, next_bit);
             if (!tree_root) {
-                printf("DEFLATE ERROR: no tree found");
+                print("DEFLATE ERROR: no tree found");
                 return 0;
             }
             if (!tree_root->left && !tree_root->right){

@@ -41,7 +41,7 @@ void* p_queue_pop(p_queue_t *root){
 
 void p_queue_traverse(p_queue_t *root){
     for (int i = 0; i < root->size; i++){
-        printf("[%i] = %i",i, root->array[i].val);
+        print("[%i] = %i",i, root->array[i].val);
     }
 }
 

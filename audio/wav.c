@@ -73,7 +73,7 @@ bool wav_load_as_int16(const char* path, audio_samples* audio){
 
     if (FS_RESULT_SUCCESS != openf(path, &fd))
     {
-        printf("[WAV] Could not open file: %s", path);
+        print("[WAV] Could not open file: %s", path);
         return false;
     }
 
@@ -82,7 +82,7 @@ bool wav_load_as_int16(const char* path, audio_samples* audio){
     if (read_size != sizeof(wav_header) ||
         hdr.id != 0x46464952 ||      // 'RIFF'
         hdr.wave_id != 0x45564157){ // 'WAVE'
-        printf("[WAV] Non-WAV file format %s", path);
+        print("[WAV] Non-WAV file format %s", path);
         return false;
     }
 
@@ -101,14 +101,14 @@ bool wav_load_as_int16(const char* path, audio_samples* audio){
                         )
                     {
                         closef(&fd);
-                        printf("[WAV] Unsupported file format %s", path);
-                        printf("=== Sizes       %i, %i", read_size, fd.size);
-                        printf("=== id          %x", hdr.id);
-                        printf("=== wave id     %x", hdr.wave_id);
-                        printf("=== format      %x", ch_hdr.ck_id);
-                        printf("=== channels    %i", fmt_chunk.channels);
-                        printf("=== sample rate %i", fmt_chunk.sample_rate);
-                        printf("=== sample_bits %i", fmt_chunk.sample_bits);
+                        print("[WAV] Unsupported file format %s", path);
+                        print("=== Sizes       %i, %i", read_size, fd.size);
+                        print("=== id          %x", hdr.id);
+                        print("=== wave id     %x", hdr.wave_id);
+                        print("=== format      %x", ch_hdr.ck_id);
+                        print("=== channels    %i", fmt_chunk.channels);
+                        print("=== sample rate %i", fmt_chunk.sample_rate);
+                        print("=== sample_bits %i", fmt_chunk.sample_bits);
                         return false;
                     }
                     break;

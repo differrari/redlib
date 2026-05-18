@@ -82,7 +82,7 @@ u64 get_time(){
 }
 
 FS_RESULT openf(const char* path, file* descriptor){
-    printf("Opening file %s",path);
+    print("Opening file %s",path);
     return FS_RESULT_DRIVER_ERROR;
 }
 

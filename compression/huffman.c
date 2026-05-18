@@ -10,18 +10,18 @@ int* huff_count_entries(sizedptr input){
     }
     int count = 0;
     for (int i = 0; i < 256; i++){
-        if (entries[i]){ count++; printf("%c = %i", i, entries[i]); }
+        if (entries[i]){ count++; print("%c = %i", i, entries[i]); }
     }
     entries[256] = count;
-    printf("%i unique bytes", entries[256]);
+    print("%i unique bytes", entries[256]);
     return entries;
 }
 
 void huffman_populate(huff_tree_node *root, uint64_t code, uint8_t code_len, uint16_t value){
     if (code_len == 0){
-        if (root->entry) printf("HUFFMAN TREE ERROR overwriting value %i with %i",root->entry,value);
+        if (root->entry) print("HUFFMAN TREE ERROR overwriting value %i with %i",root->entry,value);
         root->entry = value;
-        if (root->right || root->left) printf("[HUFFMAN TREE ERROR] ending at non-leaf node for value %i. L %x R %x ROOT %x",value,root->left,root->right,root);
+        if (root->right || root->left) print("[HUFFMAN TREE ERROR] ending at non-leaf node for value %i. L %x R %x ROOT %x",value,root->left,root->right,root);
         return;
     }
     bool right = ((code >> (code_len-1)) & 1);
@@ -45,9 +45,9 @@ void huffman_free(huff_tree_node *root){
 static char *pad = "                                                                ";
 
 void huffman_viz(huff_tree_node *root, uint8_t depth, uint64_t val){
-    if (!root->left && !root->right) printf("%s Leaf node %i = %b", pad + (63-depth), root->entry, val);
+    if (!root->left && !root->right) print("%s Leaf node %i = %b", pad + (63-depth), root->entry, val);
     else {
-        if (root->entry) printf("[HUFFMAN TREE ERROR] non-leaf node has value %i",root->entry);
+        if (root->entry) print("[HUFFMAN TREE ERROR] non-leaf node has value %i",root->entry);
         if (root->left) huffman_viz(root->left, depth+1, (val << 1) | 0);
         if (root->right) huffman_viz(root->right, depth+1, (val << 1) | 1);
     }
@@ -64,7 +64,7 @@ huff_tree_node* huff_make_node(huff_tree_node *l, huff_tree_node *r){
     node->depth = max(l->depth, r->depth) + 1;
     node->entry = l->entry + r->entry;
     node->index = node_index++;
-    printf("%i = %i\n-> l = %i %c - %i\n-> r = %i %c - %i", node->index, node->entry, l->index, TO_READABLE(l->byte), l->entry, r->index, TO_READABLE(r->byte), r->entry);
+    print("%i = %i\n-> l = %i %c - %i\n-> r = %i %c - %i", node->index, node->entry, l->index, TO_READABLE(l->byte), l->entry, r->index, TO_READABLE(r->byte), r->entry);
     return node;
 }
 
@@ -79,7 +79,7 @@ void huff_calc_code(huff_tree_node *root, uint8_t value, uint8_t depth){
         value |= 1;
         huff_calc_code(root->right, value << 1, depth+1);
     }
-    if (leaf) printf("%c = [%b]. Depth %i",root->byte, value >> 1, depth);
+    if (leaf) print("%c = [%b]. Depth %i",root->byte, value >> 1, depth);
 }
 
 huff_tree_node* huff_build_tree(int entries[257]){

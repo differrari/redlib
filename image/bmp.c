@@ -14,12 +14,12 @@ image_info bmp_get_info(void * file, size_t size){
 
 void bmp_read_image(void *file, size_t size, uint32_t *buf){
     if (size < sizeof(bmp_header)){ 
-        printf("Wrong file size");
+        print("Wrong file size");
         return;
     }
     bmp_header *header = (bmp_header*)file;
     if (size < header->data_offset + header->img_size || size < header->file_size){ 
-        printf("Wrong file size");
+        print("Wrong file size");
         return;
     }
     if (header->signature[0] != 'B' || header->signature[1] != 'M'){
@@ -57,12 +57,12 @@ void* load_bmp(char *path, image_info *info){
             *info = img_info;
             return img;
         } else { 
-            printf("Wrong image size %i",img_info.width,img_info.height);
+            print("Wrong image size %i",img_info.width,img_info.height);
             *info = (image_info){0, 0};
             return 0;
         }
     } else { 
-        printf("Failed to open image");
+        print("Failed to open image");
         *info = (image_info){0, 0};
         return 0;
     }

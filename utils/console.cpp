@@ -101,8 +101,14 @@ void Console::put_char(char c){
         draw_cursor();
         return;
     }
+    if (c == '\t'){
+        cursor_x += 4;
+        if (cursor_x >= columns) newline();
+        return;
+    }
     if (c == '\n'){
         newline(); 
+        draw_cursor();
         flush(dctx);
         return;
     }
