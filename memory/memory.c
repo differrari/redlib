@@ -131,7 +131,7 @@ void* memset32(void* dest, uint32_t val, size_t count) {
     uint64_t pattern = ((uint64_t)val << 32) | val;
     if (count >= 16) {
         uint128_t pattern128 = ((uint128_t)pattern << 64) | pattern;
-        uint128_t *d128 = (uint128_t*)__builtin_assume_aligned(d8, 16);
+        uint128_t *d128 = (uint128_t*)MEM_ASSUME_ALIGNED(d8, 16);
 
         while (count >= 128) {
             *d128++ = pattern128;
@@ -160,7 +160,7 @@ void* memset32(void* dest, uint32_t val, size_t count) {
     }
 
     if (count >= 8) {
-        uint64_t *d64 = (uint64_t*)__builtin_assume_aligned(d8, 8);
+        uint64_t *d64 = (uint64_t*)MEM_ASSUME_ALIGNED(d8, 8);
         *d64++ = pattern;
         d8 = (uint8_t*)d64;
         count -= 8;
@@ -195,7 +195,7 @@ void* memset(void* dest, int byte, size_t count) {
 
     if (count >= 16) {
         uint128_t pattern128 = ((uint128_t)pattern << 64) | pattern;
-        uint128_t *d128 = (uint128_t*)__builtin_assume_aligned(d8, 16);
+        uint128_t *d128 = (uint128_t*)MEM_ASSUME_ALIGNED(d8, 16);
         while (count >= 128) {
             *d128++ = pattern128;
             *d128++ = pattern128;
@@ -223,7 +223,7 @@ void* memset(void* dest, int byte, size_t count) {
     }
 
     if (count >= 8) {
-        uint64_t *d64 = (uint64_t*)__builtin_assume_aligned(d8, 8);
+        uint64_t *d64 = (uint64_t*)MEM_ASSUME_ALIGNED(d8, 8);
         *d64++ = pattern;
         d8 = (uint8_t*)d64;
         count -= 8;
@@ -247,8 +247,8 @@ void* memcpy(void *restrict dest, const void *restrict src, size_t count) {
         }
 
         if (count >= 16) {
-            uint128_t *d128 = (uint128_t*)__builtin_assume_aligned(d8, 16);
-            const uint128_t *s128 = (const uint128_t*)__builtin_assume_aligned(s8, 16);
+            uint128_t *d128 = (uint128_t*)MEM_ASSUME_ALIGNED(d8, 16);
+            const uint128_t *s128 = (const uint128_t*)MEM_ASSUME_ALIGNED(s8, 16);
             while (count >= 128) {
                 *d128++ = *s128++;
                 *d128++ = *s128++;
@@ -283,9 +283,9 @@ void* memcpy(void *restrict dest, const void *restrict src, size_t count) {
     }
 
     if (count >= 8) {
-        uint64_t *d64 = (uint64_t*)__builtin_assume_aligned(d8, 8);
+        uint64_t *d64 = (uint64_t*)MEM_ASSUME_ALIGNED(d8, 8);
         if (((uintptr_t)s8 & 7) == 0) {
-            const uint64_t *s64 = (const uint64_t*)__builtin_assume_aligned(s8, 8);
+            const uint64_t *s64 = (const uint64_t*)MEM_ASSUME_ALIGNED(s8, 8);
             while (count >= 128) {
                 *d64++ = *s64++;
                 *d64++ = *s64++;
