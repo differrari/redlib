@@ -51,6 +51,10 @@ static inline string_slice slice_from_buffer(buffer *buf){
     return (string_slice){ .data = (char*)buf->buffer, .length = buf->buffer_size };
 }
 
+static inline sizedptr sizedptr_from_buffer(buffer *buf){
+    return (sizedptr){ .ptr = (uptr)buf->buffer, .size = buf->buffer_size };
+}
+
 bool buffer_test();
 
 #ifdef __cplusplus

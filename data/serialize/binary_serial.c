@@ -3,13 +3,7 @@
 #include "syscalls/syscalls.h"
 #include "memory/memory.h"
 
-binary_serializer make_binary_serializer(char *structure, size_t length){
-    binary_serializer ser = {};
-    bin_ser_define_structure(&ser,structure, length);
-    return ser;
-}
-
-void bin_ser_define_structure(binary_serializer *serializer, char *structure, size_t length){
+bool bin_ser_define_structure(binary_serializer *serializer, char *structure, size_t length){
     if (serializer->structure){
         release(serializer->structure);
         serializer->field_count = 0;
@@ -22,9 +16,17 @@ void bin_ser_define_structure(binary_serializer *serializer, char *structure, si
     while (true){
         i32 struct_type = 0;
         if (!bin_scan_i32(&scanner, &struct_type)) break;
-        if (!struct_type){ success = false; break; }
+        if (!struct_type){ 
+            print("Failed to read field type at %x",scanner.cursor); 
+            success = false; 
+            break; 
+        }
         string name = {};
-        if (!bin_scan_string(&scanner, &name) || !name.length){ success = false; break; }
+        if (!bin_scan_string(&scanner, &name) || !name.length){ 
+            print("Failed to read field name at %x",scanner.cursor); 
+            success = false; 
+            break;
+        }
         stack_push(stack, &(structdef){
             .name = name,
             .type = struct_type
@@ -46,6 +48,7 @@ void bin_ser_define_structure(binary_serializer *serializer, char *structure, si
         }
     }
     stack_destroy(stack);
+    return success;
 }
 
 size_t bin_ser_calc_structure_size(structdef *items, size_t amount){
@@ -104,6 +107,36 @@ buffer bin_ser_serialize(binary_serializer *serializer, void* data, size_t lengt
     return buf;
 }
 
-hash_map_t* bin_ser_deserialize(binary_serializer *serializer, string_slice data){
-    
+bool bin_ser_deserialize(binary_serializer *serializer, sizedptr data, void (*on_read)(structdef field, sizedptr data, bool is_allocated)){
+    if (!serializer || !serializer->field_count) return 0;
+
+    binary_scanner scanner = bin_scan_create((u8*)data.ptr, data.size);
+    // hash_map_t *data = hash_map_create(uint64_t initial_capacity)
+    while (true){
+        for (size_t i = 0; i < serializer->field_count; i++){
+            structdef field = serializer->structure[i];
+            if (field.type == binary_type_string){
+                string str = {};
+                if (!bin_scan_string(&scanner, &str)){
+                    if (scanner.cursor >= scanner.size){
+                        return true;
+                    } else {
+                        return false;
+                    }
+                }
+                on_read(field, (sizedptr){(uptr)str.data,str.length}, true);
+            } else {
+                size_t size = get_bin_type_size(field.type);
+                u8 buf[size] = {};
+                if (!bin_scan_size(&scanner, size, &buf)){
+                    if (scanner.cursor >= scanner.size){
+                        return true;
+                    } else {
+                        return false;
+                    }
+                }
+                on_read(field, (sizedptr){(uptr)buf,size}, false);
+            }
+        }
+    }
 }

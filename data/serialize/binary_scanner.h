@@ -2,6 +2,7 @@
 
 #include "types.h"
 #include "string/slice.h"
+#include "files/buffer.h"
 
 typedef enum {
     binary_type_invalid,
@@ -23,7 +24,7 @@ static inline size_t get_bin_type_size(binary_types type){
         case binary_type_i64: return sizeof(i64);
         case binary_type_float: return sizeof(float);
         case binary_type_double: return sizeof(double);
-        case binary_type_string: return sizeof(string);
+        case binary_type_string: return sizeof(string_slice);
     }
 }
 
@@ -54,6 +55,8 @@ static inline binary_scanner bin_scan_create(u8* data, size_t size){
     };
 }
 
+bool bin_scan_size(binary_scanner *scanner, size_t size, void *out_val);
+bool bin_scan_size_buf(binary_scanner *scanner, size_t size, buffer *buf);
 bool bin_scan_i8(binary_scanner *scanner, i8 *out_val);
 bool bin_scan_i16(binary_scanner *scanner, i16 *out_val);
 bool bin_scan_i32(binary_scanner *scanner, i32 *out_val);

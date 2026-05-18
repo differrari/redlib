@@ -1,15 +1,29 @@
 #include "binary_scanner.h"
+#include "memory/memory.h"
+#include "syscalls/syscalls.h"
 
 bool bin_scan_ok(binary_scanner *scanner, size_t op_len){
-    return scanner->size >= scanner->cursor + op_len;
+    return !scanner || !scanner->data || scanner->size >= scanner->cursor + op_len;
+}
+
+bool bin_scan_size(binary_scanner *scanner, size_t size, void *out_val){
+    if (!out_val) return false;
+    if (!bin_scan_ok(scanner, size)) return false;
+    memcpy(out_val,(void*)(scanner->data + scanner->cursor),size);
+    scanner->cursor += size;
+    return true;
+}
+
+bool bin_scan_size_buf(binary_scanner *scanner, size_t size, buffer *buf){
+    if (!buf || !buf->buffer || buf->options & buffer_read_only) return false;
+    if (!bin_scan_ok(scanner, size)) return false;
+    if (buffer_write_lim(buf, (void*)(scanner->data + scanner->cursor), size) != size) return false;
+    scanner->cursor += size;
+    return true;
 }
 
 #define bin_scan_type(_type) bool bin_scan_##_type(binary_scanner *scanner, _type *out_val){\
-    if (!out_val) return false;\
-    if (!bin_scan_ok(scanner, sizeof(_type))) return false;\
-    *out_val = *(_type*)(scanner->data + scanner->cursor);\
-    scanner->cursor += sizeof(_type);\
-    return true;\
+    return bin_scan_size(scanner, sizeof(_type), out_val);\
 }
 
 bin_scan_type(i8)

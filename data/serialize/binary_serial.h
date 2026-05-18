@@ -16,13 +16,24 @@ typedef struct {
     size_t field_count;
 } binary_serializer;
 
-binary_serializer make_binary_serializer(char *structure, size_t length);
+static inline binary_serializer make_binary_serializer(structdef *structure, size_t count){
+    return (binary_serializer){
+        .structure = structure,
+        .field_count = count
+    };
+}
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 //Array of: 32 bits for binary_types, string for name
-void bin_ser_define_structure(binary_serializer *serializer, char *structure, size_t length);
+bool bin_ser_define_structure(binary_serializer *serializer, char *structure, size_t length);
 
 buffer bin_ser_serialize(binary_serializer *serializer, void* data, size_t length, size_t count);
 
 sizedptr bin_ser_emit_structure(structdef *items, size_t amount);
 
-hash_map_t* bin_ser_deserialize(binary_serializer *serializer, string_slice data);
+bool bin_ser_deserialize(binary_serializer *serializer, sizedptr data, void (*on_read)(structdef field, sizedptr data, bool is_allocated));
+#ifdef __cplusplus
+}
+#endif
