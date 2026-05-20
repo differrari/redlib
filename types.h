@@ -11,6 +11,7 @@ extern "C" {
 #define bswap16(v) __builtin_bswap16((uint16_t)(v))
 #define bswap32(v) __builtin_bswap32((uint32_t)(v))
 #define bswap64(v) __builtin_bswap64((uint64_t)(v))
+#define bswap128(v) ((((uint128_t)bswap64((uint64_t)(v))) << 64) | (uint128_t)bswap64((uint64_t)((uint128_t)(v) >> 64)))
 
 #if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
   #define be16(v) bswap16(v)
@@ -43,6 +44,8 @@ extern "C" {
 } while(0)
 
 typedef unsigned int uint32_t;
+typedef signed __int128 int128_t;
+typedef unsigned __int128 uint128_t;
 #ifndef CROSS
 typedef unsigned long int size_t;
 typedef unsigned long long uint64_t;
@@ -97,6 +100,8 @@ typedef signed char tern;
 
 typedef uint32_t u32;
 typedef uint64_t u64;
+typedef int128_t i128;
+typedef uint128_t u128;
 typedef uint16_t u16;
 typedef uint8_t u8;
 typedef uintptr_t uptr;

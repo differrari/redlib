@@ -4,6 +4,16 @@ extern "C" {
 
 #include "types.h"
 
+#ifndef __has_builtin
+#define __has_builtin(x) 0
+#endif
+
+#if __has_builtin(__builtin_assume_aligned)
+#define MEM_ASSUME_ALIGNED(ptr, alignment) __builtin_assume_aligned((ptr), (alignment))
+#else
+#define MEM_ASSUME_ALIGNED(ptr, alignment) (ptr)
+#endif
+
 int memcmp(const void *s1, const void *s2, size_t count);
 void* memset(void* dest, int byte, size_t count);//Let the record show libc is fucking stupid
 void* memset32(void* dest, uint32_t val, size_t count);
