@@ -6,8 +6,11 @@
 typedef struct shell_handle shell_handle;
 
 typedef struct {
-    void (*console_output)(shell_handle*, string_slice output);
-    // void (*fn2)(kbd_event event);
+    void (*console_output)(shell_handle*, char output);
+    void (*console_flush)(shell_handle*);
+    void (*console_clean)(shell_handle*);
+    void (*console_bell)(shell_handle*);
+    void (*console_ascii_cmd)(shell_handle*, u16 proc_id, char cmd);
 } shell_bindings;
 
 typedef struct {
@@ -43,7 +46,9 @@ static inline void shell_print_specify_newline(shell_handle *handle, bool newlin
     if (newline) size += buffer_write_const(&handle->out_buffer, "\n");
     va_end(args);
     if (!handle->bindings.console_output) return;
-    handle->bindings.console_output(handle, (string_slice){ .data = (char*)((uptr)handle->out_buffer.buffer + cursor), .length = size});
+    for (u32 i = 0; i < size; i++)
+        handle->bindings.console_output(handle, ((char*)handle->out_buffer.buffer)[cursor + i]);
+    if (handle->bindings.console_flush) handle->bindings.console_flush(handle);
 }
 
 static inline void current_shell_print(char *lit){
