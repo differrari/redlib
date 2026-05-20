@@ -62,7 +62,7 @@ size_t sreadf(const char* path, void* buf, size_t size){
     fclose(fd);
 }
 
-size_t swritef(const char* path, const void* buf, size_t size){
+size_t swritef(const char* path, const void* buf, size_t size, bool append){
     
 }
 
