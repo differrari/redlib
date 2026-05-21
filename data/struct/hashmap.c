@@ -11,7 +11,7 @@ static int chm_bytewise_eq(const void* a, uint64_t alen, const void* b, uint64_t
     return 1;
 }
 
-uint64_t chashmap_fnv1a64(const void* data, uint64_t len){
+uint64_t hash_map_fnv1a64(const void* data, uint64_t len){
     const uint8_t* bytes = (const uint8_t*)data;
     uint64_t h = 0xcbf29ce484222325ULL;
     for (uint64_t i = 0; i < len; i++) {
@@ -63,14 +63,14 @@ hash_map_t* hash_map_create_alloc(uint64_t initial_capacity, void* (*alloc)(size
     m->value_dispose = 0;
     m->capacity = cap;
     m->size = 0;
-    m->buckets = (chashmap_entry_t**)alloc((uint64_t)sizeof(chashmap_entry_t*)*cap);
+    m->buckets = (hash_map_entry_t**)alloc((uint64_t)sizeof(hash_map_entry_t*)*cap);
 
     if (!m->buckets) {
         m->free(m, (uint64_t)sizeof(hash_map_t));
         return 0;
     }
 
-    memset(m->buckets, 0, (uint64_t)sizeof(chashmap_entry_t*)*cap);
+    memset(m->buckets, 0, (uint64_t)sizeof(hash_map_entry_t*)*cap);
     chm_update_threshold(m);
     return m;
 }
@@ -83,16 +83,16 @@ void hash_map_destroy(hash_map_t* map){
     if(!map) return;
 
     for (uint64_t i = 0; i < map->capacity; i++) {
-        chashmap_entry_t* e = map->buckets[i];
+        hash_map_entry_t* e = map->buckets[i];
         while(e){
-            chashmap_entry_t* n = e->next;
+            hash_map_entry_t* n = e->next;
             if(e->key_len>0 && e->key) chm_free(map,e->key,e->key_len);
             if(map->value_dispose && e->value) map->value_dispose(e->value);
-            chm_free(map, e, (uint64_t)sizeof(chashmap_entry_t));
+            chm_free(map, e, (uint64_t)sizeof(hash_map_entry_t));
             e = n;
         }
     }
-    chm_free(map, map->buckets, (uint64_t)sizeof(chashmap_entry_t*)*map->capacity);
+    chm_free(map, map->buckets, (uint64_t)sizeof(hash_map_entry_t*)*map->capacity);
     chm_free(map, map, (uint64_t)sizeof(hash_map_t));
 }
 
@@ -102,7 +102,7 @@ void hash_map_set_allocator(hash_map_t* map, void* (*alloc)(size_t), void (*deal
     map->free = dealloc;
 }
 
-void hash_map_set_hash(hash_map_t* map, chashmap_hash_fn hash_fn, chashmap_keyeq_fn keyeq_fn){
+void hash_map_set_hash(hash_map_t* map, hash_map_hash_fn hash_fn, hash_map_keyeq_fn keyeq_fn){
     if (!map) return;
     if (hash_fn) map->hash_fn = hash_fn;
     if (keyeq_fn) map->keyeq_fn = keyeq_fn;
@@ -115,21 +115,21 @@ void hash_map_set_value_dispose(hash_map_t* map, void (*dispose_fn)(void*)){
 
 static int chm_resize(hash_map_t* map, uint64_t new_capacity){
     uint64_t ncap = chm_next_pow2(new_capacity);
-    chashmap_entry_t** nb = (chashmap_entry_t**)chm_alloc(map, (uint64_t)sizeof(chashmap_entry_t*)*ncap);
+    hash_map_entry_t** nb = (hash_map_entry_t**)chm_alloc(map, (uint64_t)sizeof(hash_map_entry_t*)*ncap);
     if (!nb) return 0;
 
-    memset(nb, 0, (uint64_t)sizeof(chashmap_entry_t*)*ncap);
+    memset(nb, 0, (uint64_t)sizeof(hash_map_entry_t*)*ncap);
     for (uint64_t i = 0; i < map->capacity; i++) {
-        chashmap_entry_t* e = map->buckets[i];
+        hash_map_entry_t* e = map->buckets[i];
         while (e) {
-            chashmap_entry_t* nxt = e->next;
+            hash_map_entry_t* nxt = e->next;
             uint64_t idx = e->hash & (ncap-1);
             e->next = nb[idx];
             nb[idx] = e;
             e = nxt;
         }
     }
-    chm_free(map, map->buckets, (uint64_t)sizeof(chashmap_entry_t*)*map->capacity);
+    chm_free(map, map->buckets, (uint64_t)sizeof(hash_map_entry_t*)*map->capacity);
     map->buckets = nb;
     map->capacity = ncap;
     chm_update_threshold(map);
@@ -145,7 +145,7 @@ int hash_map_put(hash_map_t* map, const void* key, uint64_t key_len, void* value
     }
     uint64_t h = map->hash_fn(key,key_len);
     uint64_t idx = h & (map->capacity-1);
-    chashmap_entry_t* e = map->buckets[idx];
+    hash_map_entry_t* e = map->buckets[idx];
 
     while(e){
         if(e->hash == h && map->keyeq_fn(e->key, e->key_len, key, key_len)){
@@ -154,13 +154,13 @@ int hash_map_put(hash_map_t* map, const void* key, uint64_t key_len, void* value
         }
         e = e->next;
     }
-    chashmap_entry_t* ne = (chashmap_entry_t*)chm_alloc(map, (uint64_t)sizeof(chashmap_entry_t));
+    hash_map_entry_t* ne = (hash_map_entry_t*)chm_alloc(map, (uint64_t)sizeof(hash_map_entry_t));
     if (!ne) return -1;
     ne->hash = h;
     
     if (key_len>0) {
         void* k = chm_alloc(map, key_len);
-        if (!k) { chm_free(map, ne, (uint64_t)sizeof(chashmap_entry_t)); return -1; }
+        if (!k) { chm_free(map, ne, (uint64_t)sizeof(hash_map_entry_t)); return -1; }
         memcpy(k, key, key_len);
         ne->key = k;
         ne->key_len = key_len;
@@ -186,7 +186,7 @@ void* hash_map_get(const hash_map_t* map, const void* key, uint64_t key_len){
 
     uint64_t h = map->hash_fn(key,key_len);
     uint64_t idx = h & (map->capacity-1);
-    chashmap_entry_t* e = map->buckets[idx];
+    hash_map_entry_t* e = map->buckets[idx];
 
     while(e){
         if(e->hash == h && map->keyeq_fn(e->key, e->key_len, key, key_len)) return e->value;
@@ -204,8 +204,8 @@ bool hash_map_remove(hash_map_t* map, const void* key, uint64_t key_len, void** 
 
     uint64_t h = map->hash_fn(key, key_len);
     uint64_t idx = h & (map->capacity-1);
-    chashmap_entry_t* e = map->buckets[idx];
-    chashmap_entry_t* prev = 0;
+    hash_map_entry_t* e = map->buckets[idx];
+    hash_map_entry_t* prev = 0;
 
     while(e){
         if (e->hash == h && map->keyeq_fn(e->key, e->key_len, key, key_len)) {
@@ -216,7 +216,7 @@ bool hash_map_remove(hash_map_t* map, const void* key, uint64_t key_len, void** 
             else if(map->value_dispose && e->value) map->value_dispose(e->value);
 
             if (e->key_len>0 && e->key) chm_free(map, e->key, e->key_len);
-            chm_free(map, e, (uint64_t)sizeof(chashmap_entry_t));
+            chm_free(map, e, (uint64_t)sizeof(hash_map_entry_t));
             map->size--;
             return true;
         }
@@ -231,12 +231,12 @@ void hash_map_empty(hash_map_t* map){
     if (!map) return;
 
     for (uint64_t i = 0; i < map->capacity; i++){
-        chashmap_entry_t* e = map->buckets[i];
+        hash_map_entry_t* e = map->buckets[i];
         while(e){
-            chashmap_entry_t* next = e->next;
+            hash_map_entry_t* next = e->next;
             if (e->key_len>0 && e->key) chm_free(map, e->key, e->key_len);
             if(map->value_dispose && e->value) map->value_dispose(e->value);
-            // chm_free(map, e, (uint64_t)sizeof(chashmap_entry_t));
+            // chm_free(map, e, (uint64_t)sizeof(hash_map_entry_t));
             e = next;
         }
     }
@@ -258,9 +258,9 @@ void hash_map_for_each(const hash_map_t* map, void (*func)(void* key, uint64_t k
     if (!map || !func) return;
 
     for (uint64_t i = 0; i < map->capacity; i++){
-        chashmap_entry_t* e = map->buckets[i];
+        hash_map_entry_t* e = map->buckets[i];
         while(e){
-            chashmap_entry_t* next = e->next;
+            hash_map_entry_t* next = e->next;
             func(e->key, e->key_len, e->value);
             e = next;
         }
