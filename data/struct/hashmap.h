@@ -50,20 +50,6 @@ uint64_t hash_map_capacity(const hash_map_t* map);
 void hash_map_for_each(const hash_map_t* map, void (*func)(void* key, uint64_t key_len, void* value));
 uint64_t hash_map_fnv1a64(const void* data, uint64_t len);
 
-#define hash_map_create hash_map_create
-#define hash_map_create_alloc hash_map_create_alloc
-#define hash_map_destroy hash_map_destroy
-#define hash_map_set_allocator hash_map_set_allocator
-#define hash_map_set_hash hash_map_set_hash
-#define hash_map_set_value_dispose hash_map_set_value_dispose
-#define hash_map_put hash_map_put
-#define hash_map_get hash_map_get
-#define hash_map_remove hash_map_remove
-#define hash_map_size hash_map_count
-#define hash_map_capacity hash_map_capacity
-#define hash_map_for_each hash_map_for_each
-#define hash_map_fnv1a64 hash_map_fnv1a64
-
 #ifdef __cplusplus
 }
 #endif
