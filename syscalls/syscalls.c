@@ -23,6 +23,20 @@ int print(const char *fmt, ...){
     return 0;
 }
 
+#ifndef CROSS
+void put(const char *fmt, ...){
+    __attribute__((aligned(16))) va_list args;
+    va_start(args, fmt); 
+    memset(log_buf, 0, 1024);
+    size_t n = string_format_va_buf(fmt, log_buf, sizeof(log_buf), args);
+    va_end(args);
+    if (n >= sizeof(log_buf)) log_buf[sizeof(log_buf)-1] = '\0';
+        file fd2 = { .id = 2 };
+        writef(&fd2, log_buf, strlen(log_buf));
+        current_shell_put(log_buf);
+}
+#endif
+
 void seek(file *descriptor, int64_t offset, SEEK_TYPE type){
     uint64_t new_cursor = descriptor->cursor;
     switch (type) {

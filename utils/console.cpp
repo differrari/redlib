@@ -3,16 +3,13 @@
 #include "syscalls/syscalls.h"
 #include "math/math.h"
 
-#define char_width (char_scale*CHAR_SIZE)
-#define line_height (char_scale*CHAR_SIZE*2)
-
 static inline u32 line_len(const char* line, u32 max_cols){
     u32 n = 0;
     while (n < max_cols && line[n]) n++;
     return n;
 }
 
-Console::Console() : cursor_x(0), cursor_y(0), is_initialized(false){
+Console::Console() : is_initialized(false){
     last_drawn_cursor_x = -1;
     last_drawn_cursor_y = -1;
     columns = 0;
@@ -92,19 +89,19 @@ void Console::resize(){
     buffer_data_size = new_buf_size;
     scroll_row_offset = 0;
 
-    if ((i32)cursor_y < 0) cursor_y = 0;
-    if ((i32)cursor_x < 0) cursor_x = 0;
-    if (cursor_y >= rows) cursor_y = rows ? rows - 1 : 0;
-    if (cursor_x >= columns) cursor_x = columns ? columns - 1 : 0;
+    if ((i32)current_format.cursor_y < 0) current_format.cursor_y = 0;
+    if ((i32)current_format.cursor_x < 0) current_format.cursor_x = 0;
+    if (current_format.cursor_y >= rows) current_format.cursor_y = rows ? rows - 1 : 0;
+    if (current_format.cursor_x >= columns) current_format.cursor_x = columns ? columns - 1 : 0;
 
     last_drawn_cursor_x = -1;
     last_drawn_cursor_y = -1;
 }
 
 void Console::render_glyph(i32 x, i32 y, char c, color foreground, color background, bool half){
-    if (!(background & 0xFF000000)) background = bg_color;
+    if (!(background & 0xFF000000)) background = current_format.current_bg_color;
     fb_fill_rect(dctx, x, y, char_width, line_height, background);
-    if (c) fb_draw_char(dctx, x, y + (half ? (line_height/2) : 0), c, char_scale, foreground);
+    if (c) fb_draw_char(dctx, x, y + (line_height/2), c, char_scale, foreground);
 }
 
 void Console::put_char(char c){
@@ -119,13 +116,13 @@ void Console::put_char(char c){
     }
     if (!render) return;
     if (c == '\r'){
-        cursor_x = 0;
+        current_format.cursor_x = 0;
         draw_cursor();
         return;
     }
     if (c == '\t'){
-        cursor_x += 4;
-        if (cursor_x >= columns) newline();
+        current_format.cursor_x += 4;
+        if (current_format.cursor_x >= columns) newline();
         return;
     }
     if (c == '\n'){
@@ -134,18 +131,18 @@ void Console::put_char(char c){
         flush(dctx);
         return;
     }
-    if (cursor_x >= columns) newline();
+    if (current_format.cursor_x >= columns) newline();
 
-    char* line = row_data + (((scroll_row_offset + cursor_y) % rows) * columns);
-    line[cursor_x] = c;
-    color* line_bg = &row_bg_data[((scroll_row_offset + cursor_y) % rows) * columns];
-    line_bg[cursor_x] = bg_color;
-    color* line_fg = &row_fg_data[((scroll_row_offset + cursor_y) % rows) * columns];
-    line_fg[cursor_x] = current_format.current_text_color;
-    if (cursor_x + 1 < columns) line[cursor_x + 1] = 0;
+    char* line = row_data + (((scroll_row_offset + current_format.cursor_y) % rows) * columns);
+    line[current_format.cursor_x] = c;
+    color* line_bg = &row_bg_data[((scroll_row_offset + current_format.cursor_y) % rows) * columns];
+    line_bg[current_format.cursor_x] = current_format.current_bg_color;
+    color* line_fg = &row_fg_data[((scroll_row_offset + current_format.cursor_y) % rows) * columns];
+    line_fg[current_format.cursor_x] = current_format.current_text_color;
+    if (current_format.cursor_x + 1 < columns) line[current_format.cursor_x + 1] = 0;
 
-    render_glyph(cursor_x * char_width, (cursor_y * line_height)+(line_height/2), c, current_format.current_text_color, bg_color);
-    cursor_x++;
+    render_glyph(current_format.cursor_x * char_width, (current_format.cursor_y * line_height), c, current_format.current_text_color, current_format.current_bg_color);
+    current_format.cursor_x++;
     draw_cursor();
 }
 
@@ -153,24 +150,24 @@ void Console::put_char(char c){
 void Console::delete_last_char(){
     if (!check_ready()) return;
 
-    if (cursor_x > 0){
-        cursor_x--;
-    } else if (cursor_y > 0){
-        cursor_y--;
-        char* line0 = row_data + (((scroll_row_offset + cursor_y) % rows) * columns);
-        cursor_x = line_len(line0, columns);
+    if (current_format.cursor_x > 0){
+        current_format.cursor_x--;
+    } else if (current_format.cursor_y > 0){
+        current_format.cursor_y--;
+        char* line0 = row_data + (((scroll_row_offset + current_format.cursor_y) % rows) * columns);
+        current_format.cursor_x = line_len(line0, columns);
         draw_cursor();
         flush(dctx);
         return;
     } else return;
 
-    char* line = &row_data[((scroll_row_offset + cursor_y) % rows) * columns];
-    line[cursor_x] = 0;
-    color* line_bg = &row_bg_data[((scroll_row_offset + cursor_y) % rows) * columns];
-    line_bg[cursor_x] = default_bg_color;
-    color* line_fg = &row_fg_data[((scroll_row_offset + cursor_y) % rows) * columns];
-    line_fg[cursor_x] = current_format.default_text_color;
-    fb_fill_rect(dctx, cursor_x*char_width, cursor_y * line_height, char_width, line_height, default_bg_color);
+    char* line = &row_data[((scroll_row_offset + current_format.cursor_y) % rows) * columns];
+    line[current_format.cursor_x] = 0;
+    color* line_bg = &row_bg_data[((scroll_row_offset + current_format.cursor_y) % rows) * columns];
+    line_bg[current_format.cursor_x] = current_format.default_bg_color;
+    color* line_fg = &row_fg_data[((scroll_row_offset + current_format.cursor_y) % rows) * columns];
+    line_fg[current_format.cursor_x] = current_format.default_text_color;
+    fb_fill_rect(dctx, current_format.cursor_x*char_width, current_format.cursor_y * line_height, char_width, line_height, current_format.default_bg_color);
     draw_cursor();
     flush(dctx);
 }
@@ -181,12 +178,12 @@ void Console::draw_cursor(){
             char *prev_line = &row_data[((scroll_row_offset + (u32)last_drawn_cursor_y) % rows) * columns];
             color *prev_line_fg = &row_fg_data[((scroll_row_offset + (u32)last_drawn_cursor_y) % rows) * columns];
             color *prev_line_bg = &row_bg_data[((scroll_row_offset + (u32)last_drawn_cursor_y) % rows) * columns];
-            render_glyph(last_drawn_cursor_x*char_width, last_drawn_cursor_y * line_height, prev_line[last_drawn_cursor_x], prev_line_fg[last_drawn_cursor_x], prev_line_bg[last_drawn_cursor_x], true);
+            render_glyph(last_drawn_cursor_x*char_width, last_drawn_cursor_y * line_height, prev_line[last_drawn_cursor_x], prev_line_fg[last_drawn_cursor_x], prev_line_bg[last_drawn_cursor_x]);
         }
     }
-    fb_fill_rect(dctx, cursor_x*char_width, cursor_y * line_height, char_width, line_height, current_format.current_text_color);
-    last_drawn_cursor_x = (i32)cursor_x;
-    last_drawn_cursor_y = (i32)cursor_y;
+    fb_fill_rect(dctx, current_format.cursor_x*char_width, current_format.cursor_y * line_height, char_width, line_height, current_format.current_text_color);
+    last_drawn_cursor_x = (i32)current_format.cursor_x;
+    last_drawn_cursor_y = (i32)current_format.cursor_y;
 }
 
 void Console::put_slice(string_slice slice){
@@ -201,15 +198,15 @@ void Console::put_string(const char* str){
 
 void Console::newline(){
     if (!check_ready()) return;
-    cursor_x = 0;
-    cursor_y++;
-    if (cursor_y >= rows - 1){
-        scroll();
-        cursor_y = rows - 1;
-    } else {
-        char* line = row_data + (((scroll_row_offset + cursor_y) % rows) * columns);
-        memset(line, 0, columns);
-    }
+    current_format.cursor_x = 0;
+    current_format.cursor_y++;
+    // if (current_format.cursor_y >= rows - 1){
+    //     scroll();
+    //     current_format.cursor_y = rows - 1;
+    // } else {
+    //     char* line = row_data + (((scroll_row_offset + current_format.cursor_y) % rows) * columns);
+    //     memset(line, 0, columns);
+    // }
 }
 
 void Console::scroll(){
@@ -220,7 +217,7 @@ void Console::scroll(){
     char* line = row_data + clear_index * columns;
     memset(line, 0, columns);
 
-    fb_clear(dctx, bg_color);
+    fb_clear(dctx, current_format.default_bg_color);
     for (u32 y = 0; y < rows; y++) {
         char* l = &row_data[((scroll_row_offset + y) % rows) * columns];
         color *line_fg = &row_fg_data[((scroll_row_offset + y) % rows) * columns];
@@ -261,7 +258,7 @@ void Console::redraw(){
 }
 
 void Console::screen_clear(){
-    if (dctx) fb_clear(dctx, bg_color);
+    if (dctx) fb_clear(dctx, current_format.current_bg_color);
     last_drawn_cursor_x = -1;
     last_drawn_cursor_y = -1;
 }
@@ -269,9 +266,9 @@ void Console::screen_clear(){
 void Console::clear(){
     screen_clear();
     if (row_data && buffer_data_size) memset(row_data, 0, buffer_data_size);
-    cursor_x = cursor_y = 0;
+    current_format.cursor_x = current_format.cursor_y = 0;
 }
 
 const char* Console::get_current_line(){
-    return row_data + (((scroll_row_offset + cursor_y) % rows) * columns);
+    return row_data + (((scroll_row_offset + current_format.cursor_y) % rows) * columns);
 }

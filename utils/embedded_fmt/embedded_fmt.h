@@ -8,12 +8,14 @@
 extern "C" {
 #endif
 
-typedef enum { embedded_fmt_invalid, embeddef_fmt_color, embeddef_fmt_cursor, embeddef_fmt_screen, embedded_fmt_count } embedded_fmt_feature;
+typedef enum { embedded_fmt_invalid, embeddef_fmt_color, embeddef_fmt_bg, embeddef_fmt_cursor_abs, embeddef_fmt_cursor_rel, embeddef_fmt_screen, embedded_fmt_count } embedded_fmt_feature;
 
 typedef struct {
     color current_text_color;
     color default_text_color;
-    //cursor;
+    color current_bg_color;
+    color default_bg_color;
+    u32 cursor_x, cursor_y;
     bool wipe;
     data_signature state_type;
     void* state;

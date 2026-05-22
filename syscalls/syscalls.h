@@ -21,6 +21,12 @@ enum {
 };
 
 extern void printl(const char *str);
+int print(const char *fmt, ...);
+#ifndef CROSS
+void put(const char *fmt, ...);
+#else
+#define put(...) printf(__VA_ARGS__)
+#endif
 
 extern void* malloc(size_t size);//NOTE: malloc can return a faulty address for allocations smaller than 0x1000. Use zalloc/allocate until this is fixed, or allocate full pages (0x1000) if you wish to manage memory manually
 extern void free_sized(void *ptr, size_t size);//NOTE: this function should be used in conjunction with malloc. For zalloc, use release(void*) instead
@@ -79,8 +85,6 @@ void* realloc_sized(void* old_ptr, size_t old_size, size_t new_size);
 void *calloc(size_t nitems, size_t size);
 
 size_t dir_list(const char *path, void *buf, size_t size, u64 *offset);
-
-int print(const char *fmt, ...);
 
 int system(const char *command);
 int system_focus(const char *command, u32 focus_mode);

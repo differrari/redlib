@@ -7,6 +7,9 @@
 #define COLOR_WHITE 0xFFFFFFFF
 #define COLOR_BLACK 0
 
+#define char_width (char_scale*CHAR_SIZE)
+#define line_height (char_scale*CHAR_SIZE*2)
+
 class Console{
 public:
     Console();
@@ -42,15 +45,11 @@ protected:
     virtual void flush(draw_ctx *ctx) = 0;
     virtual bool screen_ready() = 0;
 
-    u32 cursor_x, cursor_y;
     i32 last_drawn_cursor_x, last_drawn_cursor_y;
     u32 columns, rows;
     bool is_initialized;
     
     static constexpr u32 max_rows=128;
-
-    u32 default_bg_color = COLOR_BLACK;
-    u32 bg_color = default_bg_color;
     
     i32 scroll_row_offset = 0;
     char* row_data;
@@ -65,12 +64,15 @@ protected:
 
     u8 char_scale = 1;
 
-    embedded_fmt current_format = {
+    __attribute__((aligned(16))) embedded_fmt current_format = {
         .current_text_color = COLOR_WHITE,
         .default_text_color = COLOR_WHITE,
+        .current_bg_color = COLOR_BLACK,
+        .default_bg_color = COLOR_BLACK,
+        .cursor_x = 0,
+        .cursor_y = 0,
         .wipe = false,
         .state_type = 0,
         .state = 0,
     };
 };
-
