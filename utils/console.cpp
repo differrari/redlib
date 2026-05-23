@@ -143,7 +143,7 @@ void Console::put_char(char c){
 
     render_glyph(current_format.cursor_x * char_width, (current_format.cursor_y * line_height), c, current_format.current_text_color, current_format.current_bg_color);
     current_format.cursor_x++;
-    draw_cursor();
+    //draw_cursor();
 }
 
 //TODO: generalize this function to handle movement in general
