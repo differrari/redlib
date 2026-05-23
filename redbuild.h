@@ -414,7 +414,7 @@ void prepare_command(char* source, char* out){
     redbuild_debug("Beginning compilation process");
     if (ctx->buf.buffer) buffer_destroy(&ctx->buf);
     ctx->buf = buffer_create(1024, buffer_can_grow);
-    buffer_write(&ctx->buf, "%sgcc", ctx->chosen_compiler);
+    buffer_write(&ctx->buf, "%sgcc -std=c99", ctx->chosen_compiler);
     buffer_write_space(&ctx->buf);
     
     linked_list_for_each(ctx->preproc_flags_list, process_preproc_flags);
