@@ -27,6 +27,8 @@ typedef enum {
     SOCK_OPT_MCAST_JOIN = 1u << 5
 } SockOptFlags;
 
+// TODO add TCP_NODELAY to avoid nagle
+// TODO add more standard sock opt anyway
 typedef enum {
     SOCK_DBG_LOW = 0,
     SOCK_DBG_MEDIUM = 1,

@@ -14,11 +14,11 @@ void sheldon_emit_data(structdef field, sizedptr data, bool is_allocated){
         switch (field.type) {
         case binary_type_i8: print("%S: %i",field.name,*(i8*)data.ptr); break;
         case binary_type_i16: print("%S: %i",field.name,*(i16*)data.ptr); break;
-        case binary_type_i32: print("%S: %i",field.name,*(i32*)data.ptr); break;  
-        case binary_type_i64: print("%S: %i",field.name,*(i64*)data.ptr); break;
+        case binary_type_i32: print("{color:0000ff %S:} %i",field.name,*(i32*)data.ptr); break;  
+        case binary_type_i64: print("{color:00ff00 %S:} %i",field.name,*(i64*)data.ptr); break;
         case binary_type_float: print("%S: %f",field.name,*(float*)data.ptr); break;
         case binary_type_double: print("%S: %f",field.name,*(double*)data.ptr); break;
-        case binary_type_string: print("%S: %v",field.name,data); break;
+        case binary_type_string: print("{color:ff0000 %S:} %v",field.name,data); break;
         default: return;
     }
     if (is_allocated) release((void*)data.ptr);
@@ -88,13 +88,13 @@ bool sheldon_run_cmd(shell_handle *handle, string_slice fullcmd){
                         proc_env_config.behavior = read_env_config.behavior;
                     if (read_env_config.display_type != proc_env_config.display_type)
                         proc_env_config.display_type = read_env_config.display_type;
-                } if (buf[i] == ENV_CMD_STRUCT_SYNC){
+                } if (buf[i] == ENV_CMD_STRUCT_SYNC && proc_env_config.display_type != env_display_text){
                     size_t struct_size = 0;
                     char* struct_buf = read_full_file(structure_string.data, &struct_size);
                     if (struct_size && struct_buf){
                         bin_ser_define_structure(&proc_serializer, struct_buf, struct_size);
                     } else print("Invalid structure");
-                } if (buf[i] == ENV_CMD_DATA_SYNC){
+                } if (buf[i] == ENV_CMD_DATA_SYNC && proc_env_config.display_type != env_display_text){
                     if (proc_env_config.behavior == env_behavior_wipe && handle->bindings.console_clean) handle->bindings.console_clean(handle);
                     size_t data_size = readf(&data_fd, data_buf, 0x1000);
                     if (data_size && data_buf){

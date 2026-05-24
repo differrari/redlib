@@ -1206,9 +1206,7 @@ void string_concat_inplace(string *dest, string src)
     }
     memcpy(dst + dest->length, src.data, src.length);
     dst[new_len] = '\0';
-    if (dest->data) {
-        release(dest->data);
-    }
+    if (dest->data && dest->mem_length) release(dest->data);
     dest->data = dst;
     dest->length = new_len;
     dest->mem_length = new_cap;

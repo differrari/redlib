@@ -10,7 +10,7 @@ typedef struct {
     void (*console_flush)(shell_handle*);
     void (*console_clean)(shell_handle*);
     void (*console_bell)(shell_handle*);
-    void (*console_ascii_cmd)(shell_handle*, u16 proc_id, char cmd);
+    void (*console_ascii_cmd)(shell_handle*, char cmd, u16 proc_id);
 } shell_bindings;
 
 typedef struct {
