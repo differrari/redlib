@@ -35,6 +35,8 @@ static inline text_format_arr array_to_text_format(text_format *ptr, size_t coun
     return (text_format_arr){ .array_type = fmt_array_static, .fmt = ptr, .count = count }; 
 }
 
+u32 fb_get_line_spacing(int scale);
+
 gpu_size fb_draw_single_text(draw_ctx *ctx, string_slice slice, gpu_rect bounds, text_format format);
 gpu_size fb_draw_text(draw_ctx *ctx, string_slice slice, gpu_rect bounds, text_format default_format, text_format_arr array);
 

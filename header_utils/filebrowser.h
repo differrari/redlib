@@ -149,8 +149,12 @@ void refresh(){
     commit_draw_ctx(&filebrowser_ctx);
 }
 
+bool (*filebrowser_handle_path)(const char *name, const char *full_path);
+
 void enter_path(const char *name, const char *full_path){
     if (!name || !*name) return;
+
+    if (filebrowser_handle_path && filebrowser_handle_path(name, full_path)) return;
 
     if (strend(name, ".red") == 0){
         exec(full_path, 0, 0, EXEC_MODE_DEFAULT);
@@ -190,6 +194,13 @@ void enter_path(const char *name, const char *full_path){
 
 void enter(char *name){
     enter_path(name, name);
+}
+
+void navigate(char *name){
+    stack_reset(directories);
+    string s = string_from_literal(name);
+    stack_push(directories,&s);
+    refresh();
 }
 
 void pop_dir(){

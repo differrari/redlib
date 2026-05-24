@@ -34,6 +34,10 @@ static inline void new_line(gpu_point *point, u32 line_size, int indent){
     point->y += line_size;
 }
 
+u32 fb_get_line_spacing(int scale){
+    return 2 * scale;
+}
+
 gpu_size fb_draw_text(draw_ctx *ctx, string_slice slice, gpu_rect bounds, text_format default_format, text_format_arr array){
     gpu_point cursor = { .x = 0, .y = 0 };
     int indent = 0;
@@ -44,7 +48,7 @@ gpu_size fb_draw_text(draw_ctx *ctx, string_slice slice, gpu_rect bounds, text_f
         text_format current_format = get_current_format(i, default_format, array);
         char c = slice.data[i];
         size_t curr_char_width = fb_get_char_size(current_format.scale);
-        size_t curr_line_height = fb_get_char_size(current_format.scale);
+        size_t curr_line_height = fb_get_char_size(current_format.scale) + fb_get_line_spacing(current_format.scale);
         if (char_width < curr_char_width) char_width = curr_char_width;
         if (line_height < curr_line_height) line_height = curr_line_height;
         wrap_policy current_wrap = default_format.wrap;
