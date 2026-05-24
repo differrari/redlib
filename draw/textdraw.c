@@ -38,7 +38,15 @@ u32 fb_get_line_spacing(int scale){
     return 2 * scale;
 }
 
-gpu_size fb_draw_text(draw_ctx *ctx, string_slice slice, gpu_rect bounds, text_format default_format, text_format_arr array){
+u32 fb_char_width(u32 scale){
+    return fb_get_char_size(scale);
+}
+
+u32 fb_line_height(u32 scale){
+    return fb_get_char_size(scale) + fb_get_line_spacing(scale);
+}
+
+gpu_size fb_draw_text(draw_ctx *ctx, string_slice slice, gpu_rect bounds, gpu_point scroll, text_format default_format, text_format_arr array){
     gpu_point cursor = { .x = 0, .y = 0 };
     int indent = 0;
     bool can_indent = true;
@@ -47,8 +55,8 @@ gpu_size fb_draw_text(draw_ctx *ctx, string_slice slice, gpu_rect bounds, text_f
     for (size_t i = 0; i < slice.length; i++){
         text_format current_format = get_current_format(i, default_format, array);
         char c = slice.data[i];
-        size_t curr_char_width = fb_get_char_size(current_format.scale);
-        size_t curr_line_height = fb_get_char_size(current_format.scale) + fb_get_line_spacing(current_format.scale);
+        size_t curr_char_width = fb_char_width(current_format.scale);
+        size_t curr_line_height = fb_line_height(current_format.scale);
         if (char_width < curr_char_width) char_width = curr_char_width;
         if (line_height < curr_line_height) line_height = curr_line_height;
         wrap_policy current_wrap = default_format.wrap;
@@ -84,8 +92,8 @@ gpu_size fb_draw_text(draw_ctx *ctx, string_slice slice, gpu_rect bounds, text_f
             }
         }
         
-        if (c != '\n' && cursor.x < (i32)bounds.size.width && 
-            cursor.y < (i32)bounds.size.height){
+        if (c != '\n' && cursor.x + scroll.x < (i32)bounds.size.width && 
+            cursor.y + scroll.y < (i32)bounds.size.height){
             fb_draw_raw_char(ctx, cursor.x + bounds.point.x, cursor.y + bounds.point.y, c, current_format.scale, current_format.color);
             cursor.x += curr_char_width;
         }
@@ -96,8 +104,8 @@ gpu_size fb_draw_text(draw_ctx *ctx, string_slice slice, gpu_rect bounds, text_f
     return (gpu_size){bounds.size.width, bounds.size.height};
 }
 
-gpu_size fb_draw_single_text(draw_ctx *ctx, string_slice slice, gpu_rect bounds, text_format format){
-    return fb_draw_text(ctx, slice, bounds, format, (text_format_arr){});
+gpu_size fb_draw_single_text(draw_ctx *ctx, string_slice slice, gpu_rect bounds, gpu_point scroll, text_format format){
+    return fb_draw_text(ctx, slice, bounds, scroll, format, (text_format_arr){});
 }
 
 u32 lin_col_to_pos(i32 line, i32 col, string_slice content){

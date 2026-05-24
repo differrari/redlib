@@ -36,9 +36,11 @@ static inline text_format_arr array_to_text_format(text_format *ptr, size_t coun
 }
 
 u32 fb_get_line_spacing(int scale);
+u32 fb_char_width(u32 scale);
+u32 fb_line_height(u32 scale);
 
-gpu_size fb_draw_single_text(draw_ctx *ctx, string_slice slice, gpu_rect bounds, text_format format);
-gpu_size fb_draw_text(draw_ctx *ctx, string_slice slice, gpu_rect bounds, text_format default_format, text_format_arr array);
+gpu_size fb_draw_single_text(draw_ctx *ctx, string_slice slice, gpu_rect bounds, gpu_point scroll, text_format format);
+gpu_size fb_draw_text(draw_ctx *ctx, string_slice slice, gpu_rect bounds, gpu_point scroll, text_format default_format, text_format_arr array);
 
 u32 lin_col_to_pos(i32 line, i32 col, string_slice content);
 void pos_to_lin_col(u32 pos, string_slice content, i32 *lin, i32 *col);
