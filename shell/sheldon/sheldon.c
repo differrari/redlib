@@ -24,11 +24,20 @@ void sheldon_emit_data(structdef field, sizedptr data, bool is_allocated){
     if (is_allocated) release((void*)data.ptr);
 }
 
+bool sheldon_ctrl_functions(shell_handle *handle, string_slice cmd, string_slice arg){
+    if (slice_lit_match(cmd, "exit", true) || slice_lit_match(cmd, "q", true)){
+        handle->bindings.console_control(handle, console_ctrl_close);
+        return true;
+    }
+    return false;
+}
+
 bool sheldon_run_cmd(shell_handle *handle, string_slice fullcmd){
     string_splitter splitter = make_string_splitter_slice(fullcmd, ' ', false);
     if (!string_splitter_advance(&splitter))
         return false;
     string_slice cmd = string_splitter_get_current(&splitter);
+    if (sheldon_ctrl_functions(handle, cmd, string_splitter_remaining(&splitter))) return true;
     if (call_sheldon_builtin(handle, cmd, string_splitter_remaining(&splitter), 0)) return true;
     
     int32_t proc = system_focus(fullcmd.data, EXEC_MODE_KEEP_FOCUS);

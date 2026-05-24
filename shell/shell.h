@@ -5,12 +5,18 @@
 
 typedef struct shell_handle shell_handle;
 
+typedef enum  {
+    console_ctrl_none,
+    console_ctrl_close
+} console_ctrls;
+
 typedef struct {
     void (*console_output)(shell_handle*, char output);
     void (*console_flush)(shell_handle*);
     void (*console_clean)(shell_handle*);
     void (*console_bell)(shell_handle*);
     void (*console_ascii_cmd)(shell_handle*, char cmd, u16 proc_id);
+    void (*console_control)(shell_handle*, console_ctrls);
 } shell_bindings;
 
 typedef struct {
