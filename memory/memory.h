@@ -15,11 +15,15 @@ extern "C" {
 #endif
 
 int memcmp(const void *s1, const void *s2, size_t count);
+#undef memset
 void* memset(void* dest, int byte, size_t count);//Let the record show libc is fucking stupid
 void* memset32(void* dest, uint32_t val, size_t count);
+#undef memcpy
 void* memcpy(void *dest, const void *src, size_t count);
 void memreverse(void *ptr, size_t n);
+#undef memmove
 void* memmove(void *dest, const void *src, size_t count);
+#undef memmem
 void* memmem(const void* haystack, size_t haystack_len, const void* needle, size_t needle_len);
 
 #ifdef __cplusplus
