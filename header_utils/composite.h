@@ -43,16 +43,25 @@ static void composite(draw_ctx *in_ctx, int_point offset, int zoom_scale, draw_c
         return;
     } 
 
-    if (in_ctx->full_redraw){
+    if (zoom_scale != 1){
         for (i32 dy = 0; dy < h; dy++)
-            memcpy(ex_ctx->fb + ((sy + dy) * ex_ctx->width) + sx, in_ctx->fb + ((dy + oy) * in_ctx->width) + ox, w * sizeof(color));
-        mark_dirty(ex_ctx, sx, sy, w, h);
+            for (i32 dx = 0; dx < w; dx++)
+                ex_ctx->fb[((sy + dy) * ex_ctx->width) + (sx + dx)] = in_ctx->fb[(((dy * zoom_scale) + oy) * in_ctx->width) + ((dx * zoom_scale) + ox)];
     } else {
-        for (uint32_t dr = 0; dr < in_ctx->dirty_count; dr++){
-            gpu_rect r = in_ctx->dirty_rects[dr];
-            for (u32 dy = 0; dy < r.size.height; dy++)
-                memcpy(ex_ctx->fb + ((sy + dy + r.point.y) * ex_ctx->width) + sx + r.point.x, in_ctx->fb + ((dy + oy + r.point.y) * in_ctx->width) + r.point.x + ox, r.size.width * sizeof(color));
-            mark_dirty(ex_ctx, sx + r.point.x, sy + r.point.y, r.size.width, r.size.height);
+        if (in_ctx->full_redraw){
+            for (i32 dy = 0; dy < h; dy++)
+                memcpy(ex_ctx->fb + ((sy + dy) * ex_ctx->width) + sx, in_ctx->fb + ((dy + oy) * in_ctx->width) + ox, w * sizeof(color));
+            mark_dirty(ex_ctx, sx, sy, w, h);
+        } else {
+            for (u32 dr = 0; dr < in_ctx->dirty_count; dr++){
+                gpu_rect r = in_ctx->dirty_rects[dr];
+                for (u32 dy = 0; dy < r.size.height; dy++)
+                    memcpy(ex_ctx->fb + ((sy + dy + r.point.y) * ex_ctx->width) + sx + r.point.x, in_ctx->fb + ((dy + oy + r.point.y) * in_ctx->width) + r.point.x + ox, r.size.width * sizeof(color));
+                mark_dirty(ex_ctx, sx + r.point.x, sy + r.point.y, r.size.width, r.size.height);
+            }
         }
     }
+
+    in_ctx->dirty_count = 0;
+    in_ctx->full_redraw = false;
 }
