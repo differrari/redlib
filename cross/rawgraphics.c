@@ -43,9 +43,9 @@ void resize_draw_ctx(draw_ctx *ctx, uint32_t width, uint32_t height){
     ctx->stride = 4 * width;
     glfwSetWindowSize(_window, width, height);
     glViewport( 0, 0, width, height );
-    glMatrixMode( GL_PROJECTION );
+    glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-    glOrtho( 0, width, 0, height, -1, 1 );
+    glOrtho(0, width, 0, height, -1, 1);
 }
 
 static void error_callback(int error, const char* description)
@@ -95,13 +95,21 @@ void request_draw_ctx(draw_ctx *ctx){
     ctx->fb = zalloc(w*h*sizeof(color));
     ctx->width = w;
     ctx->height = h;
-    ctx->stride = 4 * w;
+    ctx->stride = sizeof(color) * w;
     glfwInit();
     glfwSetErrorCallback(error_callback);
+
+    glfwDefaultWindowHints();
+#if __APPLE__
     glfwWindowHint(GLFW_COCOA_RETINA_FRAMEBUFFER, GLFW_FALSE);
-    
+    glfwWindowHint(GLFW_MAXIMIZED, GLFW_FALSE);
+#endif
     _window = glfwCreateWindow(w, h, "redlib", NULL, NULL);
     glfwMakeContextCurrent(_window);
+
+    ctx->width = w;
+    ctx->height = h;
+    
     glViewport( 0, 0, w, h );
     glMatrixMode( GL_PROJECTION );
     glLoadIdentity();
