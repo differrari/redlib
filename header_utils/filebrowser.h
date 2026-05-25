@@ -5,19 +5,19 @@
 #include "data/struct/stack.h"
 #include "input_keycodes.h"
 
-arr_stack_t *directories;
-arr_stack_t *files;
+static arr_stack_t *directories;
+static arr_stack_t *files;
 
-int selected = 0;
+static int selected = 0;
 
-bool viewing_file = false;
-char *viewed_path;
-char *viewed_data;
-size_t viewed_size;
+static bool viewing_file = false;
+static char *viewed_path;
+static char *viewed_data;
+static size_t viewed_size;
 
-draw_ctx filebrowser_ctx;
+static draw_ctx filebrowser_ctx;
 
-bool disable_multiverse;
+static bool disable_multiverse;
 
 typedef struct {
     string name;
@@ -120,7 +120,6 @@ void refresh(){
                 }
             }
         }
-        commit_draw_ctx(&filebrowser_ctx);
         return;
     }
 
@@ -146,7 +145,6 @@ void refresh(){
             }
         }
     }
-    commit_draw_ctx(&filebrowser_ctx);
 }
 
 bool (*filebrowser_handle_path)(const char *name, const char *full_path);
