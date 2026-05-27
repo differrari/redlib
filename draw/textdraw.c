@@ -94,12 +94,12 @@ gpu_size fb_draw_text(draw_ctx *ctx, string_slice slice, gpu_rect bounds, gpu_po
         
         if (c != '\n' && cursor.x + scroll.x < (i32)bounds.size.width && 
             cursor.y + scroll.y < (i32)bounds.size.height){
-            fb_draw_raw_char(ctx, cursor.x + bounds.point.x, cursor.y + bounds.point.y, c, current_format.scale, current_format.color);
+            if (ctx->fb) fb_draw_raw_char(ctx, cursor.x + bounds.point.x, cursor.y + bounds.point.y, c, current_format.scale, current_format.color);
             cursor.x += curr_char_width;
         }
     }
     
-    mark_dirty(ctx, bounds.point.x, bounds.point.y, bounds.size.width, bounds.size.height);
+    if (ctx->fb) mark_dirty(ctx, bounds.point.x, bounds.point.y, bounds.size.width, bounds.size.height);
     
     return (gpu_size){bounds.size.width, bounds.size.height};
 }
