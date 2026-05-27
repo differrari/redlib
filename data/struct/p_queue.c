@@ -46,7 +46,7 @@ void p_queue_traverse(p_queue_t *root){
 }
 
 p_queue_t* p_queue_create(int max){
-     p_queue_t *root = malloc(sizeof(p_queue_t) + (sizeof(p_queue_item) * max));
+     p_queue_t *root = zalloc(sizeof(p_queue_t) + (sizeof(p_queue_item) * max));
      root->max_priority = UINT64_MAX; 
      root->max_size = max;
      root->array = (p_queue_item*)((uintptr_t)root + sizeof(p_queue_t));
@@ -54,5 +54,5 @@ p_queue_t* p_queue_create(int max){
 }
 
 void p_queue_free(p_queue_t *root){
-    free_sized(root, sizeof(p_queue_t) + (sizeof(p_queue_item) * root->max_size));
+    release(root);
 }

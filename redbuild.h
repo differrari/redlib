@@ -9,6 +9,8 @@
 #include "alloc/allocate.h"
 #include "data/struct/linked_list.h"
 
+static bool vendor_mode = false;
+
 typedef enum {
     target_none,
     target_redacted,
@@ -66,6 +68,10 @@ typedef struct redb_ctx {
 
 static buffer ccbuf;
 static redb_ctx *ctx;
+
+void vendored(){
+    vendor_mode = true;
+}
 
 #define REDBUILD_DEBUG
 #ifdef REDBUILD_DEBUG
@@ -156,8 +162,10 @@ void cross_mod(){
     redbuild_debug("Native platform setup");
     add_system_lib("c");
     add_system_lib("m");
-    add_local_dependency("~/redlib", "~/redlib/clibshared.a", "~/redlib", true);
-    add_system_lib("glfw");
+    if (!vendor_mode){
+        add_local_dependency("~/redlib", "~/redlib/clibshared.a", "~/redlib", true);
+        add_system_lib("glfw");
+    }
     add_precomp_flag("CROSS");
     redbuild_debug("Common platform setup done");
     if (ctx->compilation_target == target_none || ctx->compilation_target == target_native) ctx->compilation_target = native_target;
@@ -187,7 +195,8 @@ void cross_mod(){
 
 void red_mod(){
     ctx->chosen_compiler = "aarch64-none-elf-";
-    add_local_dependency("~/redlib", "~/redlib/libshared.a", "~/os/", true);
+    if (!vendor_mode)
+        add_local_dependency("~/redlib", "~/redlib/libshared.a", "~/os/", true);
     add_linker_flag("-Wl,-emain",false);
     add_linker_flag("-ffreestanding", false);
     add_linker_flag("-nostdlib", false);
