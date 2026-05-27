@@ -63,7 +63,11 @@ size_t sreadf(const char* path, void* buf, size_t size){
 }
 
 size_t swritef(const char* path, const void* buf, size_t size, bool append){
-    
+    FILE *fd = fopen(path,"w");
+    if (!fd) return 0;
+    if (append) fseek(fd, 0, SEEK_END);
+    fwrite(buf, size, 1, fd);
+    fclose(fd);
 }
 
 #endif
