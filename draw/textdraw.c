@@ -52,6 +52,7 @@ gpu_size fb_draw_text(draw_ctx *ctx, string_slice slice, gpu_rect bounds, gpu_po
     bool can_indent = true;
     u32 char_width = 0, line_height = 0;
     size_t current_lookahead = 0;
+    gpu_size max_size = {};
     for (size_t i = 0; i < slice.length; i++){
         text_format current_format = get_current_format(i, default_format, array);
         char c = slice.data[i];
@@ -65,6 +66,7 @@ gpu_size fb_draw_text(draw_ctx *ctx, string_slice slice, gpu_rect bounds, gpu_po
         }
         if (c == '\n'){
             new_line(&cursor, line_height, 0);
+            if (cursor.y > max_size.height) max_size.height = cursor.y + line_height;
             char_width = 0;
             line_height = 0;
             indent = 0;
@@ -88,6 +90,7 @@ gpu_size fb_draw_text(draw_ctx *ctx, string_slice slice, gpu_rect bounds, gpu_po
                 current_lookahead = word_size-1;
                 if ((word_size * char_width) + cursor.x > bounds.size.width){
                     new_line(&cursor, line_height, current_wrap == wrap_word_preserve_indent ? indent * char_width : 0);
+                    if (cursor.y > max_size.height) max_size.height = cursor.y + line_height;
                 }
             }
         }
@@ -96,12 +99,14 @@ gpu_size fb_draw_text(draw_ctx *ctx, string_slice slice, gpu_rect bounds, gpu_po
             cursor.y + scroll.y < (i32)bounds.size.height){
             if (ctx->fb) fb_draw_raw_char(ctx, cursor.x + bounds.point.x, cursor.y + bounds.point.y, c, current_format.scale, current_format.color);
             cursor.x += curr_char_width;
+            if (cursor.x > max_size.width) max_size.width = cursor.x;
+            if (!max_size.height) max_size.height = line_height;
         }
     }
     
-    if (ctx->fb) mark_dirty(ctx, bounds.point.x, bounds.point.y, bounds.size.width, bounds.size.height);
+    if (ctx->fb) mark_dirty(ctx, bounds.point.x, bounds.point.y, max_size.width, max_size.height);
     
-    return (gpu_size){bounds.size.width, bounds.size.height};
+    return (gpu_size){max_size.width, max_size.height};
 }
 
 gpu_size fb_draw_single_text(draw_ctx *ctx, string_slice slice, gpu_rect bounds, gpu_point scroll, text_format format){
