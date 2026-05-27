@@ -52,15 +52,18 @@ void seek(file *descriptor, int64_t offset, SEEK_TYPE type){
 }
 
 void* realloc_sized(void* old_ptr, size_t old_size, size_t new_size){
-    void* new_ptr = malloc(new_size);
-    if (!new_ptr) return 0;
-    memset(new_ptr, 0, new_size);
-    memcpy(new_ptr, old_ptr, min(old_size,new_size));
-    free_sized(old_ptr, old_size);
-    return new_ptr;
+    return reallocate(old_ptr, new_size);
 }
 
 #ifndef CROSS
+
+void* malloc(size_t size){
+    return zalloc(size);
+}
+
+extern void free_sized(void *ptr, size_t size){
+    return release(ptr);
+}
 
 void begin_drawing(draw_ctx *ctx){
 

@@ -31,10 +31,10 @@ typedef struct wav_format_chunk {
 }__attribute__((packed)) wav_format_chunk;
 
 static void transform_16bit(wav_format_chunk *fmt_chunk, uint32_t data_size, audio_samples* audio, uint32_t upsample, file* fd){
-    int16_t* tbuf = (int16_t*)malloc(data_size);
+    int16_t* tbuf = (int16_t*)zalloc(data_size);
     readf(fd, (char*)tbuf, data_size);
     audio->samples.size = data_size * upsample;
-    audio->samples.ptr = (uintptr_t)malloc(audio->samples.size);
+    audio->samples.ptr = (uintptr_t)zalloc(audio->samples.size);
     audio->smpls_per_channel = audio->samples.size / (sizeof(int16_t) * fmt_chunk->channels);
     audio->channels = fmt_chunk->channels;
     uint32_t samples_remaining = data_size / sizeof(int16_t);
@@ -50,10 +50,10 @@ static void transform_16bit(wav_format_chunk *fmt_chunk, uint32_t data_size, aud
 }
 
 static void transform_8bit(wav_format_chunk *fmt_chunk, uint32_t data_size, audio_samples* audio, uint32_t upsample, file* fd){
-    uint8_t* tbuf = (uint8_t*)malloc(data_size);
+    uint8_t* tbuf = (uint8_t*)zalloc(data_size);
     readf(fd, (char*)tbuf, data_size);
     audio->samples.size = data_size * upsample * sizeof(int16_t);
-    audio->samples.ptr = (uintptr_t)malloc(audio->samples.size);
+    audio->samples.ptr = (uintptr_t)zalloc(audio->samples.size);
     audio->smpls_per_channel = audio->samples.size / (sizeof(int16_t) * fmt_chunk->channels);
     audio->channels = fmt_chunk->channels;
     uint32_t samples_remaining = data_size;
@@ -120,7 +120,7 @@ bool wav_load_as_int16(const char* path, audio_samples* audio){
                 if (fmt_chunk.sample_bits == 16 && upsample == 1){
                     // simple case: slurp samples direct from file to wav buffer
                     audio->samples.size = ch_hdr.ck_size;
-                    audio->samples.ptr = (uintptr_t)malloc(audio->samples.size);
+                    audio->samples.ptr = (uintptr_t)zalloc(audio->samples.size);
                     readf(&fd, (char*)audio->samples.ptr, audio->samples.size);
                     audio->smpls_per_channel = ch_hdr.ck_size / (sizeof(int16_t) * fmt_chunk.channels);
                     audio->channels = fmt_chunk.channels;

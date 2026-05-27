@@ -3,7 +3,7 @@
 #include "math/math.h"
 
 int* huff_count_entries(sizedptr input){
-    int *entries = malloc(sizeof(int) * 257);
+    int *entries = zalloc(sizeof(int) * 257);
     uint8_t *buf = (uint8_t*)input.ptr;
     for (size_t i = 0; i < input.size; i++){
         entries[buf[i]]++;
@@ -27,7 +27,7 @@ void huffman_populate(huff_tree_node *root, uint64_t code, uint8_t code_len, uin
     bool right = ((code >> (code_len-1)) & 1);
     huff_tree_node *child = right ? root->right : root->left;
     if (!child){
-        child = (huff_tree_node*)malloc(sizeof(huff_tree_node));
+        child = (huff_tree_node*)zalloc(sizeof(huff_tree_node));
         if (right)
             root->right = child;
         else  
@@ -39,7 +39,7 @@ void huffman_populate(huff_tree_node *root, uint64_t code, uint8_t code_len, uin
 void huffman_free(huff_tree_node *root){
     if (root->right) huffman_free(root->right);
     if (root->left) huffman_free(root->left);
-    free_sized(root, sizeof(huff_tree_node));
+    release(root);
 }
 
 static char *pad = "                                                                ";
@@ -58,7 +58,7 @@ int node_index = 0;
 #define TO_READABLE(c) (c >= 'a' && c <= 'z' ? c : '?')
 
 huff_tree_node* huff_make_node(huff_tree_node *l, huff_tree_node *r){
-    huff_tree_node *node = malloc(sizeof(huff_tree_node));//TODO: no need for an alloc every time, we know the max number of nodes
+    huff_tree_node *node = zalloc(sizeof(huff_tree_node));//TODO: no need for an alloc every time, we know the max number of nodes
     node->left = l;
     node->right = r;
     node->depth = max(l->depth, r->depth) + 1;
@@ -89,7 +89,7 @@ huff_tree_node* huff_build_tree(int entries[257]){
     for (int i = 0; i < count; i++){
         while (!entries[index]) index++;
         if (index < 256){
-            huff_tree_node *node = malloc(sizeof(huff_tree_node));//TODO: no need for an alloc every time, we know the max number of nodes
+            huff_tree_node *node = zalloc(sizeof(huff_tree_node));//TODO: no need for an alloc every time, we know the max number of nodes
             node->entry = entries[index];
             node->byte = index;
             node->index = node_index++;

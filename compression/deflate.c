@@ -38,7 +38,7 @@ huff_tree_node* deflate_decode_codes(uint8_t max_code_length, uint16_t alphabet_
         next_code[bits] = code;
         // printf("Next code [%i] = %i",bits,next_code[bits]);
     }
-    huff_tree_node *root = malloc(sizeof(huff_tree_node));
+    huff_tree_node *root = zalloc(sizeof(huff_tree_node));
     for (int i = 0; i < alphabet_length; i++){
         if (lengths[i]){
             huffman_populate(root, next_code[lengths[i]]++, lengths[i], i);
@@ -257,7 +257,7 @@ size_t deflate_decode(void* ptr, size_t size, deflate_read_ctx *ctx){
 
         huff_tree_node *tree_root = huff_decode_nodes;
 
-        uint16_t *full_huffman = malloc(sizeof(uint16_t) * tree_data_size);
+        uint16_t *full_huffman = zalloc(sizeof(uint16_t) * tree_data_size);
 
         uint16_t last_code_len = 0;
 
@@ -313,7 +313,7 @@ size_t deflate_decode(void* ptr, size_t size, deflate_read_ctx *ctx){
         // huffman_viz(dist_tree, 0, 0);
         // printf("**** WOO ****");
 
-        free_sized(full_huffman, tree_data_size * sizeof(uint16_t));
+        release(full_huffman);
 
         tree_root = litlen_tree;
         } else if (btype == 0b01){//Static huffman

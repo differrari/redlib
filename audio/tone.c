@@ -52,7 +52,7 @@ void sound_create(float duration, sound_defn* sound, audio_samples* audio){
     audio->channels = 1;
     audio->smpls_per_channel = duration * 44100.f;
     audio->samples.size = audio->smpls_per_channel * sizeof(audio_sample_t);
-    audio->samples.ptr = (uintptr_t)malloc(audio->samples.size);
+    audio->samples.ptr = (uintptr_t)zalloc(audio->samples.size);
     wave_generate(sound, (audio_sample_t*)audio->samples.ptr, audio->smpls_per_channel);
 }
 

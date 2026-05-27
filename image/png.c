@@ -184,7 +184,7 @@ void* load_png(char *path, image_info *info){
     closef(&descriptor);
     *info = png_get_info(file_img, descriptor.size);
     print("info %ix%i",info->width,info->height);
-    img = malloc(info->width*info->height*system_bpp);
+    img = zalloc(info->width*info->height*system_bpp);
     png_read_image(file_img, descriptor.size, img);
     return img;
 }

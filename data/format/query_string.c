@@ -11,7 +11,7 @@ void query_parse(const char *buf, uint32_t len, QueryParam **out_params, uint32_
 
     for (uint32_t i = 0; i < len; i++) if (buf[i] == '&') max_params++;
 
-    QueryParam *params = (QueryParam*)malloc(sizeof(QueryParam) * max_params);
+    QueryParam *params = (QueryParam*)zalloc(sizeof(QueryParam) * max_params);
     if (!params) return;
 
     uint32_t count = 0;

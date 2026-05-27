@@ -18,7 +18,7 @@ public:
     IndexMap<T>* operator=(const IndexMap<T>& orig){
         this->count = orig.count;
         this->capacity = orig.capacity;
-        void *mem = (void*)malloc(sizeof(T) * (capacity + 1));
+        void *mem = (void*)zalloc(sizeof(T) * (capacity + 1));
         items = reinterpret_cast<T*>(mem);
         memcpy(this->items, orig.items, sizeof(T) * (capacity + 1));
         default_val = &items[capacity];
@@ -30,7 +30,7 @@ public:
             items = 0;
             return;
         }
-        void *mem = (void*)malloc(sizeof(T) * (capacity + 1));
+        void *mem = (void*)zalloc(sizeof(T) * (capacity + 1));
         items = reinterpret_cast<T*>(mem);
         default_val = &items[capacity];
     }

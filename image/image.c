@@ -78,7 +78,7 @@ void* load_image(char *path, image_info *info, IMAGE_FORMATS format){
         return 0;
     }
     size_t image_size = img_info.width * img_info.height * system_bpp;
-    void *img = (void*)malloc(image_size);
+    void *img = (void*)zalloc(image_size);
     switch (format) {
         case PNG:
         png_read_image(img_file, file_size, img);
@@ -97,12 +97,12 @@ void* load_image_resized(char *path, image_info *info, IMAGE_FORMATS format, uin
     void *old_img = load_image(path, &old_info, format);
     info->width = new_width;
     info->height = new_height;
-    void *new_img = malloc(new_width * new_height * sizeof(uint32_t));
+    void *new_img = zalloc(new_width * new_height * sizeof(uint32_t));
     if (new_width < old_info.width || new_height < old_info.height){
         print("[IMG warning] image downscaling is not properly implemented or tested. Use at your own risk");
     }
     rescale_image(old_info.width, old_info.height, new_width, new_height, old_img, new_img);
-    free_sized(old_img, old_info.width * old_info.height * sizeof(uint32_t));
+    release(old_img);
     return new_img;
 }
 

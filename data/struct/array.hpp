@@ -19,7 +19,7 @@ public:
             items = 0;
             return;
         }
-        void *mem = (void*)malloc(sizeof(T) * capacity);
+        void *mem = (void*)zalloc(sizeof(T) * capacity);
         items = reinterpret_cast<T*>(mem);
     }
 
