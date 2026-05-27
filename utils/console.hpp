@@ -16,9 +16,9 @@ public:
 
     void initialize();
 
-    void put_char(char c);
-    void put_string(const char* str);
-    void put_slice(string_slice slice);
+    virtual void put_char(char c);
+    virtual void put_string(const char* str);
+    virtual void put_slice(string_slice slice);
 
     char last_char;
 

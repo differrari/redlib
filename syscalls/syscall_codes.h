@@ -4,9 +4,7 @@
 #define PFREE_CODE                  2
 
 #define PRINTL_CODE                 3
-
-#define MALLOC_CODE                 4//DEADLINE: 01/03/2026 - will be deprecated in favor of PALLOC/PFREE
-#define FREE_CODE                   5//DEADLINE: 01/03/2026 - will be deprecated in favor of PALLOC/PFREE
+#define SERIAL_TRANS_CODE           4
 
 #define READ_KEY_CODE               10
 #define REGISTER_SHORTCUT_CODE      11
