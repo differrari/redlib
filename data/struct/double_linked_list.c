@@ -25,7 +25,7 @@ cdouble_linked_list_t* cdouble_linked_list_clone(const cdouble_linked_list_t* li
     if (!list) return NULL;
     cdouble_linked_list_t* clone = cdouble_linked_list_create();
     if (!clone) return NULL;
-    cdouble_linked_listf_node_t* it = list->head;
+    cdouble_linked_list_node_t* it = list->head;
     for (uint64_t i = 0; i < list->length; ++i) {
         uintptr_t raw = (uintptr_t)zalloc(sizeof(cdouble_linked_list_node_t));
         if (raw) {
