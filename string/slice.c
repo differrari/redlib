@@ -47,3 +47,25 @@ bool string_quick_split(char *str, char seek, string_slice *lhs, string_slice *r
     *rhs = (string_slice){.data = str + size, .length = full_size-size};
     return true;
 }
+
+#define is_nl(c,include_newline) (c==' '||(include_newline && c=='\n')||c=='\t'||c=='\r')
+
+string_slice slice_trim_ws(string_slice slice, bool include_newline){
+    if (!slice.length || !slice.data) return slice;
+    string_slice new_slice = slice;
+    u32 i = 0;
+    for (; i < slice.length; i++){
+        char c = slice.data[i];
+        if (is_nl(c,include_newline)){
+            new_slice.data++;
+            new_slice.length--;
+        } else break;
+    }
+    for (u32 j = slice.length-1; j > i; j--){
+        char c = slice.data[j];
+        if (is_nl(c,include_newline)){
+            new_slice.length--;
+        } else break;
+    }
+    return new_slice;
+}

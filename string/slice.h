@@ -42,6 +42,8 @@ static inline sizedptr slice_to_sizedptr(string_slice slice){
     return (sizedptr){.ptr = (uptr)slice.data,.size = slice.length};
 }
 
+string_slice slice_trim_ws(string_slice slice, bool include_newline);
+
 typedef struct {
     char seek;
     char *str;
