@@ -66,7 +66,7 @@ gpu_size fb_draw_text(draw_ctx *ctx, string_slice slice, gpu_rect bounds, gpu_po
         }
         if (c == '\n'){
             new_line(&cursor, line_height, 0);
-            if (cursor.y > max_size.height) max_size.height = cursor.y + line_height;
+            if (cursor.y + line_height > max_size.height) max_size.height = cursor.y + line_height;
             char_width = 0;
             line_height = 0;
             indent = 0;
@@ -90,7 +90,7 @@ gpu_size fb_draw_text(draw_ctx *ctx, string_slice slice, gpu_rect bounds, gpu_po
                 current_lookahead = word_size-1;
                 if ((word_size * char_width) + cursor.x > bounds.size.width){
                     new_line(&cursor, line_height, current_wrap == wrap_word_preserve_indent ? indent * char_width : 0);
-                    if (cursor.y > max_size.height) max_size.height = cursor.y + line_height;
+                    if (cursor.y + line_height > max_size.height) max_size.height = cursor.y + line_height;
                 }
             }
         }
