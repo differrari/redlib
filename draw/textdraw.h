@@ -14,7 +14,8 @@ typedef enum { wrap_none, wrap_word, wrap_word_preserve_indent } wrap_policy;
 
 typedef struct {
     u32 scale;
-    color color;
+    color foreground;
+    color background;
     range bounds;
     wrap_policy wrap;
 } text_format;
@@ -39,6 +40,9 @@ u32 fb_get_line_spacing(int scale);
 u32 fb_char_width(u32 scale);
 u32 fb_line_height(u32 scale);
 
+typedef enum { draw_text_render, draw_text_delete, draw_text_rerender } draw_text_op;
+
+void fb_continuous_draw_text(draw_ctx *ctx, draw_text_op operation, gpu_point *cursor, string_slice slice, range *render_range, gpu_rect bounds, gpu_size *out_size, gpu_point scroll, text_format default_format, text_format_arr array);
 gpu_size fb_draw_single_text(draw_ctx *ctx, string_slice slice, gpu_rect bounds, gpu_point scroll, text_format format);
 gpu_size fb_draw_text(draw_ctx *ctx, string_slice slice, gpu_rect bounds, gpu_point scroll, text_format default_format, text_format_arr array);
 

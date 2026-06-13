@@ -133,6 +133,14 @@ void buffer_destroy(buffer *buf){
     *buf = (buffer){};
 }
 
+uptr buffer_seek(buffer *buf, i64 amount, bool absolute){
+    if (!buf) return 0;
+    u64 new_cursor = absolute ? amount : buf->cursor + amount;
+    if (new_cursor <= buf->buffer_size)
+        buf->cursor = new_cursor;
+    return buf->cursor;
+}
+
 size_t buffer_read(buffer *buf, void *into, size_t size, uintptr_t cursor){
     if (!buf || !into || !size) return 0;
     if (buf->options & buffer_static) cursor = 0;

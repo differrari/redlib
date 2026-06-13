@@ -82,7 +82,7 @@ bool sheldon_run_cmd(shell_handle *handle, string_slice fullcmd){
         kbd_event event;
         if (read_event(&event)){
             if (!handle_modifier(&event)){
-                char cmd = hid_to_char(event.key, current_modifier);
+                char cmd = hid_to_char(event.key, current_modifier, special_key);
                 if (event.type == KEY_PRESS && handle->bindings.console_ascii_cmd) handle->bindings.console_ascii_cmd(handle, cmd, proc);
             }
         }

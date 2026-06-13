@@ -44,6 +44,7 @@ size_t buffer_read(buffer *buf, void *into, size_t size, uintptr_t cursor);
 size_t buffer_delete(buffer *buf, uptr cursor, size_t amount);
 void buffer_wipe(buffer *buf);
 void buffer_destroy(buffer *buf);
+uptr buffer_seek(buffer *buf, i64 amount, bool absolute);
 
 #include "string/slice.h"
 

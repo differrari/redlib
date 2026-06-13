@@ -370,7 +370,7 @@ static const char hid_keycode_to_shift_char[256] = {
 #else
 extern "C" {
 #endif
-char hid_to_char(unsigned char c, u8 modifier);
+char hid_to_char(unsigned char c, u8 modifier, u8 special);
 
 static inline bool printable(unsigned char c){
     return c >= 'A' && c <='z';
