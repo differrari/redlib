@@ -69,7 +69,7 @@ void fb_continuous_draw_text(draw_ctx *ctx, draw_text_op operation, gpu_point *c
         }
         if (c == '\n'){
             new_line(cursor, line_height, 0);
-            if (cursor->y > (i32)out_size->height) out_size->height = cursor->y + line_height;
+            if (cursor->y + line_height > out_size->height) out_size->height = cursor->y + line_height;
             char_width = 0;
             line_height = 0;
             indent = 0;
@@ -90,7 +90,7 @@ void fb_continuous_draw_text(draw_ctx *ctx, draw_text_op operation, gpu_point *c
                 current_lookahead = word_size-1;
                 if ((word_size * char_width) + cursor->x > bounds.size.width){
                     new_line(cursor, line_height, current_wrap == wrap_word_preserve_indent ? indent * char_width : 0);
-                    if (cursor->y > (i32)out_size->height) out_size->height = cursor->y + line_height;
+                    if (cursor->y + line_height > out_size->height) out_size->height = cursor->y + line_height;
                 }
             }
         }

@@ -31,6 +31,7 @@ typedef struct allocator_header {
 page_index *p_index;
 
 static inline void* fallback_proxy(size_t size, page_allocator fallback){
+    size = (size + PAGE_SIZE - 1) & ~(PAGE_SIZE - 1);
     if (!p_index) {
         p_index = fallback(PAGE_SIZE);
         if (!p_index) return 0;
@@ -53,44 +54,44 @@ void* allocate(void* page, size_t size, page_allocator fallback){
     
     allocator_header *hdr = (allocator_header*)page;
     while (hdr) {
-        if (hdr->used + size <= PAGE_SIZE - sizeof(allocator_header)){
-            if (!hdr->free_mem) hdr->free_mem = (uintptr_t)hdr + sizeof(allocator_header);
+        if (!hdr->free_mem) hdr->free_mem = (uintptr_t)hdr + sizeof(allocator_header);
         
-            if (hdr->free_mem + size <= (uintptr_t)hdr + PAGE_SIZE){
-                *(size_t*)hdr->free_mem = size;
-                void *addr = (void*)(hdr->free_mem + INDIVIDUAL_HDR);
-                hdr->free_mem += size;
-                hdr->used += size;
-                memset(addr, 0, size - INDIVIDUAL_HDR);
+        free_block **blk_ptr = &hdr->free_block;
+        while (*blk_ptr){
+            free_block *block = *blk_ptr;
+            if ((uintptr_t)block < (uintptr_t)hdr + sizeof(allocator_header) || (uintptr_t)block + sizeof(free_block) > (uintptr_t)hdr + PAGE_SIZE){
+                print("[ALLOC] Wrong allocation, a free block points outside its page %llx + %llx >= %llx",(uintptr_t)block & ~(0xFFF), block->block_size,(uintptr_t)hdr & ~(0xFFF));
+                return 0;
+            }
+            if ((uintptr_t)block + block->block_size > (uintptr_t)hdr + PAGE_SIZE) return 0;
+            free_block *next = block->next;
+            if (next && ((uintptr_t)next & ~(PAGE_SIZE - 1)) != ((uintptr_t)hdr & ~(PAGE_SIZE - 1))) return 0;
+            if (block->block_size >= size){
+                size_t alloc_size = block->block_size;
+                if (block->block_size >= size + sizeof(free_block)){
+                    free_block *split = (free_block*)((uptr)block + size);
+                    split->block_size = block->block_size - size;
+                    split->next = next;
+                    next = split;
+                    alloc_size = size;
+                }
+                *blk_ptr = next;
+                hdr->used += alloc_size;
+                *(size_t*)block = alloc_size;
+                void* addr = (void*)((uintptr_t)block + INDIVIDUAL_HDR);
+                memset(addr, 0, alloc_size - INDIVIDUAL_HDR);
                 return addr;
             }
-        
-            free_block **blk_ptr = &hdr->free_block;
-            while (*blk_ptr){
-                free_block *block = *blk_ptr;
-                if ((uintptr_t)block < (uintptr_t)hdr + sizeof(allocator_header) || (uintptr_t)block + sizeof(free_block) > (uintptr_t)hdr + PAGE_SIZE){
-                    print("[ALLOC] Wrong allocation, a free block points outside its page %llx + %llx >= %llx",(uintptr_t)block & ~(0xFFF), block->block_size,(uintptr_t)hdr & ~(0xFFF));
-                    return 0;
-                }
-                if ((uintptr_t)block + block->block_size > (uintptr_t)hdr + PAGE_SIZE) return 0;
-                free_block *next = block->next;
-                if (next && ((uintptr_t)next & ~(PAGE_SIZE - 1)) != ((uintptr_t)hdr & ~(PAGE_SIZE - 1))) return 0;
-                if (block->block_size >= size){
-                    if (block->block_size >= size + sizeof(free_block)){
-                        free_block *split = (free_block*)((uptr)block + size);
-                        split->block_size = block->block_size - size;
-                        split->next = next;
-                        next = split;
-                    }
-                    *blk_ptr = next;
-                    hdr->used += size;
-                    *(size_t*)block = size;
-                    void* addr = (void*)((uintptr_t)block + INDIVIDUAL_HDR);
-                    memset(addr, 0, size - INDIVIDUAL_HDR);
-                    return addr;
-                }
-                blk_ptr = &block->next;
-            }
+            blk_ptr = &block->next;
+        }
+
+        if (hdr->used + size <= PAGE_SIZE - sizeof(allocator_header) && hdr->free_mem + size <= (uintptr_t)hdr + PAGE_SIZE) {
+            *(size_t*)hdr->free_mem = size;
+            void *addr = (void*)(hdr->free_mem + INDIVIDUAL_HDR);
+            hdr->free_mem += size;
+            hdr->used += size;
+            memset(addr, 0, size - INDIVIDUAL_HDR);
+            return addr;
         }
     
         if (!hdr->next) {
@@ -121,7 +122,7 @@ void release(void* ptr){
 
     if (!((uintptr_t)ptr & (PAGE_SIZE - 1))){
         alloc_print("[FREE] Page free %llx",ptr);
-        page_free(ptr);
+        if (!p_index) page_free(ptr);
         //if (p_index) unregister_page_alloc(p_index, ptr);
         return;
     }
@@ -151,56 +152,159 @@ void release(void* ptr){
     
     hdr->used -= size;
     if (!hdr->used){
+        if (hdr != (allocator_header*)zalloc_page) {
+            allocator_header *prev = (allocator_header*)zalloc_page;
+            while (prev && prev->next != hdr) prev = prev->next;
+            if (prev) {
+                prev->next = hdr->next;
+                page_free(hdr);
+                return;
+            }
+        }
         hdr->free_block = 0;
         hdr->free_mem = 0;
     } else {
         free_block *block = (free_block*)header;
+        free_block *prev = 0;
+        free_block *cur = hdr->free_block;
         block->block_size = size;
-        block->next = hdr->free_block;
-        if (block->next && ((uintptr_t)block->next & ~(PAGE_SIZE - 1)) != ((uintptr_t)hdr & ~(PAGE_SIZE - 1))){
-            print("[FREE] block free now pointing to other page %llx vs %llx",block->next,hdr);
-            return;
+        while (cur && cur < block) {
+            if (((uintptr_t)cur & ~(PAGE_SIZE - 1)) != ((uintptr_t)hdr & ~(PAGE_SIZE - 1))){
+                print("[FREE] block free now pointing to other page %llx vs %llx", cur, hdr);
+                return;
+            }
+            prev = cur;
+            cur = cur->next;
         }
-        hdr->free_block = block;
-        if (((uintptr_t)block & ~(PAGE_SIZE - 1)) != ((uintptr_t)hdr & ~(PAGE_SIZE - 1))){
-            print("[FREE] free list head now pointing to other page %llx vs %llx",block,hdr);
-            return;
-        }
+        block->next = cur;
+        if (prev) prev->next = block;
+        else hdr->free_block = block;
         // while ((uintptr_t)block->next == header + size){
         //     free_block *next_block = (free_block*)block->next;
         //     block->next = next_block->next;
         //     block->block_size += next_block->block_size;
         // } 
+        while (block->next && (uintptr_t)block + block->block_size == (uintptr_t)block->next) {
+            block->block_size += block->next->block_size;
+            block->next = block->next->next;
+        }
+        
+        if (prev && (uintptr_t)prev + prev->block_size == (uintptr_t)block) {
+            prev->block_size += block->block_size;
+            prev->next = block->next;
+            block = prev;
+            while (block->next && (uintptr_t)block + block->block_size == (uintptr_t)block->next) {
+                block->block_size += block->next->block_size;
+                block->next = block->next->next;
+            }
+        }
+
+        if ((uintptr_t)block + block->block_size == hdr->free_mem) {
+            free_block *tail_prev = 0;
+            free_block *tail = hdr->free_block;
+            while (tail && tail != block) {
+                tail_prev = tail;
+                tail = tail->next;
+            }
+            if (tail) {
+                if (tail_prev) tail_prev->next = tail->next;
+                else hdr->free_block = tail->next;
+                hdr->free_mem = (uintptr_t)block;
+            }
+
+            while (hdr->free_block) {
+                tail_prev = 0;
+                tail = hdr->free_block;
+                free_block *found = 0;
+                free_block *found_prev = 0;
+                while (tail && (uintptr_t)tail < hdr->free_mem) {
+                    if ((uintptr_t)tail + tail->block_size == hdr->free_mem) {
+                        found = tail;
+                        found_prev = tail_prev;
+                    }
+                    tail_prev = tail;
+                    tail = tail->next;
+                }
+                if (!found) break;
+                if (found_prev) found_prev->next = found->next;
+                else hdr->free_block = found->next;
+                hdr->free_mem = (uintptr_t)found;
+            }
+        }
     }
 }
 
 void* reallocate(void* ptr, size_t new_size){
     //TODO: if possible, once we have a sentinel value in the extra 0x8, we can check if we can just take up more memory without reallocating entirely
     // allocator_header *hdr = (allocator_header*)((uintptr_t)ptr & (~0xFFF));
+    if (!new_size) {
+        if (ptr) release(ptr);
+        return 0;
+    }
     
-    if (!ptr) return 0;
-    
-    uintptr_t header = (uintptr_t)ptr - INDIVIDUAL_HDR;
+    if (!ptr) return zalloc(new_size);
     
     size_t old_size = p_index ? get_alloc_size(p_index, ptr) : 0;
    if (old_size) {
-        old_size -= INDIVIDUAL_HDR;
-    } else {
-        old_size = *(size_t*)header;
         if (old_size < INDIVIDUAL_HDR) return 0;
         old_size -= INDIVIDUAL_HDR;
+    } else {
+        if (!((uintptr_t)ptr & (PAGE_SIZE - 1))) return 0;
+        uintptr_t header = (uintptr_t)ptr - INDIVIDUAL_HDR;
+        old_size = *(size_t*)header;
+        if (old_size < INDIVIDUAL_HDR) return 0;
+        size_t total_size = old_size;
+        old_size -= INDIVIDUAL_HDR;
+        size_t wanted_size = (new_size + INDIVIDUAL_HDR + ALIGNMENT - 1) & ~(ALIGNMENT - 1); 
+        if (wanted_size <= total_size) return ptr;
+
+        allocator_header *hdr = (allocator_header*)((uintptr_t)ptr & (~(PAGE_SIZE - 1)));
+        free_block *prev = 0;
+        free_block *cur = hdr->free_block;
+        uintptr_t next_header = header + total_size;
+        while (cur && (uintptr_t)cur < next_header) {
+            prev = cur;
+            cur = cur->next;
+        }
+
+        if (cur && (uintptr_t)cur == next_header && total_size + cur->block_size >= wanted_size) {
+            size_t take = wanted_size - total_size;
+            if (cur->block_size >= take + sizeof(free_block)) {
+                free_block *split = (free_block*)((uintptr_t)cur + take);
+                split->block_size = cur->block_size - take;
+                split->next = cur->next;
+                if (prev) prev->next = split;
+                else hdr->free_block = split;
+            } else {
+                take = cur->block_size;
+                if (prev) prev->next = cur->next;
+                else hdr->free_block = cur->next;
+            }
+            *(size_t*)header = total_size + take;
+            hdr->used += take;
+            memset((void*)((uintptr_t)ptr + old_size), 0, total_size + take - INDIVIDUAL_HDR - old_size);
+            return ptr;
+        }
+        if (next_header == hdr->free_mem && hdr->free_mem + wanted_size - total_size <= (uintptr_t)hdr+PAGE_SIZE) {
+            size_t take = wanted_size - total_size;
+            hdr->free_mem += take;
+            hdr->used += take;
+            *(size_t*)header = wanted_size;
+            memset((void*)((uintptr_t)ptr + old_size), 0, wanted_size - INDIVIDUAL_HDR - old_size);
+            return ptr;
+        }
     }
+    if (new_size <= old_size) return ptr;
     
     // size_t diff = new_size > old_size ? new_size-old_size : size-old_size;
     
     // size_t next_val = *(size_t*)((uintptr_t)ptr + old_size);
     
     // if (next_val == 0 || next_val == 0xDEADBEEFDEADBEEF)
-    if (!zalloc_page) zalloc_page = page_alloc(PAGE_SIZE);
     
-    void *new_ptr = zalloc_page ? allocate(zalloc_page, new_size, page_alloc) : 0;
+    void *new_ptr = zalloc(new_size);
     if (!new_ptr) return 0;
-    memcpy(new_ptr, ptr, old_size < new_size ? old_size : new_size);
+    memcpy(new_ptr, ptr, old_size);
     release(ptr);
     return new_ptr;
 }
