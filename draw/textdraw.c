@@ -47,7 +47,7 @@ u32 fb_line_height(u32 scale){
     return fb_get_char_size(scale) + fb_get_line_spacing(scale);
 }
 
-void fb_continuous_draw_text(draw_ctx *ctx, draw_text_op operation, gpu_point *cursor, string_slice slice, range *render_range, gpu_rect bounds, gpu_size *out_size, gpu_point scroll, text_format default_format, text_format_arr array){
+void fb_continuous_draw_text(draw_ctx *ctx, draw_text_op operation, gpu_point *cursor, string_slice slice, range_t *render_range, gpu_rect bounds, gpu_size *out_size, gpu_point scroll, text_format default_format, text_format_arr array){
     int indent = 0;
     bool can_indent = true;
     u32 char_width = 0, line_height = 0;
@@ -116,7 +116,7 @@ gpu_size fb_draw_text(draw_ctx *ctx, string_slice slice, gpu_rect bounds, gpu_po
     gpu_point cursor = { .x = 0, .y = 0 };
     gpu_size max_size = {};
 
-    range string_range = {.start = 0, .size = slice.length};
+    range_t string_range = {.start = 0, .size = slice.length};
     
     fb_continuous_draw_text(ctx, false, &cursor, slice, &string_range, bounds, &max_size, scroll, default_format, array);
     if (ctx->fb) mark_dirty(ctx, bounds.point.x, bounds.point.y, max_size.width, max_size.height);

@@ -11,7 +11,7 @@ typedef struct {
     u32 scale;
     color foreground;
     color background;
-    range bounds;
+    range_t bounds;
     wrap_policy wrap;
 } text_format;
 
@@ -37,7 +37,7 @@ u32 fb_line_height(u32 scale);
 
 typedef enum { draw_text_render, draw_text_delete, draw_text_rerender } draw_text_op;
 
-void fb_continuous_draw_text(draw_ctx *ctx, draw_text_op operation, gpu_point *cursor, string_slice slice, range *render_range, gpu_rect bounds, gpu_size *out_size, gpu_point scroll, text_format default_format, text_format_arr array);
+void fb_continuous_draw_text(draw_ctx *ctx, draw_text_op operation, gpu_point *cursor, string_slice slice, range_t *render_range, gpu_rect bounds, gpu_size *out_size, gpu_point scroll, text_format default_format, text_format_arr array);
 gpu_size fb_draw_single_text(draw_ctx *ctx, string_slice slice, gpu_rect bounds, gpu_point scroll, text_format format);
 gpu_size fb_draw_text(draw_ctx *ctx, string_slice slice, gpu_rect bounds, gpu_point scroll, text_format default_format, text_format_arr array);
 
