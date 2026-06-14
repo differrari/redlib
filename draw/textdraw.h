@@ -5,11 +5,6 @@
 #include "string/slice.h"
 #include "data/struct/stack.h"
 
-typedef struct {
-    uptr start;
-    size_t size;
-} range;
-
 typedef enum { wrap_none, wrap_word, wrap_word_preserve_indent } wrap_policy;
 
 typedef struct {
