@@ -54,6 +54,9 @@ common_ui_config label(draw_ctx *ctx, text_ui_config text_config, common_ui_conf
 common_ui_config textbox(draw_ctx *ctx, text_ui_config text_config, common_ui_config common_config);
 common_ui_config rectangle(draw_ctx *ctx, rect_ui_config rect_config, common_ui_config common_config);
 
+int_point calculate_label_pos(text_ui_config text_config, common_ui_config common_config);
+gpu_size calculate_label_size(text_ui_config text_config);
+
 #ifdef __cplusplus
 }
 #endif
