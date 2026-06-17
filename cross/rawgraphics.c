@@ -62,10 +62,16 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
 {
     uint32_t next_index = (kbd_event_write + 1) % INPUT_BUFFER_CAPACITY;
 
+    key = glfw_to_redacted[key];
+    bool is_mod = (key & 0xF0) == 0xe0;
+
+    int press_ev = is_mod ? MOD_PRESS : KEY_PRESS;
+    int release_ev = is_mod ? MOD_RELEASE : KEY_RELEASE;
+    
     event_queue[kbd_event_write] = (kbd_event){
-        .type = action == GLFW_PRESS || action == GLFW_REPEAT ? KEY_PRESS : KEY_RELEASE,
-        .key = glfw_to_redacted[key],
-        .modifier = mods
+        .type = action == GLFW_PRESS || action == GLFW_REPEAT ? press_ev : release_ev,
+        .key = is_mod ? 0 : key,
+        .modifier = is_mod ? key : 0
     };
     kbd_event_write = next_index;
 
