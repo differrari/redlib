@@ -102,6 +102,9 @@ void request_draw_ctx(draw_ctx *ctx){
     ctx->width = w;
     ctx->height = h;
     ctx->stride = sizeof(color) * w;
+#if __linux__
+    glfwInitHint(GLFW_PLATFORM, GLFW_PLATFORM_X11);
+#endif
     glfwInit();
     glfwSetErrorCallback(error_callback);
 
