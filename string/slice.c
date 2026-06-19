@@ -22,15 +22,17 @@ void string_split(const char *str, char seek, void (*perform)(string_slice slice
     } while(point);
 }
 
+#include "syscalls/syscalls.h"
+
 bool string_splitter_advance(string_splitter *splitter){
     if (!splitter->str || !splitter->seek) return false;
     if (splitter->pointer >= splitter->length) return false;
-    char *current = splitter->str + splitter->pointer;
-    if (*current == 0) return false;
-    char *new_point = (char*)seek_to(current, splitter->seek);
-    if (new_point == current) return false;
-    size_t size = new_point-current-(*new_point || *(new_point-1) == splitter->seek ? 1 : 0);
-    splitter->current = (string_slice){.data = (char*)splitter->str + splitter->pointer, size};
+    string_slice current = string_splitter_remaining(splitter);
+    if (!current.length) return false;
+    string_slice remaining = slice_seek_to(current, splitter->seek);
+    size_t size = remaining.length ? remaining.data-current.data-(*remaining.data || *(remaining.data-1) == splitter->seek ? 1 : 0) : current.length;
+    splitter->current = current;
+    splitter->current.length = size;
     splitter->pointer += size+1;
     if (!size && !splitter->allow_empty) return string_splitter_advance(splitter);
     return true;
@@ -68,4 +70,11 @@ string_slice slice_trim_ws(string_slice slice, bool include_newline){
         } else break;
     }
     return new_slice;
+}
+
+string_slice slice_seek_to(string_slice slice, char character){
+    for (u64 i = 0; i < slice.length; i++)
+        if (slice.data[i] == character)
+            return (string_slice){slice.data+i+1,slice.length-i-1};
+    return (string_slice){};
 }
