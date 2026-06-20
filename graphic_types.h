@@ -1,6 +1,7 @@
 #pragma once
 
 #include "types.h"
+#include "alloc/allocate.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -49,6 +50,23 @@ typedef struct draw_ctx {
     uint32_t dirty_count;
     bool full_redraw;
 } draw_ctx;
+
+static inline draw_ctx buffer_to_draw_ctx(void *buf, i32 width, i32 height){
+    return (draw_ctx){
+        .dirty_rects = {},
+        .fb = (u32*)buf,
+        .stride = (u32)width * (u32)sizeof(color),
+        .width = (u32)width,
+        .height = (u32)height,
+        .dirty_count = 0,
+        .full_redraw = 0,
+    };
+}
+
+static inline draw_ctx dummy_draw_ctx(i32 width, i32 height){
+    return buffer_to_draw_ctx(zalloc(width * height * sizeof(color)), width, height);
+}
+
 
 #ifdef __cplusplus
 }
