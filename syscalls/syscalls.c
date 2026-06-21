@@ -18,7 +18,7 @@ int print(const char *fmt, ...){
     file fd2 = { .id = 2 };
     writef(&fd2, log_buf, strlen(log_buf));
     writef(&fd2, "\r\n", 2);
-    // current_shell_print(log_buf);
+    current_shell_print(log_buf);
 #endif
     return 0;
 }
