@@ -2,6 +2,8 @@
 
 #include "graphic_types.h"
 #include "types.h"
+#include "draw/draw.h"
+#include "memory/memory.h"
 
 static void composite(draw_ctx *in_ctx, int_point offset, int zoom_scale, draw_ctx *ex_ctx){
 
