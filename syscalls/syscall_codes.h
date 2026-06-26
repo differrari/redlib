@@ -22,6 +22,9 @@
 #define EXEC_CODE                   32
 #define KILL_PROCESS_CODE           34
 
+// #define START_THREAD_CODE           35
+#define HALT_THREAD_CODE            36
+
 #define GET_TIME_CODE               40
 
 #define SOCKET_CREATE_CODE          50

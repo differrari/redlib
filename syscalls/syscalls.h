@@ -42,6 +42,7 @@ extern void get_mouse_status(mouse_data *in);
 
 extern void msleep(uint64_t time);
 extern __attribute__((noreturn)) void halt(int32_t exit_code);
+extern __attribute__((noreturn)) void halt_thread(int32_t exit_code);
 extern int32_t exec(const char* prog_name, int argc, const char* argv[], u32 mode);
 extern int32_t kill_process(uint16_t pid);
 
