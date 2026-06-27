@@ -76,8 +76,8 @@ extern size_t swritef(const char* path, const void* buf, size_t size, bool appen
 extern void closef(file *descriptor);
 extern bool statf(const char *path, fs_stat *out_stat);
 extern bool truncatef(file*, size_t);
-// extern bool load_fsmodule(system_module *mod);
-// extern bool unload_fsmodule();
+extern bool load_fsmodule(system_module *mod);
+extern bool unload_fsmodule();
 
 extern bool send_signal(signal_types type, u16 proc_id);
 extern bool handle_signal(signal_types type, signal_handler handler);

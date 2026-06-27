@@ -64,6 +64,8 @@ typedef struct system_module {
     const char* mount;
     uint64_t version;
 
+    u16 owner;
+
     bool (*init)(struct system_module *);
     bool (*fini)();
 

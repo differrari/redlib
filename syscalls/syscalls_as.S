@@ -55,8 +55,8 @@ syscall_def truncatef,  FILE_TRNC_CODE
 syscall_def send_signal, SIGNAL_SEND_CODE
 syscall_def handle_signal, SIGNAL_HANDLER_CODE
 
-//syscall_def load_fsmodule, LOAD_FSMODULE_CODE
-//syscall_def unload_fsmodule, UNLOAD_FSMODULE_CODE 
+syscall_def load_fsmodule, LOAD_FSMODULE_CODE
+syscall_def unload_fsmodule, UNLOAD_FSMODULE_CODE 
 
 syscall_def in_case_of_js_break_glass, IN_CASE_OF_JS_CODE
 
