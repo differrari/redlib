@@ -66,8 +66,8 @@ typedef struct system_module {
 
     u16 owner;
 
-    bool (*init)(struct system_module *);
-    bool (*fini)();
+    bool (*init)(struct system_module *);//NOTE: for modules loaded in userspace, it's the program's responsability to call these functions
+    bool (*fini)();//NOTE: for modules loaded in userspace, it's the program's responsability to call these functions
 
     file_open_fn open;
     file_read_fn read;
@@ -75,7 +75,6 @@ typedef struct system_module {
     file_close_fn close;
     
     file_truncate_fn truncate;
-    
     file_getstat_fn getstat;
 
     file_readdir_fn readdir;
