@@ -14,13 +14,13 @@ typedef struct {
     data_signature data_type;
 } fs_stat;
 
-typedef FS_RESULT (*file_open_fn)(const char*, file*);
-typedef size_t (*file_read_fn)(file*, char*, size_t, file_offset);
-typedef size_t (*file_write_fn)(file*, const char *, size_t, file_offset);
-typedef void (*file_close_fn)(file *descriptor);
-typedef bool   (*file_getstat_fn)(const char*, fs_stat*);
-typedef size_t (*file_readdir_fn)(const char*, void*, size_t, file_offset*);
-typedef bool (*file_truncate_fn)(file*, size_t);
+typedef FS_RESULT   (*file_open_fn)(const char*, file*);
+typedef size_t      (*file_read_fn)(file*, char*, size_t, file_offset);
+typedef size_t      (*file_write_fn)(file*, const char *, size_t, file_offset);
+typedef void        (*file_close_fn)(file *descriptor);
+typedef bool        (*file_getstat_fn)(const char*, fs_stat*);
+typedef size_t      (*file_readdir_fn)(const char*, void*, size_t, file_offset*);
+typedef bool        (*file_truncate_fn)(file*, size_t);
 
 #define VERSION_NUM(major,minor,patch,build) (uint64_t)((((uint64_t)major) << 48) | (((uint64_t)minor) << 32) | (((uint64_t)patch) << 16) | ((uint64_t)build))
 
