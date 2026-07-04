@@ -7,17 +7,25 @@ typedef u64 job_id_t;
 
 typedef enum {
     job_none,
+    // job_open,
     // job_read,
     // job_write,
-    job_stat 
+    // job_trunc,
+    // job_close,
+    job_stat,
+    job_readdir
 } job_types;
 
 #define MAX_JOB_BUFFERS 8
 
+typedef enum { copy_on_start, copy_on_end } job_sync_type;
+
 typedef struct {
-    sizedptr ptr;
+    sizedptr worker_ptr;
+    sizedptr orig_ptr;
     u8 arg_num;
     bool explicit_size;
+    job_sync_type sync;
 } job_buffer;
 
 typedef struct {
