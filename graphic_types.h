@@ -67,6 +67,13 @@ static inline draw_ctx dummy_draw_ctx(i32 width, i32 height){
     return buffer_to_draw_ctx(zalloc(width * height * sizeof(color)), width, height);
 }
 
+static inline gpu_rect draw_ctx_rect(draw_ctx *ctx){
+    return (gpu_rect){
+        .point = {},
+        .size = {ctx->width,ctx->height}
+    };
+}
+
 
 #ifdef __cplusplus
 }
