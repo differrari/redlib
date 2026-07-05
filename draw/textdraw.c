@@ -147,6 +147,7 @@ u32 lin_col_to_pos(i32 line, i32 col, string_slice content){
 }
 
 void pos_to_lin_col(u32 pos, string_slice content, i32 *lin, i32 *col){
+    if (!lin || !col) return;
     *lin = 0;
     *col = 0;
     for (i32 i = 0; i < min(pos,content.length); i++){
