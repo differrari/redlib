@@ -37,9 +37,14 @@ u32 fb_line_height(u32 scale);
 
 typedef enum { draw_text_render, draw_text_delete, draw_text_rerender } draw_text_op;
 
+typedef struct {
+    gpu_size size;
+    gpu_point cursor;
+} text_draw_result;
+
 void fb_continuous_draw_text(draw_ctx *ctx, draw_text_op operation, gpu_point *cursor, string_slice slice, range_t *render_range, gpu_rect bounds, gpu_size *out_size, gpu_point scroll, text_format default_format, text_format_arr array);
-gpu_size fb_draw_single_text(draw_ctx *ctx, string_slice slice, gpu_rect bounds, gpu_point scroll, text_format format);
-gpu_size fb_draw_text(draw_ctx *ctx, string_slice slice, gpu_rect bounds, gpu_point scroll, text_format default_format, text_format_arr array);
+text_draw_result fb_draw_single_text(draw_ctx *ctx, string_slice slice, gpu_rect bounds, gpu_point scroll, text_format format);
+text_draw_result fb_draw_text(draw_ctx *ctx, string_slice slice, gpu_rect bounds, gpu_point scroll, text_format default_format, text_format_arr array);
 
 u32 lin_col_to_pos(i32 line, i32 col, string_slice content);
 void pos_to_lin_col(u32 pos, string_slice content, i32 *lin, i32 *col);

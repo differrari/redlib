@@ -112,19 +112,20 @@ void fb_continuous_draw_text(draw_ctx *ctx, draw_text_op operation, gpu_point *c
     }
 }
 
-gpu_size fb_draw_text(draw_ctx *ctx, string_slice slice, gpu_rect bounds, gpu_point scroll, text_format default_format, text_format_arr array){
-    gpu_point cursor = { .x = 0, .y = 0 };
-    gpu_size max_size = {};
+text_draw_result fb_draw_text(draw_ctx *ctx, string_slice slice, gpu_rect bounds, gpu_point scroll, text_format default_format, text_format_arr array){
+    text_draw_result result = {
+        
+    };
 
     range_t string_range = {.start = 0, .size = slice.length};
     
-    fb_continuous_draw_text(ctx, false, &cursor, slice, &string_range, bounds, &max_size, scroll, default_format, array);
-    if (ctx->fb) mark_dirty(ctx, bounds.point.x, bounds.point.y, max_size.width, max_size.height);
+    fb_continuous_draw_text(ctx, false, &result.cursor, slice, &string_range, bounds, &result.size, scroll, default_format, array);
+    if (ctx->fb) mark_dirty(ctx, bounds.point.x, bounds.point.y, result.size.width, result.size.height);
     
-    return max_size;
+    return result;
 }
 
-gpu_size fb_draw_single_text(draw_ctx *ctx, string_slice slice, gpu_rect bounds, gpu_point scroll, text_format format){
+text_draw_result fb_draw_single_text(draw_ctx *ctx, string_slice slice, gpu_rect bounds, gpu_point scroll, text_format format){
     return fb_draw_text(ctx, slice, bounds, scroll, format, (text_format_arr){});
 }
 
