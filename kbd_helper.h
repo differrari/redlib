@@ -16,10 +16,11 @@ extern "C" {
 static inline bool handle_modifier(kbd_event *event){
     switch (event->type) {
         case MOD_PRESS:
-            current_modifier |= event->modifier;
+
+            current_modifier |= 1 << (event->modifier & 0xF);
             return true;
         case MOD_RELEASE:
-            current_modifier &= ~event->modifier;
+            current_modifier &= ~(1 << (event->modifier & 0xF));
             return true;
         case KEY_PRESS:
             if (event->key == KEY_CAPSLOCK){
@@ -33,6 +34,11 @@ static inline bool handle_modifier(kbd_event *event){
             return false;
         default: return false;
     }
+}
+
+bool is_mod_pressed(int mod, bool double_side){
+    if (double_side && mod < 4 && (current_modifier >> (mod + 4)) & 1) return true;
+    return (current_modifier >> mod) & 1;
 }
 
 static inline bool handle_copy(kbd_event *ev, void (*on_copy)(void *ctx)){
