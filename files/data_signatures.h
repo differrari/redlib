@@ -9,7 +9,7 @@
                             ((uint64_t)(((uint8_t *)(arr))[4]) << 32)+\
                             ((uint64_t)(((uint8_t *)(arr))[5]) << 40)+\
                             ((uint64_t)(((uint8_t *)(arr))[6]) << 48)+\
-                            ((uint64_t)(((uint8_t *)(arr))[7]) << 56))
+                            ((uint64_t)(((uint8_t *)0) << 56))
 
 typedef u64 data_signature;
 
