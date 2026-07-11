@@ -36,7 +36,7 @@ static inline bool handle_modifier(kbd_event *event){
     }
 }
 
-bool is_mod_pressed(int mod, bool double_side){
+static inline bool is_mod_pressed(int mod, bool double_side){
     if (double_side && mod < 4 && (current_modifier >> (mod + 4)) & 1) return true;
     return (current_modifier >> mod) & 1;
 }

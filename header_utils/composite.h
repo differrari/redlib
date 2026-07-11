@@ -5,6 +5,7 @@
 #include "draw/draw.h"
 #include "memory/memory.h"
 
+//Can this be made more optimized if we consider it's meant to tile, not overlap?
 static void composite(draw_ctx *in_ctx, int_point offset, int zoom_scale, draw_ctx *ex_ctx){
 
     int32_t sx = offset.x;
