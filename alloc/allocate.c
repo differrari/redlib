@@ -339,6 +339,10 @@ bool test_zalloc(){
     //TEST: more tests for releasing memory, including fragmentation protection
     
     print("alloc release working correctly");
+
+    for (int i = 0; i < 10000; i++){
+        assert_neq(zalloc(0x100), 0, "%i-th allocation failed",i);
+    }
     
     return true;
 }
