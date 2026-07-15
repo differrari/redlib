@@ -32,7 +32,7 @@ typedef struct {
 
 void on_entry(const char* path, const char* name){
     if (!strcmp(name, "..") || !strcmp(name, ".")) return;
-    string full_path;
+    string full_path = {};
     u64 dir_count = stack_count(directories);
     if (dir_count){
         string parent = STACK_GET(string,directories,dir_count-1);
@@ -64,8 +64,11 @@ color color_for_type(fs_entry_type type){
 }
 
 void refresh(){
-    for (u64 i = 0; i < stack_count(files); i++)
-        string_free(STACK_GET(string,files,i));
+    for (u64 i = 0; i < stack_count(files); i++){
+        file_data *fdata = stack_get(files,i);
+        string_free(fdata->full_path);
+        string_free(fdata->name);
+    }
     stack_reset(files);
 
     u64 dir_count = stack_count(directories);
