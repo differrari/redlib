@@ -62,8 +62,8 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
 {
     uint32_t next_index = (kbd_event_write + 1) % INPUT_BUFFER_CAPACITY;
 
+    bool is_mod = (key >= GLFW_KEY_LEFT_SHIFT && key <= GLFW_KEY_RIGHT_SUPER);
     key = glfw_to_redacted[key];
-    bool is_mod = (key & 0xF0) == 0xe0;
 
     int press_ev = is_mod ? MOD_PRESS : KEY_PRESS;
     int release_ev = is_mod ? MOD_RELEASE : KEY_RELEASE;

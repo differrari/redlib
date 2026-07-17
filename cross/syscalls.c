@@ -121,4 +121,12 @@ Don't ever do that again\r\n\
     halt(-1);
 }
 
+int system_focus(const char *command, u32 focus_mode){
+    system(command);
+}
+
+bool send_signal(signal_types type, u16 proc_id){
+    print("[SIGNAL implementation error] not implemented for cross platform");
+}
+
 #endif

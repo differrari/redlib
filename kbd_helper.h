@@ -16,7 +16,6 @@ extern "C" {
 static inline bool handle_modifier(kbd_event *event){
     switch (event->type) {
         case MOD_PRESS:
-
             current_modifier |= 1 << (event->modifier & 0xF);
             return true;
         case MOD_RELEASE:

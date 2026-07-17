@@ -28,6 +28,7 @@ struct shell_handle {
     shell_bindings bindings;
     shell_ctx *common_ctx;
     void *local_ctx;
+    void *owner;
     bool (*cmd_input)(shell_handle*, string_slice input);
 };
 
