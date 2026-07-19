@@ -50,6 +50,7 @@ typedef enum {
     TOKENIZER_COMMENT_TYPE_NONE,
     TOKENIZER_COMMENT_TYPE_SLASH,
     TOKENIZER_COMMENT_TYPE_HASH,
+    TOKENIZER_COMMENT_TYPE_SEMI,
 } TokenizerComment;
 
 typedef struct {
