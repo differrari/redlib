@@ -16,10 +16,10 @@ extern "C" {
 static inline bool handle_modifier(kbd_event *event){
     switch (event->type) {
         case MOD_PRESS:
-            current_modifier |= 1 << (event->modifier & 0xF);
+            current_modifier |= event->modifier;
             return true;
         case MOD_RELEASE:
-            current_modifier &= ~(1 << (event->modifier & 0xF));
+            current_modifier &= ~event->modifier;
             return true;
         case KEY_PRESS:
             if (event->key == KEY_CAPSLOCK){
