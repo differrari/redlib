@@ -36,11 +36,11 @@ bool sheldon_run_cmd(shell_handle *handle, string_slice fullcmd){
     string_splitter splitter = make_string_splitter_slice(fullcmd, ' ', false);
     if (!string_splitter_advance(&splitter))
         return false;
-    sheldon_ctx* loctx = handle->local_ctx;
     string_slice cmd = string_splitter_get_current(&splitter);
-    if (!loctx->script_only && sheldon_ctrl_functions(handle, cmd, string_splitter_remaining(&splitter))) return true;
+    if (sheldon_ctrl_functions(handle, cmd, string_splitter_remaining(&splitter))) return true;
     if (call_sheldon_builtin(handle, cmd, string_splitter_remaining(&splitter), 0)) return true;
 
+    sheldon_ctx* loctx = handle->local_ctx;
     if (loctx->script_only) return false;
     
     int32_t proc = system_focus(fullcmd.data, EXEC_MODE_KEEP_FOCUS);
