@@ -23,7 +23,7 @@
 #define SHELLEY_ARG_OPT_ALL(name, optional, position) SHELLEY_ARG(name, true, 0, true, option, value, optional)
 
 #define SHELLEY_CMD(_name, execute, ...) static cmd_returns _name(shell_handle *handle, hash_map_t *arguments){ execute }\
-cmd_def _name##_def = {\
+static cmd_def _name##_def = {\
     .name = SLICE_LIT(#_name),\
     .entry_point = _name,\
     .argc = NARGS(__VA_ARGS__),\
