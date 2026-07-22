@@ -12,6 +12,12 @@ void new_shell(shell_handle *handle, shell_bindings bindings, void (*init_shell)
     if (init_shell) init_shell(handle);
 }
 
+bool shell_interpret(shell_handle *handle, string_slice cmd){
+    if (handle->scripting.eval && (!handle->scripting.is_script || handle->scripting.is_script(cmd)))
+        if (handle->scripting.eval(cmd, handle->scripting.ctx)) return true;
+    return run_cmd(handle, cmd);
+}
+
 bool run_cmd(shell_handle *handle, string_slice cmd){
     if (!handle->cmd_input) return false;
     return handle->cmd_input(handle,cmd);

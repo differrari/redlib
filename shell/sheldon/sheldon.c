@@ -33,9 +33,6 @@ bool sheldon_ctrl_functions(shell_handle *handle, string_slice cmd, string_slice
 }
 
 bool sheldon_run_cmd(shell_handle *handle, string_slice fullcmd){
-    if (handle->scripting.eval && (!handle->scripting.is_script || handle->scripting.is_script(fullcmd)))
-        if (handle->scripting.eval(fullcmd, handle->scripting.ctx)) return true;
-    
     string_splitter splitter = make_string_splitter_slice(fullcmd, ' ', false);
     if (!string_splitter_advance(&splitter))
         return false;

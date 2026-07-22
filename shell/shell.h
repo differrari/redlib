@@ -46,6 +46,7 @@ extern shell_handle* current_shell;
 
 void new_shell(shell_handle *, shell_bindings bindings, void (*init_shell)(shell_handle *handle));
 void register_func();
+bool shell_interpret(shell_handle *, string_slice);
 bool run_cmd(shell_handle *, string_slice);
 #ifdef __cplusplus
 }
