@@ -78,8 +78,8 @@ common_ui_config rectangle(draw_ctx *ctx, rect_ui_config rect_config, common_ui_
     uint32_t p = rect_config.border_padding;
     uint32_t twice_p = p << 1;
     
-    if (bx < 0) bw -= -bx;
-    if (by < 0) bh -= -by;
+    if (bx < 0) { bw -= -bx; bx = 0; }
+    if (by < 0) { bh -= -by; by = 0; }
     
     int32_t inner_x = bx + (rect_config.border_padding ? 0 : b);
     int32_t inner_y = by + (rect_config.border_padding ? 0 : b);

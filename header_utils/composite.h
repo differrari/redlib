@@ -4,44 +4,47 @@
 #include "types.h"
 #include "draw/draw.h"
 #include "memory/memory.h"
+#include "syscalls/syscalls.h"
 
 //Can this be made more optimized if we consider it's meant to tile, not overlap?
-static void composite(draw_ctx *in_ctx, int_point offset, int zoom_scale, draw_ctx *ex_ctx){
-
-    int32_t sx = offset.x;
-    int32_t sy = offset.y;
+static void composite(draw_ctx *source_ctx, int_point offset, int zoom_scale, draw_ctx *destination_ctx, gpu_rect drawable_area){
+    
+    i32 sx = offset.x;
+    i32 sy = offset.y;
 
     sx /= zoom_scale;
     sy /= zoom_scale;
+
+    if (drawable_area.size.width > destination_ctx->width) drawable_area.size.width = destination_ctx->width;
+    if (drawable_area.size.height > destination_ctx->height) drawable_area.size.height = destination_ctx->height;
     
-    if (sx >= (int32_t)ex_ctx->width || sy >= (int32_t)ex_ctx->height || sx + in_ctx->width <= 0 || sy + in_ctx->height <= 0){
+    if (sx >= (i32)drawable_area.size.width || sy >= (i32)destination_ctx->height || sx + source_ctx->width <= 0 || sy + source_ctx->height <= 0){
         return;
     }
 
-    int32_t w = in_ctx->width;
-    int32_t h = in_ctx->height;
-    
+    i32 w = source_ctx->width;
+    i32 h = source_ctx->height;
+
     w /= zoom_scale;
     h /= zoom_scale;
 
-    uint32_t ox = 0;
-    uint32_t oy = 0;
+    i32 ox = 0;
+    i32 oy = 0;
     
-    if (sx < 0){
-        w -= -sx;
-        ox = -sx;
-        sx = 0;
+    if (sx < drawable_area.point.x){
+        w -= drawable_area.point.x-sx;
+        ox = drawable_area.point.x-sx;
+        sx = drawable_area.point.x;
     }
-    if (sy < 0){
-        h -= -sy;
-        oy = -sy;
-        sy = 0;
+    if (sy < drawable_area.point.y){
+        h -= drawable_area.point.y-sy;
+        oy = drawable_area.point.y-sy;
+        sy = drawable_area.point.y;
     }
 
-    if (sx + w > (i32)ex_ctx->width) w = ex_ctx->width - sx;
-    else if (sx < 0){ w += sx; ox = -sx; sx = 0; }
-    if (sy + h > (i32)ex_ctx->height) h = ex_ctx->height - sy;
-    else if (sy < 0){ h += sy; oy = -sy; sy = 0; }
+    if ((sx-drawable_area.point.x) + w > (i32)drawable_area.size.width) w = drawable_area.size.width - (sx-drawable_area.point.x);
+    if ((sy-drawable_area.point.y) + h > (i32)drawable_area.size.height) h = drawable_area.size.height - (sy-drawable_area.point.y);
+
     if (w <= 0 || h <= 0){
         return;
     } 
@@ -49,22 +52,22 @@ static void composite(draw_ctx *in_ctx, int_point offset, int zoom_scale, draw_c
     if (zoom_scale != 1){
         for (i32 dy = 0; dy < h; dy++)
             for (i32 dx = 0; dx < w; dx++)
-                ex_ctx->fb[((sy + dy) * ex_ctx->width) + (sx + dx)] = in_ctx->fb[(((dy * zoom_scale) + oy) * in_ctx->width) + ((dx * zoom_scale) + ox)];
+                destination_ctx->fb[((sy + dy) * destination_ctx->width) + (sx + dx)] = source_ctx->fb[(((dy * zoom_scale) + oy) * source_ctx->width) + ((dx * zoom_scale) + ox)];
     } else {
-        if (in_ctx->full_redraw){
+        if (source_ctx->full_redraw){
             for (i32 dy = 0; dy < h; dy++)
-                memcpy(ex_ctx->fb + ((sy + dy) * ex_ctx->width) + sx, in_ctx->fb + ((dy + oy) * in_ctx->width) + ox, w * sizeof(color));
-            mark_dirty(ex_ctx, sx, sy, w, h);
+                memcpy(destination_ctx->fb + ((sy + dy) * drawable_area.size.width) + sx, source_ctx->fb + ((dy + oy) * source_ctx->width) + ox, w * sizeof(color));
+            mark_dirty(destination_ctx, sx, sy, w, h);
         } else {
-            for (u32 dr = 0; dr < in_ctx->dirty_count; dr++){
-                gpu_rect r = in_ctx->dirty_rects[dr];
+            for (u32 dr = 0; dr < source_ctx->dirty_count; dr++){
+                gpu_rect r = source_ctx->dirty_rects[dr];
                 for (u32 dy = 0; dy < r.size.height; dy++)
-                    memcpy(ex_ctx->fb + ((sy + dy + r.point.y) * ex_ctx->width) + sx + r.point.x, in_ctx->fb + ((dy + oy + r.point.y) * in_ctx->width) + r.point.x + ox, r.size.width * sizeof(color));
-                mark_dirty(ex_ctx, sx + r.point.x, sy + r.point.y, r.size.width, r.size.height);
+                    memcpy(destination_ctx->fb + ((sy + dy + r.point.y) * drawable_area.size.width) + sx + r.point.x, source_ctx->fb + ((dy + oy + r.point.y) * source_ctx->width) + r.point.x + ox, r.size.width * sizeof(color));
+                mark_dirty(destination_ctx, sx + r.point.x, sy + r.point.y, r.size.width, r.size.height);
             }
         }
     }
 
-    in_ctx->dirty_count = 0;
-    in_ctx->full_redraw = false;
+    source_ctx->dirty_count = 0;
+    source_ctx->full_redraw = false;
 }
