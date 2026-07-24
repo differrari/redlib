@@ -36,9 +36,10 @@ typedef struct {
 
 typedef struct {
     hash_map_t *builtins;
+    bool script_only;
 } sheldon_ctx;
 
-shell_handle* create_sheldon(shell_bindings bindings, void (*register_builtins)(shell_handle *handle));
+shell_handle* create_sheldon(shell_bindings bindings, void* owner, void (*register_builtins)(shell_handle *handle));
 
 #ifdef __cplusplus
 }

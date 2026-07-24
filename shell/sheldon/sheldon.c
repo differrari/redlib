@@ -33,21 +33,29 @@ bool sheldon_ctrl_functions(shell_handle *handle, string_slice cmd, string_slice
 }
 
 bool sheldon_run_cmd(shell_handle *handle, string_slice fullcmd){
+    if (handle->scripting.eval && (!handle->scripting.is_script || handle->scripting.is_script(fullcmd)))
+        if (handle->scripting.eval(fullcmd, handle->scripting.ctx)) return true;
+    
     string_splitter splitter = make_string_splitter_slice(fullcmd, ' ', false);
     if (!string_splitter_advance(&splitter))
         return false;
     string_slice cmd = string_splitter_get_current(&splitter);
     if (sheldon_ctrl_functions(handle, cmd, string_splitter_remaining(&splitter))) return true;
     if (call_sheldon_builtin(handle, cmd, string_splitter_remaining(&splitter), 0)) return true;
+
+    sheldon_ctx* loctx = handle->local_ctx;
+    if (loctx->script_only) return false;
     
     int32_t proc = system_focus(fullcmd.data, EXEC_MODE_KEEP_FOCUS);
-    if (!proc) return false;
+    if (!proc || proc == -1) return false;
 
     string output_string = string_format("/proc/%i/out", proc);
     string state_string = string_format("/proc/%i/state", proc);
     string config_string = string_format("/environments/%i/config", proc);
     string data_string = string_format("/environments/%i/data", proc);
     string structure_string = string_format("/environments/%i/structure", proc);
+
+    //TODO: capture stdout for #ifdef CROSS
     
     file out_fd, state_fd, display_fd, data_fd;
     openf(output_string.data, &out_fd);
@@ -140,12 +148,13 @@ bool sheldon_run_cmd(shell_handle *handle, string_slice fullcmd){
     return false;
 }
 
-shell_handle* create_sheldon(shell_bindings bindings, void (*register_builtins)(shell_handle *handle)){
+shell_handle* create_sheldon(shell_bindings bindings, void* owner, void (*register_builtins)(shell_handle *handle)){
     shell_handle *handle = zalloc(sizeof(shell_handle) + sizeof(shell_ctx) + sizeof(sheldon_ctx));
     shell_ctx *shctx = (shell_ctx*)((uptr)handle + sizeof(shell_handle));
     sheldon_ctx* loctx = (sheldon_ctx*)((uptr)shctx + sizeof(shell_ctx));
     handle->local_ctx = loctx;
     handle->common_ctx = shctx;
+    handle->owner = owner;
     loctx->builtins = hash_map_create(256);
     if (!register_builtins) register_builtins = register_sheldon_builtins;
     register_builtins(handle);

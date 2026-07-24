@@ -58,6 +58,14 @@ static bool skip_ws_and_comments(Tokenizer *t, Token *out) {
                 }
                 continue;
             }
+        } else if (t->comment_type == TOKENIZER_COMMENT_TYPE_SEMI){
+            if (scan_match(s, ';')) {
+                while (!scan_eof(s)) {
+                    char c = scan_next(s);
+                    if (c == '\n' || c == '\r') break;
+                }
+                continue;
+            }
         }
 
         break;
