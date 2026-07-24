@@ -5,9 +5,10 @@
 #include "draw/draw.h"
 #include "memory/memory.h"
 #include "syscalls/syscalls.h"
+#include "math/math.h"
 
 //Can this be made more optimized if we consider it's meant to tile, not overlap?
-static void composite(draw_ctx *source_ctx, int_point offset, int zoom_scale, draw_ctx *destination_ctx, gpu_rect drawable_area){
+static void composite(draw_ctx *source_ctx, int_point offset, float zoom_scale, draw_ctx *destination_ctx, gpu_rect drawable_area){
     
     i32 sx = offset.x;
     i32 sy = offset.y;
@@ -52,7 +53,8 @@ static void composite(draw_ctx *source_ctx, int_point offset, int zoom_scale, dr
     if (zoom_scale != 1){
         for (i32 dy = 0; dy < h; dy++)
             for (i32 dx = 0; dx < w; dx++)
-                destination_ctx->fb[((sy + dy) * destination_ctx->width) + (sx + dx)] = source_ctx->fb[(((dy * zoom_scale) + oy) * source_ctx->width) + ((dx * zoom_scale) + ox)];
+                destination_ctx->fb[((sy + dy) * destination_ctx->width) + (sx + dx)] = source_ctx->fb[((floor_to_int(dy * zoom_scale) + oy) * source_ctx->width) + (floor_to_int(dx * zoom_scale) + ox)];
+        mark_dirty(destination_ctx, sx, sy, w, h);
     } else {
         if (source_ctx->full_redraw){
             for (i32 dy = 0; dy < h; dy++)
