@@ -69,10 +69,18 @@ typedef signed char int8_t;
 
 #define NULL 0
 
+#ifndef __cplusplus
+typedef unsigned char bool;
+
+#define true 1
+#define false 0
+#endif
+
 #else
 
 #include <stdint.h>
 #include <stddef.h>
+#include <stdbool.h>
 
 #endif
 
@@ -87,13 +95,6 @@ typedef struct sizedptr {
 
 #ifdef __cplusplus
 }
-#else
-
-typedef unsigned char bool;
-
-#define true 1
-#define false 0
-
 #endif
 
 typedef signed char tern;
