@@ -189,6 +189,13 @@ void fb_fill_rect(draw_ctx *ctx, int32_t x, int32_t y, uint32_t width, uint32_t 
     mark_dirty(ctx, x,y,w,h);
 }
 
+void fb_outline_rect(draw_ctx *ctx, i32 x, i32 y, u32 width, u32 height, u32 size, color color){
+    fb_fill_rect(ctx, x + 0, y + 0, width, size, color);
+    fb_fill_rect(ctx, x + 0, y + height-size, width, size, color);
+    fb_fill_rect(ctx, x + 0, y + 0, size, height, color);
+    fb_fill_rect(ctx, x + width-size, y + 0, size, height, color);
+}
+
 void fb_draw_img(draw_ctx *ctx, uint32_t x, uint32_t y, uint32_t *img, uint32_t img_width, uint32_t img_height){
     fb_draw_partial_img(ctx, img, x, y, img_width, img_height, (image_transform){});
 }
