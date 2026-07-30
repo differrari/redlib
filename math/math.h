@@ -100,8 +100,12 @@ static inline i64 round_to_int(double val){
     return frac >= 0.5 ? whole + 1 : whole;
 }
 
+static inline i64 floor_to_int(double val){
+    return (i64)val;
+}
+
 static inline double floor(double val){
-    return (int64_t)val;
+    return (double)floor_to_int(val);
 }
 
 static inline int64_t abs_i64(int64_t v){

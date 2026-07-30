@@ -7,16 +7,16 @@
 extern "C" {
 #endif
 
-typedef uint32_t color;
+typedef u32 color;
 
 typedef union argbcolor {
     struct {
-        uint32_t blue: 8;
-        uint32_t green: 8;
-        uint32_t red: 8;
-        uint32_t alpha: 8;
+        u32 blue: 8;
+        u32 green: 8;
+        u32 red: 8;
+        u32 alpha: 8;
     };
-    uint32_t color;
+    u32 color;
 } argbcolor;
 
 typedef struct {

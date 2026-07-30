@@ -44,7 +44,10 @@ static inline void* fallback_proxy(size_t size, page_allocator fallback){
 
 void* allocate(void* page, size_t size, page_allocator fallback){
     if (!fallback) fallback = page_alloc;
-    if (!page) return 0;
+    if (!page){
+        print("[ALLOC error] No page to allocate into");
+        return 0;
+    }
     size += INDIVIDUAL_HDR;
     size = (size + ALIGNMENT - 1) & ~(ALIGNMENT - 1);
     
@@ -60,12 +63,18 @@ void* allocate(void* page, size_t size, page_allocator fallback){
         while (*blk_ptr){
             free_block *block = *blk_ptr;
             if ((uintptr_t)block < (uintptr_t)hdr + sizeof(allocator_header) || (uintptr_t)block + sizeof(free_block) > (uintptr_t)hdr + PAGE_SIZE){
-                print("[ALLOC] Wrong allocation, a free block points outside its page %llx + %llx >= %llx",(uintptr_t)block & ~(0xFFF), block->block_size,(uintptr_t)hdr & ~(0xFFF));
+                print("[ALLOC error] Wrong allocation, a free block points outside its page %llx + %llx >= %llx",(uintptr_t)block & ~(0xFFF), block->block_size,(uintptr_t)hdr & ~(0xFFF));
                 return 0;
             }
-            if ((uintptr_t)block + block->block_size > (uintptr_t)hdr + PAGE_SIZE) return 0;
+            if ((uintptr_t)block + block->block_size > (uintptr_t)hdr + PAGE_SIZE){
+                print("[ALLOC error] corrupted free block, size too large");
+                return 0;
+            }
             free_block *next = block->next;
-            if (next && ((uintptr_t)next & ~(PAGE_SIZE - 1)) != ((uintptr_t)hdr & ~(PAGE_SIZE - 1))) return 0;
+            if (next && ((uintptr_t)next & ~(PAGE_SIZE - 1)) != ((uintptr_t)hdr & ~(PAGE_SIZE - 1))){
+                print("[ALLOC error] Free list points outside of own page.");
+                return 0;
+            } 
             if (block->block_size >= size){
                 size_t alloc_size = block->block_size;
                 if (block->block_size >= size + sizeof(free_block)){
@@ -96,10 +105,14 @@ void* allocate(void* page, size_t size, page_allocator fallback){
     
         if (!hdr->next) {
             hdr->next = fallback(PAGE_SIZE);
-            if (!hdr->next) return 0;
+            if (!hdr->next) {
+                print("[ALLOC error] failed to allocate new page from fallback");
+                return 0;
+            }
         }
         hdr = hdr->next;
     }
+    print("[ALLOC error] no header found. This should not happen as it's been null-checked before");
     return 0;
 }
 
@@ -312,6 +325,12 @@ void* reallocate(void* ptr, size_t new_size){
 #include "debug/assert.h"
 
 bool test_zalloc(){
+    void* last = 0;
+    for (int i = 0; i < 10000; i++){
+        void* next = zalloc(0x100);
+        assert_neq(next, 0, "%i-th allocation failed. Last %llx",i,last);
+        last = next;
+    }
     
     uintptr_t first = (uintptr_t)zalloc(0xCF8);//Heap + 0
     assert_eq(first & 0xFF, 0x30, "First allocation in wrong place %llx",first);
@@ -339,10 +358,6 @@ bool test_zalloc(){
     //TEST: more tests for releasing memory, including fragmentation protection
     
     print("alloc release working correctly");
-
-    for (int i = 0; i < 10000; i++){
-        assert_neq(zalloc(0x100), 0, "%i-th allocation failed",i);
-    }
     
     return true;
 }

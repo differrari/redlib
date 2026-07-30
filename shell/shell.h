@@ -22,12 +22,19 @@ typedef struct {
 typedef struct {
     string current_directory;
 } shell_ctx;
+
+typedef struct {
+    void *ctx;
+    bool (*eval)(string_slice exp, void*);
+    bool (*is_script)(string_slice cmd);
+} shell_script_ctx;
  
 struct shell_handle {
     buffer out_buffer;
     shell_bindings bindings;
     shell_ctx *common_ctx;
     void *local_ctx;
+    shell_script_ctx scripting;
     void *owner;
     bool (*cmd_input)(shell_handle*, string_slice input);
 };
@@ -39,6 +46,7 @@ extern shell_handle* current_shell;
 
 void new_shell(shell_handle *, shell_bindings bindings, void (*init_shell)(shell_handle *handle));
 void register_func();
+bool shell_interpret(shell_handle *, string_slice);
 bool run_cmd(shell_handle *, string_slice);
 #ifdef __cplusplus
 }

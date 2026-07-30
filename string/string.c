@@ -1288,3 +1288,8 @@ string string_replace_character(char* original, char symbol, char *value){
     string_slice start = make_string_slice(original, 0, next-original-1);
     return string_format("%v%s%s",start, value, next);
 }
+
+size_t strlen(const char *s) { return strlen_max(s,0); }
+int strcmp(const char *a, const char *b){ return strcmp_case(a, b, false); }
+int strncmp(const char *a, const char *b, size_t length) { return strncmp_case(a,b, false, length); }
+int strend(const char *a, const char *b) { return strend_case(a,b,false); }
