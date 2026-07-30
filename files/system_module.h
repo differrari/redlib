@@ -20,7 +20,7 @@ typedef size_t      (*file_write_fn)(file*, const char *, size_t, file_offset);
 typedef void        (*file_close_fn)(file *descriptor);
 typedef bool        (*file_getstat_fn)(const char*, fs_stat*);
 typedef size_t      (*file_readdir_fn)(const char*, void*, size_t, file_offset*);
-typedef bool        (*file_truncate_fn)(file*, size_t);
+typedef bool        (*file_truncate_fn)(file*);
 //mkdir
 //moving
 
