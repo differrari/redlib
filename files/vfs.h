@@ -9,7 +9,7 @@
 
 #define DIR_AS_FILE "#"
 
-static arr_stack_t *entries;
+static arr_stack_t *entries = 0;
 
 static u64 (*hashing_func)(const char *path);
 
@@ -133,11 +133,12 @@ static inline FS_RESULT vfs_open(const char *path, file *fd){
 }
 
 #ifndef SKIP_ROUTER_FNS
-static file_offset *out_offset;
-static file_offset current_offset;
+static file_offset *out_offset = 0;
+static file_offset current_offset = 0;
 
 static void emit_route_contents(path_resolution resolution){
-    if (!out_offset || *out_offset <= current_offset){
+    if (!out_offset || (*out_offset) <= current_offset){
+        // print("Processing entry %v",resolution.path);
         if (slice_lit_match(resolution.path,resolution.file->name.data, true) && resolution.file->alias_info.alias_path.length){
             string fullpath = string_format("%S/%v",resolution.file->alias_info.alias_path,resolution.forwarded);
             dir_list(fullpath.data, router_fs_dir_helper->list, router_fs_dir_helper->limit, out_offset);

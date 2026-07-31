@@ -6,7 +6,7 @@
 void traverse_directory(const char *directory, bool recursive, dir_traverse func){
     size_t listsize = 0x1000;
     void *listptr = zalloc(listsize);
-    uint64_t offset = 0;
+    file_offset offset = 0;
     size_t read_size = dir_list(directory, listptr, listsize, &offset);
     (void)read_size;
     string_list *list = (string_list*)listptr;
