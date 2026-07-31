@@ -1,6 +1,7 @@
 #pragma once
 
 #include "syscalls/syscalls.h"
+#include "window_info.h"
 
 typedef enum { env_display_text, env_display_table, env_display_document } env_display_type;
 typedef enum { env_behavior_scroll, env_behavior_wipe } env_behavior;
@@ -48,3 +49,11 @@ static inline void send_environment_data(void* buf, size_t size){
     swritef("/environment/data", buf, size, true);
     env_data_sync();
 }
+
+#ifndef CROSS
+static inline void env_set_window_info(window_info_t *info){
+    swritef("/environment/window", info, sizeof(window_info_t), false);
+}
+#else
+extern void env_set_window_info(window_info_t *info);
+#endif
