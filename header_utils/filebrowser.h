@@ -63,20 +63,21 @@ color color_for_type(fs_entry_type type){
     }
 }
 
-void refresh(){
-    for (u64 i = 0; i < stack_count(files); i++){
-        file_data *fdata = stack_get(files,i);
-        string_free(fdata->full_path);
-        string_free(fdata->name);
-    }
-    stack_reset(files);
-
+void refresh(bool full){
     u64 dir_count = stack_count(directories);
-    if (dir_count > 0)
-        traverse_directory(STACK_GET(string,directories,dir_count-1).data, false, on_entry);
+    if (full){
+        for (u64 i = 0; i < stack_count(files); i++){
+            file_data *fdata = stack_get(files,i);
+            string_free(fdata->full_path);
+            string_free(fdata->name);
+        }
+        stack_reset(files);
+    
+        if (dir_count > 0)
+            traverse_directory(STACK_GET(string,directories,dir_count-1).data, false, on_entry);
+    }
     
     i64 file_count = stack_count(files);
-
     if (selected >= file_count)
         selected = file_count > 0 ? file_count - 1 : 0;
 
@@ -179,7 +180,7 @@ void enter_path(const char *name, const char *full_path){
         stack_push(directories,&s);
         selected = 0;
         viewing_file = false;
-        refresh();
+        refresh(true);
         return;
     }
 
@@ -190,7 +191,7 @@ void enter_path(const char *name, const char *full_path){
     viewed_path = (char*)full_path;
     viewed_data = read_full_file(viewed_path, &viewed_size);
     viewing_file = true;
-    refresh();
+    refresh(false);
 }
 
 void enter(char *name){
@@ -201,7 +202,7 @@ void navigate(char *name){
     stack_reset(directories);
     string s = string_from_literal(name);
     stack_push(directories,&s);
-    refresh();
+    refresh(true);
 }
 
 void pop_dir(){
@@ -214,7 +215,7 @@ void pop_dir(){
             viewed_path = 0;
         viewed_size = 0;
         viewing_file = false;
-        refresh();
+        refresh(true);
         return;
     }
     u64 dir_count = stack_count(directories);
@@ -223,7 +224,7 @@ void pop_dir(){
     string_free(last);
     stack_remove(directories,1);
     selected = 0;
-    refresh();
+    refresh(true);
 }
 
 void filebrowser_input(kbd_event ev){
@@ -239,12 +240,12 @@ void filebrowser_input(kbd_event ev){
     u64 file_count = stack_count(files);
     if (ev.key == KEY_UP){
         selected = (selected - 1 + file_count) % file_count;
-        refresh();
+        refresh(false);
         return;
     }
     if (ev.key == KEY_DOWN){
         selected = (selected + 1) % file_count;
-        refresh();
+        refresh(false);
         return;
     }
     if (ev.key == KEY_ENTER || ev.key == KEY_KPENTER){
