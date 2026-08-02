@@ -116,7 +116,7 @@ void* allocate(void* page, size_t size, page_allocator fallback){
     return 0;
 }
 
-static void* zalloc_page = 0;
+void* zalloc_page = 0;
 
 void* zalloc(size_t size){
     if (!zalloc_page) zalloc_page = page_alloc(PAGE_SIZE);

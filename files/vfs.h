@@ -41,13 +41,14 @@ static inline bool make_complex_entry(const char *name, fs_backing_type back_typ
         .alias_info = {
             .alias_path = alias,
         },
+        .file_buffer = {},
         .backing_type = back_type,
         .entry_type = ent_type,
         .actions = actions,
         .references = 0,
         .read_only = false,
         .data_type = data_type,
-        .fid = hashing_func ? hashing_func(name): hash_map_fnv1a64(name, strlen(name)),
+        .fid = hash_filename(name),
     });
     return true;
 }
@@ -156,6 +157,10 @@ static void emit_route_contents(path_resolution resolution){
     if (!out_offset || (*out_offset) <= current_offset){
         // print("Processing entry for query %v",resolution.path);
         if (slice_lit_match(resolution.path,resolution.file->name.data, true) && resolution.file->alias_info.alias_path.length){
+            if (!resolution.forwarded.length) {
+                dir_list(resolution.file->name.data, router_fs_dir_helper->list, router_fs_dir_helper->limit, out_offset);
+                return;
+            }
             string fullpath = string_format("%S/%v",resolution.file->alias_info.alias_path,resolution.forwarded);
             dir_list(fullpath.data, router_fs_dir_helper->list, router_fs_dir_helper->limit, out_offset);
             return;
@@ -220,7 +225,7 @@ static inline bool vfs_stat(const char *path, fs_stat *out_stat){
     if (file->alias_info.alias_path.length){
         string fullpath = file->alias_info.alias_path;
         string additional = (string){};
-        if (file->entry_type == entry_directory){
+        if (file->entry_type == entry_directory && resolution.forwarded.length){
             additional = string_format("%S/%s",fullpath,resolution.forwarded);
             fullpath = additional;
         }
