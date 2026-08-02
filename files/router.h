@@ -64,6 +64,7 @@ static path_resolution parse_path(arr_stack_t *entries, const char *path, path_r
         if (found && ((policy & path_resolution_forward) || !string_splitter_advance(&path_splitter))){
             res.file = file;
             if (policy & path_resolution_forward){
+                if (!file->alias_info.alias_path.length) continue;
                 res.forwarded = string_splitter_remaining(&path_splitter);
             }
             // print("Path %s matched pattern %s",path, pattern);
