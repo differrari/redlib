@@ -6,6 +6,7 @@
 #include "data/struct/hashmap.h"
 #include "syscalls/syscalls.h"
 #include "router.h"
+#include "math/math.h"
 
 #define DIR_AS_FILE "#"
 
@@ -132,13 +133,28 @@ static inline FS_RESULT vfs_open(const char *path, file *fd){
     return FS_RESULT_SUCCESS;
 }
 
+static string_slice vfs_skip_path(string_slice path, string name){
+    if (name.length < path.length) return slice_from_string(name);
+    size_t m = path.length;
+    string_slice ret = {};
+    for (size_t i = 0; i < m; i++){
+        if (path.data[i] != name.data[i]){
+            ret = (string_slice){ .data = name.data + i, .length = name.length-i};
+            break;
+        }
+    }
+    ret = (string_slice){ .data = name.data + path.length, .length = name.length-path.length};
+    if (ret.length && ret.data[0] == '/') { ret.data++; ret.length--; }
+    return ret;
+}
+
 #ifndef SKIP_ROUTER_FNS
 static file_offset *out_offset = 0;
 static file_offset current_offset = 0;
 
 static void emit_route_contents(path_resolution resolution){
     if (!out_offset || (*out_offset) <= current_offset){
-        // print("Processing entry %v",resolution.path);
+        // print("Processing entry for query %v",resolution.path);
         if (slice_lit_match(resolution.path,resolution.file->name.data, true) && resolution.file->alias_info.alias_path.length){
             string fullpath = string_format("%S/%v",resolution.file->alias_info.alias_path,resolution.forwarded);
             dir_list(fullpath.data, router_fs_dir_helper->list, router_fs_dir_helper->limit, out_offset);
@@ -148,9 +164,11 @@ static void emit_route_contents(path_resolution resolution){
             resolution.file->actions.readdir(resolution.forwarded.data, router_fs_dir_helper->list, router_fs_dir_helper->limit, out_offset);
             return;
         }
-        if (!dir_list_fill(router_fs_dir_helper, resolution.file->name.data)){
-            if (out_offset) *out_offset = current_offset;
-        }
+        string_slice lpc = vfs_skip_path(resolution.path,resolution.file->name);
+        if (lpc.length)
+            if (!dir_list_fill(router_fs_dir_helper, lpc.data)){
+                if (out_offset) *out_offset = current_offset;
+            }
     }
     current_offset++;
 }
