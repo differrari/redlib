@@ -135,7 +135,8 @@ void buffer_destroy(buffer *buf){
 
 uptr buffer_seek(buffer *buf, i64 amount, bool absolute){
     if (!buf) return 0;
-    u64 new_cursor = absolute ? amount : buf->cursor + amount;
+    if (absolute && amount < 0) amount = 0;
+    u64 new_cursor = absolute ? (u64)amount : buf->cursor + amount;
     if (new_cursor <= buf->buffer_size)
         buf->cursor = new_cursor;
     return buf->cursor;

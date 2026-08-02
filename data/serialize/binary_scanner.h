@@ -26,6 +26,7 @@ static inline size_t get_bin_type_size(binary_types type){
         case binary_type_double: return sizeof(double);
         case binary_type_string: return sizeof(string_slice);
     }
+    return 0;
 }
 
 static inline size_t get_bin_type_align(binary_types type){
@@ -39,6 +40,7 @@ static inline size_t get_bin_type_align(binary_types type){
         case binary_type_double: return sizeof(double);
         case binary_type_string: return sizeof(string);
     }
+    return 0;
 }
 
 typedef struct {

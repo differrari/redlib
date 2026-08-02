@@ -12,6 +12,7 @@ static inline text_format* get_fmt_at(text_format_arr array, size_t index){
             return &((text_format*)array.fmt)[index];
         case fmt_array_none: return 0;
     }
+    return 0;
 }
 
 static inline text_format get_current_format(uptr cpos, text_format default_format, text_format_arr array){

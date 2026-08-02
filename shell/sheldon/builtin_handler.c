@@ -1,5 +1,3 @@
-#pragma once
-
 #include "builtin_handler.h"
 
 cmd_arg* find_option(string_slice option, cmd_def *def){

@@ -22,15 +22,13 @@ void string_split(const char *str, char seek, void (*perform)(string_slice slice
     } while(point);
 }
 
-#include "syscalls/syscalls.h"
-
 bool string_splitter_advance(string_splitter *splitter){
     if (!splitter->str || !splitter->seek) return false;
     if (splitter->pointer >= splitter->length) return false;
     string_slice current = string_splitter_remaining(splitter);
     if (!current.length) return false;
     string_slice remaining = slice_seek_to(current, splitter->seek);
-    size_t size = remaining.length ? remaining.data-current.data-(*remaining.data || *(remaining.data-1) == splitter->seek ? 1 : 0) : current.length;
+    size_t size = remaining.length ? (size_t)(remaining.data-current.data-(*remaining.data || *(remaining.data-1) == splitter->seek ? 1 : 0)) : current.length;
     splitter->current = current;
     splitter->current.length = size;
     splitter->pointer += size+1;
