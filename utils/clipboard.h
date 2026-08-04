@@ -5,16 +5,14 @@
 #include "syscalls/syscalls.h"
 #include "files/data_signatures.h"
 #ifdef CROSS
-#include <GLFW/glfw3.h>
-
-extern GLFWwindow* _window;
+#include "raylib.h"
 
 #endif
 
 static inline void clipboard_copy(void *buf, size_t size, data_signature type){
 #ifdef CROSS
     if (type != DATA_SIG_UNKNOWN && type != DATA_SIG_TEXT) return;
-    glfwSetClipboardString(_window, buf);
+    SetClipboardText(buf);
 #else
     file fd = {};
     if (openf("/clipboard", &fd) != FS_RESULT_SUCCESS) return;
@@ -29,7 +27,7 @@ static inline void clipboard_copy(void *buf, size_t size, data_signature type){
 static inline void* clipboard_paste(data_signature expected_sig, size_t *out_size){
 #ifdef CROSS
     if (expected_sig != DATA_SIG_UNKNOWN && expected_sig != DATA_SIG_TEXT) return 0;
-    return glfwGetClipboardString(_window);
+    return GetClipboardText();
 #else
     file fd = {};
     if (openf("/clipboard", &fd) != FS_RESULT_SUCCESS) return 0;
