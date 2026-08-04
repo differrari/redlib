@@ -3,7 +3,7 @@
 #include "string/string.h"
 #include "ui/draw/draw.h"
 #include "alloc/allocate.h"
-#include <GLFW/glfw3.h>
+#include "raylib.h"
 #include "keyboard_input.h"
 #include "mouse_input.h"
 #include "keycode_convert.h"
@@ -13,86 +13,39 @@ extern void free(void*ptr);
 
 #define CONVERT_COLOR(color) ((color & 0xFF00FF00) | ((color & 0xFF) << 16) | ((color >> 16) & 0xFF))
 
-GLFWwindow* _window;
+Texture2D _screen_tex;
 
 void begin_drawing(draw_ctx *ctx){
-    
+
 }
 
 void destroy_draw_ctx(draw_ctx *ctx){
-    glfwTerminate();
+    CloseWindow();
 }
 
 void commit_draw_ctx(draw_ctx *ctx){
-    glRasterPos2i(0,ctx->height-1);
-    glPixelZoom(1,-1);
-    glDrawPixels(ctx->width,
-     	 ctx->height,
-         GL_BGRA,
-     	 GL_UNSIGNED_INT_8_8_8_8_REV,
-     	 ctx->fb);
-    glfwSwapBuffers(_window);
-    glfwPollEvents();
+    BeginDrawing();
+    ClearBackground(GetColor(0));
+    UpdateTexture(_screen_tex, ctx->fb);
+    DrawTexture(_screen_tex,0,0,WHITE);
+    EndDrawing();
 }
 
 void resize_draw_ctx(draw_ctx *ctx, uint32_t width, uint32_t height){
     release(ctx->fb);
+    UnloadTexture(_screen_tex);
     ctx->width = width;
     ctx->height = height;
     ctx->fb = zalloc(width*height*sizeof(color));
     ctx->stride = 4 * width;
-    glfwSetWindowSize(_window, width, height);
-    glViewport( 0, 0, width, height );
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
-    glOrtho(0, width, 0, height, -1, 1);
-}
-
-static void error_callback(int error, const char* description)
-{
-    print("Error: %s", description);
-}
-
-#define INPUT_BUFFER_CAPACITY 64
-
-static kbd_event event_queue[INPUT_BUFFER_CAPACITY];
-static int kbd_event_read;
-static int kbd_event_write;
-static void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
-{
-    uint32_t next_index = (kbd_event_write + 1) % INPUT_BUFFER_CAPACITY;
-
-    bool is_mod = (key >= GLFW_KEY_LEFT_SHIFT && key <= GLFW_KEY_RIGHT_SUPER);
-    key = glfw_to_redacted[key];
-
-    int press_ev = is_mod ? MOD_PRESS : KEY_PRESS;
-    int release_ev = is_mod ? MOD_RELEASE : KEY_RELEASE;
-    
-    event_queue[kbd_event_write] = (kbd_event){
-        .type = action == GLFW_PRESS || action == GLFW_REPEAT ? press_ev : release_ev,
-        .key = is_mod ? 0 : key,
-        .modifier = is_mod ? key : 0
-    };
-    kbd_event_write = next_index;
-
-    if (kbd_event_write == kbd_event_read)
-        kbd_event_read = (kbd_event_read + 1) % INPUT_BUFFER_CAPACITY;
-}
-
-double x_pos, y_pos;
-static int old_x = 0;
-static int old_y = 0;
-static double scroll;
-
-static void cursor_position_callback(GLFWwindow* window, double xpos, double ypos)
-{
-    x_pos = xpos;
-    y_pos = ypos;
-}
-
-static void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
-{
-    scroll = yoffset;
+    _screen_tex = LoadTextureFromImage((Image){
+       .data = ctx->fb,
+       .width = width,
+       .height = height,
+       .mipmaps = 1,
+       .format = PIXELFORMAT_UNCOMPRESSED_R8G8B8A8 
+    });
+    SetWindowSize(width, height);
 }
 
 void request_draw_ctx(draw_ctx *ctx){
@@ -102,47 +55,61 @@ void request_draw_ctx(draw_ctx *ctx){
     ctx->width = w;
     ctx->height = h;
     ctx->stride = sizeof(color) * w;
-#if __linux__
-    glfwInitHint(GLFW_PLATFORM, GLFW_PLATFORM_X11);
-#endif
-    glfwInit();
-    glfwSetErrorCallback(error_callback);
 
-    glfwDefaultWindowHints();
-#if __APPLE__
-    glfwWindowHint(GLFW_COCOA_RETINA_FRAMEBUFFER, GLFW_FALSE);
-    glfwWindowHint(GLFW_MAXIMIZED, GLFW_FALSE);
-#endif
-    _window = glfwCreateWindow(w, h, "redlib", NULL, NULL);
-    glfwMakeContextCurrent(_window);
-
-    ctx->width = w;
-    ctx->height = h;
-    
-    glViewport( 0, 0, w, h );
-    glMatrixMode( GL_PROJECTION );
-    glLoadIdentity();
-    glOrtho( 0, w, 0, h, -1, 1 );
-    glfwSetKeyCallback(_window, key_callback);
-    glfwSetCursorPosCallback(_window, cursor_position_callback);
-    glfwSetScrollCallback(_window, scroll_callback);
+    InitWindow(w,h,"RedXLib");
+    _screen_tex = LoadTextureFromImage((Image){
+        .data = ctx->fb,
+        .width = w,
+        .height = h,
+        .mipmaps = 1,
+        .format = PIXELFORMAT_UNCOMPRESSED_B8G8R8A8
+    });
+    SetExitKey(0);
 }
 
-bool read_event(kbd_event *out){
-    if (kbd_event_read == kbd_event_write) return false;
+#define is_mod(key) (key >= 340/*LSHIFT */ && key <= 347/*RMETA */)
 
-    *out = event_queue[kbd_event_read];
-    kbd_event_read = (kbd_event_read + 1) % INPUT_BUFFER_CAPACITY;
-    
-    return true;
+bool keypresses[512];
+bool read_event(kbd_event *event){
+    //TODO: modifiers
+    int key = 0;
+    key = GetKeyPressed();
+    bool mod = is_mod(key);
+    if (key){
+        event->type = mod ? MOD_PRESS : KEY_PRESS;
+        if (mod)
+            event->modifier = cross_to_redacted[key];
+        else 
+            event->key = cross_to_redacted[key];
+        // print("P: KEY %i(%i). MOD %i",cross_to_redacted[key],key,mod);
+        keypresses[key] = true;
+        return true;
+    }
+    for (int i = 0; i < 512; i++)
+        if (keypresses[i] && IsKeyUp(i)){
+            bool mrelease = is_mod(i);
+            event->type = mrelease ? MOD_RELEASE : KEY_RELEASE;
+            if (mrelease)
+                event->modifier = cross_to_redacted[i];
+            else
+                event->key = cross_to_redacted[i];
+            // print("R: KEY %i(%i). MOD %i",cross_to_redacted[i],i,mod);
+            keypresses[i] = false;
+            return true;
+        }
+    return false;
 }
+
+int old_x = 0;
+int old_y = 0;
 
 void get_mouse_status(mouse_data *in){
-    in->raw.scroll = (u8)scroll;
-    scroll = 0;
+    in->raw.scroll = ((int)GetMouseWheelMove() & 0xff);
     in->raw.buttons = 0;
     for (int i = 0; i < 3; i++)
-        in->raw.buttons |= (glfwGetMouseButton(_window, i) & 1) << i;
+        in->raw.buttons |= (IsMouseButtonDown(i) & 1) << i;
+    int x_pos = GetMouseX();
+    int y_pos = GetMouseY();
     in->raw.x = x_pos - old_x;
     in->raw.y = y_pos - old_y;
     in->position.x = x_pos;
@@ -152,7 +119,7 @@ void get_mouse_status(mouse_data *in){
 }
 
 bool should_close_ctx(){
-    return glfwWindowShouldClose(_window);
+    return WindowShouldClose();
 }
 
 #endif
