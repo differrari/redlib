@@ -58,6 +58,7 @@ void request_draw_ctx(draw_ctx *ctx){
     ctx->stride = sizeof(color) * w;
 
     InitWindow(w,h,"RedXLib");
+    SetWindowMonitor(0);
     
     if (FileExists("icon.png")){
         SetWindowIcon(LoadImage("icon.png"));
