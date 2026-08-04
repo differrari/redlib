@@ -43,7 +43,7 @@ void resize_draw_ctx(draw_ctx *ctx, uint32_t width, uint32_t height){
        .width = width,
        .height = height,
        .mipmaps = 1,
-       .format = PIXELFORMAT_UNCOMPRESSED_R8G8B8A8 
+       .format = PIXELFORMAT_UNCOMPRESSED_B8G8R8A8 
     });
     SetWindowSize(width, height);
 }
