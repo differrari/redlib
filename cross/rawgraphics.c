@@ -27,6 +27,9 @@ void destroy_draw_ctx(draw_ctx *ctx){
 void commit_draw_ctx(draw_ctx *ctx){
     BeginDrawing();
     ClearBackground(GetColor(0));
+#ifndef RAYLIB_SUPPORT_BGRA    
+    for (uint64_t i = 0; i < ctx->width * ctx->height; i++) ctx->fb[i] = CONVERT_COLOR(ctx->fb[i]);//TODO: sux
+#endif
     UpdateTexture(_screen_tex, ctx->fb);
     DrawTexture(_screen_tex,0,0,WHITE);
     EndDrawing();
