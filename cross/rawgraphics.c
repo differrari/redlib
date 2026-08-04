@@ -7,6 +7,7 @@
 #include "keyboard_input.h"
 #include "mouse_input.h"
 #include "keycode_convert.h"
+#include "environment/window_info.h"
 #include "syscalls/syscalls.h"
 
 extern void free(void*ptr);
@@ -57,6 +58,11 @@ void request_draw_ctx(draw_ctx *ctx){
     ctx->stride = sizeof(color) * w;
 
     InitWindow(w,h,"RedXLib");
+    
+    if (FileExists("icon.png")){
+        SetWindowIcon(LoadImage("icon.png"));
+    }
+
     _screen_tex = LoadTextureFromImage((Image){
         .data = ctx->fb,
         .width = w,
@@ -120,6 +126,12 @@ void get_mouse_status(mouse_data *in){
 
 bool should_close_ctx(){
     return WindowShouldClose();
+}
+
+void env_set_window_info(window_info_t *info){
+    string s = string_from_literal_length(info->name, info->name_length);
+    SetWindowTitle(s.data);
+    string_free(s);
 }
 
 #endif
