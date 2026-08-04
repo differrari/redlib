@@ -8,10 +8,6 @@ CXXFLAGS := $(CXXFLAGS_BASE) $(CPPFLAGS)
 
 UNAME_S := $(shell uname -s)
 
-ifeq ($(UNAME_S),Darwin)
-	CPPFLAGS += -I/opt/homebrew/include
-endif 
-
 CLEAN_OBJS := $(shell find . -name "*.o")
 CLEAN_DEPS := $(shell find . -name "*.d")
 C_SRC   := $(shell find . -name "*.c")
