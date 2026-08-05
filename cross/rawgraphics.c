@@ -61,6 +61,7 @@ void request_draw_ctx(draw_ctx *ctx){
     ctx->stride = sizeof(color) * w;
 
     InitWindow(w,h,"RedXLib");
+    
     SetWindowMonitor(0);
     
     if (FileExists("icon.png")){
@@ -78,7 +79,6 @@ void request_draw_ctx(draw_ctx *ctx){
 
     if (TextFindIndex(GetApplicationDirectory(), ".app") > -1) 
         ChangeDirectory(TextFormat("%s/..",GetApplicationDirectory()));
-    SetWindowTitle(GetWorkingDirectory());
     
 }
 
