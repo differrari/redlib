@@ -4,16 +4,11 @@
 #include "files/helpers.h"
 #include "syscalls/syscalls.h"
 #include "files/data_signatures.h"
-#ifdef CROSS
-#include "raylib.h"
 
-#endif
-
-static inline void clipboard_copy(void *buf, size_t size, data_signature type){
 #ifdef CROSS
-    if (type != DATA_SIG_UNKNOWN && type != DATA_SIG_TEXT) return;
-    SetClipboardText(buf);
+extern void clipboard_copy(void *buf, size_t size, data_signature type);
 #else
+static inline void clipboard_copy(void *buf, size_t size, data_signature type){
     file fd = {};
     if (openf("/clipboard", &fd) != FS_RESULT_SUCCESS) return;
     fd.data_type = type;
@@ -21,14 +16,15 @@ static inline void clipboard_copy(void *buf, size_t size, data_signature type){
     writef(&fd, (char*)buf, size);
     
     closef(&fd);
-#endif
 }
+#endif
 
-static inline void* clipboard_paste(data_signature expected_sig, size_t *out_size){
 #ifdef CROSS
+extern void* clipboard_paste(data_signature expected_sig, size_t *out_size);
+#else
+static inline void* clipboard_paste(data_signature expected_sig, size_t *out_size){
     if (expected_sig != DATA_SIG_UNKNOWN && expected_sig != DATA_SIG_TEXT) return 0;
     return GetClipboardText();
-#else
     file fd = {};
     if (openf("/clipboard", &fd) != FS_RESULT_SUCCESS) return 0;
     if (fd.data_type != 0 && fd.data_type != expected_sig) return 0;
@@ -41,5 +37,5 @@ static inline void* clipboard_paste(data_signature expected_sig, size_t *out_siz
     closef(&fd);
     
     return fcontent;
-#endif
 }
+#endif
