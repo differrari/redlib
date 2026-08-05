@@ -75,6 +75,11 @@ void request_draw_ctx(draw_ctx *ctx){
         .format = PIXELFORMAT_UNCOMPRESSED_B8G8R8A8
     });
     SetExitKey(0);
+
+    if (TextFindIndex(GetApplicationDirectory(), ".app") > -1) 
+        ChangeDirectory(TextFormat("%s/..",GetApplicationDirectory()));
+    SetWindowTitle(GetWorkingDirectory());
+    
 }
 
 #define is_mod(key) (key >= 340/*LSHIFT */ && key <= 347/*RMETA */)
