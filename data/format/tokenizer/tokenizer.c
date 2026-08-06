@@ -308,7 +308,7 @@ static bool read_operator(Scanner *s, Token *tok) {
 
     for (int i = 0; ops1[i]; i++) {
         if (c == ops1[i]) {
-            if (c == '-' && pos+1 < len && is_digit(buf[pos+1])) return false;
+            if (c == '-' && pos+1 < len && (is_digit(buf[pos+1]) || buf[pos+1] == '.')) return false;
             s->pos = pos + 1;
             tok->kind = TOK_OPERATOR;
             tok->start = buf + pos;
