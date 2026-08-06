@@ -96,7 +96,7 @@ static bool read_number(Tokenizer *t, Token *tok) {
     uint32_t len = s->len;
     uint32_t pos = start;
 
-    if (pos >= len || !(buf[pos] == '-' || is_digit(buf[pos]))) return false;
+    if (pos >= len || !(buf[pos] == '-' || buf[pos] == '.' || is_digit(buf[pos]))) return false;
 
     if (buf[pos] == '0' && pos + 1 < len) {
         char p = buf[pos + 1];
@@ -201,6 +201,7 @@ static bool read_number(Tokenizer *t, Token *tok) {
     tok->kind = t->skip_type_check ? TOK_CONST : TOK_NUMBER;
     tok->start = buf + start;
     tok->length = mant_end - start;
+    if (tok->length == 1 && buf[start] == '.') return false;
     tok->pos = start;
     return true;
 }
@@ -385,7 +386,7 @@ bool tokenizer_next(Tokenizer *t, Token *out) {
 
     if (read_operator(s, out)) return true;
 
-    if (c == '-' || (c >= '0' && c <= '9')) {
+    if (c == '-' || c == '.' || (c >= '0' && c <= '9')) {
         uint32_t pos_before = s->pos;
         if (read_number(t, out)) return true;
 
