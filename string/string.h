@@ -93,6 +93,7 @@ uint64_t parse_hex_u64(const char* str, size_t size);
 uint64_t parse_int_u64(const char* str, size_t size);
 int64_t parse_int64(const char* str, size_t size);
 float parse_float(char *input,size_t length);
+double parse_double(char *input,size_t length);
 
 bool utf16tochar(uint16_t* str_in, char* out_str, size_t max_len);
 

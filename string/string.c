@@ -1158,6 +1158,16 @@ float parse_float(char *input,size_t length){
     return i + s * ((float)f/powi(10,l2));
 }
 
+double parse_double(char *input,size_t length){
+    char *p = (char*)seek_to(input, '.');
+    size_t l1 = p-input;
+    int64_t i = parse_int64(input, l1-(*p != 0));
+    size_t l2 = length-l1;
+    int64_t f = parse_int64(p, l2);
+    int s = (i == 0 && *input == '-') ? -1 : sign(i);
+    return i + s * ((double)f/powi(10,l2));
+}
+
 int64_t parse_int64(const char* str, size_t size){
     uint64_t result = 0;
     bool neg = false;
