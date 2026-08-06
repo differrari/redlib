@@ -42,6 +42,15 @@ static inline sizedptr slice_to_sizedptr(string_slice slice){
     return (sizedptr){.ptr = (uptr)slice.data,.size = slice.length};
 }
 
+static inline int slice_index(string_slice a, const char *b){
+    for (int i = 0; a.length; i++){
+        int j = 0;
+        while (b[j] && a.data[i + j] == b[j]) j++;
+        if (!b[j]) return i;
+    }
+    return -1;
+}
+
 string_slice slice_trim_ws(string_slice slice, bool include_newline);
 
 typedef struct {
