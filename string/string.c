@@ -1149,22 +1149,38 @@ uint64_t parse_int_u64(const char* str, size_t size){
 }
 
 float parse_float(char *input,size_t length){
-    char *p = (char*)seek_to(input, '.');
+    for (size_t i = 0; i < length && input[i] && input[i] == ' '; i++){ input++; length--; }
+    char *p = (char*)input;
+    for (size_t i = 0; i < length && p[i] && ((i == 0 && p[i] == '-') || is_digit(p[i])); i++){p++;}
     size_t l1 = p-input;
-    int64_t i = parse_int64(input, l1-(*p != 0));
+    if (l1 && l1 < length) l1++;
+    int64_t i = parse_int64(input, l1);
     size_t l2 = length-l1;
-    int64_t f = parse_int64(p, l2);
-    int s = (i == 0 && *input == '-') ? -1 : sign(i);
+    int64_t f = 0;
+    if (l2 > 0 && p[l1] == '.'){
+        p++;
+        l2 -= 1;
+        f = parse_int64(p, l2);
+    }
+    int s = i == 0 && input[0] == '-' ? -1 : sign(i);
     return i + s * ((float)f/powi(10,l2));
 }
 
 double parse_double(char *input,size_t length){
-    char *p = (char*)seek_to(input, '.');
+    for (size_t i = 0; i < length && input[i] && input[i] == ' '; i++){ input++; length--; }
+    char *p = (char*)input;
+    for (size_t i = 0; i < length && p[i] && ((i == 0 && p[i] == '-') || is_digit(p[i])); i++){p++;}
     size_t l1 = p-input;
-    int64_t i = parse_int64(input, l1-(*p != 0));
+    if (l1 && l1 < length) l1++;
+    int64_t i = parse_int64(input, l1);
     size_t l2 = length-l1;
-    int64_t f = parse_int64(p, l2);
-    int s = (i == 0 && *input == '-') ? -1 : sign(i);
+    int64_t f = 0;
+    if (l2 > 0 && p[l1] == '.'){
+        p++;
+        l2 -= 1;
+        f = parse_int64(p, l2);
+    }
+    int s = i == 0 && input[0] == '-' ? -1 : sign(i);
     return i + s * ((double)f/powi(10,l2));
 }
 
