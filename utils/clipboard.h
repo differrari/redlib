@@ -23,8 +23,6 @@ static inline void clipboard_copy(void *buf, size_t size, data_signature type){
 extern void* clipboard_paste(data_signature expected_sig, size_t *out_size);
 #else
 static inline void* clipboard_paste(data_signature expected_sig, size_t *out_size){
-    if (expected_sig != DATA_SIG_UNKNOWN && expected_sig != DATA_SIG_TEXT) return 0;
-    return GetClipboardText();
     file fd = {};
     if (openf("/clipboard", &fd) != FS_RESULT_SUCCESS) return 0;
     if (fd.data_type != 0 && fd.data_type != expected_sig) return 0;
