@@ -262,3 +262,33 @@ static inline size_t vfs_readdir(const char *path, void *buf, size_t size, file_
 static inline size_t vfs_list(const char *path, void *buf, size_t size, file_offset *offset){
     return vfs_readdir(path, buf, size, offset);
 }
+
+static inline FS_RESULT vfs_trace_open(const char *path, file *fd){
+     FS_RESULT res = vfs_open(path, fd);
+     print("vfs_trace_open result %llx",res);
+     return res;
+}
+
+static inline size_t vfs_trace_read(file *fd, char *buf, size_t size, file_offset offset){
+     size_t res = vfs_read(fd, buf, size, offset);
+     print("vfs_trace_read result %llx",res);
+     return res;
+}
+
+static inline size_t vfs_trace_write(file *fd, const char *buf, size_t size, file_offset offset){
+     size_t res = vfs_write(fd, buf, size, offset);
+     print("vfs_trace_write result %llx",res);
+     return res;
+}
+
+static inline bool vfs_trace_stat(const char *path, fs_stat *outstat){
+     bool res = vfs_stat(path, outstat);
+     print("vfs_trace_stat result %llx",res);
+     return res;
+}
+
+static inline size_t vfs_trace_readdir(const char *path, void* buf, size_t size, file_offset *offset){
+     size_t res = vfs_readdir(path, buf, size, offset);
+     print("vfs_trace_readdir result %llx",res);
+     return res;
+}

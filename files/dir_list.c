@@ -28,5 +28,6 @@ bool stat_dir(fs_stat *out_stat){
     if (!out_stat) return false;
     out_stat->size = 0;
     out_stat->type = entry_directory;
+    out_stat->data_type = 0;
     return true;
 }

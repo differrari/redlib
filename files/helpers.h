@@ -28,6 +28,13 @@ COMMAND(read_full_file, "read", REQUIRE(path, char, ""), HARDCODED(out_size, siz
 bool write_full_file(const char *path, void* buf, size_t size);
 
 void read_lines(char *file, void *ctx, void (*handle_line)(void *ctx, string_slice line));
+
+static inline uint16_t find_find_extension_index(char *path){
+    uint16_t count = 0;
+    while (*path && *path != '.'){ path++; count++; }
+    return path ? count : 0;
+}
+
 #ifdef __cplusplus
 }
 #endif
