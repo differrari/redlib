@@ -21,7 +21,7 @@ static char *homedir;
 #define DT_DIR 4
 #endif
 
-extern size_t getline(char **restrict lineptr, size_t *restrict n, FILE *restrict stream);
+extern long getline(char **restrict lineptr, size_t *restrict n, FILE *restrict stream);
 
 void traverse_directory(const char *directory, bool recursive, dir_traverse func){
     DIR *dir;

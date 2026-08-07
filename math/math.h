@@ -48,6 +48,10 @@ static inline float absf(float n){
     return n < 0 ? -n : n;
 }
 
+static inline double absd(double n){
+    return n < 0 ? -n : n;
+}
+
 static inline float clampf(float v, float min, float max){
     float t = v < min ? min : v;
     return t > max ? max : t;
