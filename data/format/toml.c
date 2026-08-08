@@ -67,7 +67,7 @@ void read_toml(char *info, toml_handler on_kvp, void *context){
             case TOK_IDENTIFIER:{
                 Token op;
                 if (!ts_expect(&ts, TOK_OPERATOR, &op) || !slice_lit_match(token_to_slice(op), "=", false)){
-                    return;
+                    continue;
                 }
                 read_toml_value(&ts, t, on_kvp, context);
             }
@@ -76,14 +76,13 @@ void read_toml(char *info, toml_handler on_kvp, void *context){
             {       
                 Token t2;
                 while (ts_next(&ts, &t2)) {
-                    if (!t2.kind) return;
-                    if (t2.kind == TOK_RBRACKET) break;
+                    if (!t2.kind || t2.kind == TOK_RBRACKET) break;
                 }
             }
             break;
             default: 
                 
-            break;
+            continue;
         }
     }
 
