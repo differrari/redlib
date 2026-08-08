@@ -197,6 +197,19 @@ static inline size_t vfs_read(file *fd, char* buf, size_t size, file_offset offs
     return buffer_read(&mfile->file_buffer, buf, size, offset);
 }
 
+static inline size_t vfs_transform(const char *path, void* buf, size_t size){
+    if (path && *path == '/') path++;
+    if (!path || !strlen(path)) path = DIR_AS_FILE;
+    path_resolution resolution = parse_path(entries, path, path_resolution_forward, 0);
+    module_file *mfile = resolution.file;
+    if (!mfile) return FS_RESULT_NOTFOUND;
+    if (mfile->actions.transform) return mfile->actions.transform(path, buf, size);
+    if (mfile->alias_info.alias_fd.id){
+        return transformf(mfile->alias_info.alias_path.data, buf, size);
+    } 
+    return 0;
+}
+
 static inline size_t vfs_write(file *fd, const char* buf, size_t size, file_offset offset){
     module_file *mfile = find_entry(fd->id);
     if (!mfile) return 0;
@@ -272,6 +285,12 @@ static inline FS_RESULT vfs_trace_open(const char *path, file *fd){
 static inline size_t vfs_trace_read(file *fd, char *buf, size_t size, file_offset offset){
      size_t res = vfs_read(fd, buf, size, offset);
      print("vfs_trace_read result %llx",res);
+     return res;
+}
+
+static inline size_t vfs_trace_transform(const char *path, void *buf, size_t size){
+     size_t res = vfs_transform(path, buf, size);
+     print("vfs_trace_transform result %llx",res);
      return res;
 }
 

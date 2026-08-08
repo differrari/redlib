@@ -44,11 +44,17 @@
 #define FILE_SIMPLE_WRITE_CODE      65
 #define FILE_STAT_CODE              66
 #define FILE_TRNC_CODE              67
-
-#define LOAD_FSMODULE_CODE          68
-#define UNLOAD_FSMODULE_CODE        69
+#define FILE_TRANS_CODE             68
 
 #define DIR_LIST_CODE               70
+
+#define LOAD_FSMODULE_CODE          71
+#define UNLOAD_FSMODULE_CODE        72
+
+#define FILE_MKDIR_CODE             75
+#define FILE_MKFILE_CODE            76
+#define FILE_DELETE_CODE            77
+#define FILE_MOVING_CODE            78
 
 #define SIGNAL_SEND_CODE            80
 #define SIGNAL_HANDLER_CODE         81

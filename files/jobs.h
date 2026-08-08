@@ -13,7 +13,8 @@ typedef enum {
     job_trunc,
     job_close,
     job_stat,
-    job_readdir
+    job_readdir,
+    job_transform,
 } job_types;
 
 #define MAX_JOB_BUFFERS 8

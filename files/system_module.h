@@ -21,7 +21,10 @@ typedef void        (*file_close_fn)(file *descriptor);
 typedef bool        (*file_getstat_fn)(const char*, fs_stat*);
 typedef size_t      (*file_readdir_fn)(const char*, void*, size_t, file_offset*);
 typedef bool        (*file_truncate_fn)(file*);
+typedef size_t      (*file_transform_fn)(const char*, void*, size_t);
 //mkdir
+//mkfile
+//delete
 //moving
 
 #define VERSION_NUM(major,minor,patch,build) (uint64_t)((((uint64_t)major) << 48) | (((uint64_t)minor) << 32) | (((uint64_t)patch) << 16) | ((uint64_t)build))
@@ -36,6 +39,7 @@ typedef struct {
     file_truncate_fn truncate;
     file_getstat_fn getstat;
     file_readdir_fn readdir;
+    file_transform_fn transform;
 } file_actions;
 
 typedef struct {
@@ -80,6 +84,8 @@ typedef struct system_module {
     file_getstat_fn getstat;
 
     file_readdir_fn readdir;
+
+    file_transform_fn transform;
 
     alias_info_t alias_info; 
 
