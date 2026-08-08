@@ -158,7 +158,7 @@ void enter_path(const char *name, const char *full_path){
 
     if (filebrowser_handle_path && filebrowser_handle_path(name, full_path)) return;
 
-    if (strend(name, ".red") == 0){
+    if (!strend(name, ".red")|| !strend(name,".RED")){
         exec(full_path, 0, 0, EXEC_MODE_DEFAULT);
         halt(0);
     }
