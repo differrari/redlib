@@ -68,6 +68,9 @@ void fb_continuous_draw_text(draw_ctx *ctx, draw_text_op operation, gpu_point *c
         if (c == '\n' || c == '\r' || is_whitespace(c)){
             current_lookahead = 0;
         }
+        if (c == '\t'){
+            cursor->x += 4 * curr_char_width;
+        }
         if (c == '\n'){
             new_line(cursor, line_height, 0);
             if (cursor->y + line_height > out_size->height) out_size->height = cursor->y + line_height;

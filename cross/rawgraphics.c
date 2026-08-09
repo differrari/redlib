@@ -81,33 +81,48 @@ void request_draw_ctx(draw_ctx *ctx){
 
 #define is_mod(key) (key >= 340/*LSHIFT */ && key <= 347/*RMETA */)
 
-bool keypresses[512];
+bool keypresses[512] = {};
+u64 keypress_repeat[512] = {};
 bool read_event(kbd_event *event){
     //TODO: modifiers
     int key = 0;
     key = GetKeyPressed();
     bool mod = is_mod(key);
+    uint64_t now = get_time();
     if (key){
-        event->type = mod ? MOD_PRESS : KEY_PRESS;
+        if (mod) event->type = MOD_PRESS;
+        else {
+            if (IsKeyPressed(key)) event->type = KEY_PRESS;
+            else if (IsKeyDown(key)) event->type = KEY_CONTINUE;
+        }
         if (mod)
             event->modifier = cross_to_redacted[key];
         else 
             event->key = cross_to_redacted[key];
+        keypress_repeat[key] = now + 500;
         // print("P: KEY %i(%i). MOD %i",cross_to_redacted[key],key,mod);
         keypresses[key] = true;
         return true;
     }
     for (int i = 0; i < 512; i++)
-        if (keypresses[i] && IsKeyUp(i)){
+        if (keypresses[i]){
             bool mrelease = is_mod(i);
-            event->type = mrelease ? MOD_RELEASE : KEY_RELEASE;
-            if (mrelease)
-                event->modifier = cross_to_redacted[i];
-            else
+            if (IsKeyUp(i)){
+                event->type = mrelease ? MOD_RELEASE : KEY_RELEASE;
+                if (mrelease)
+                    event->modifier = cross_to_redacted[i];
+                else
+                    event->key = cross_to_redacted[i];
+                // print("R: KEY %i(%i). MOD %i",cross_to_redacted[i],i,mod);
+                keypresses[i] = false;
+                keypress_repeat[i] = 0;
+                return true;
+            } else if (!mrelease && keypress_repeat[i] > 0 && keypress_repeat[i] <= now) {
+                event->type = KEY_CONTINUE;
                 event->key = cross_to_redacted[i];
-            // print("R: KEY %i(%i). MOD %i",cross_to_redacted[i],i,mod);
-            keypresses[i] = false;
-            return true;
+                keypress_repeat[i] = now + 30;
+                return true;
+            }
         }
     return false;
 }
