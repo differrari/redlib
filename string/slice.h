@@ -43,7 +43,7 @@ static inline sizedptr slice_to_sizedptr(string_slice slice){
 }
 
 static inline int slice_index(string_slice a, const char *b){
-    for (int i = 0; i < a.length; i++){
+    for (u32 i = 0; i < a.length; i++){
         int j = 0;
         while (b[j] && i+j < a.length && a.data[i + j] == b[j]) j++;
         if (!b[j]) return i;
