@@ -12,7 +12,7 @@ typedef struct {
     char keys[6];
 } keypress;
 
-typedef enum in_event_type { KEY_RELEASE, KEY_PRESS, MOD_RELEASE, MOD_PRESS } in_event_type;
+typedef enum in_event_type { KEY_RELEASE, KEY_PRESS, KEY_CONTINUE, MOD_RELEASE, MOD_PRESS, MOD_CONTINUE } in_event_type;
 
 typedef struct {
     in_event_type type;
