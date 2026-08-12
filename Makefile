@@ -16,6 +16,8 @@ ASM_SRC := $(shell find . -name "*.S")
 OBJ     := $(C_SRC:%.c=$(BUILD_DIR)/%.o) $(ASM_SRC:%.S=$(BUILD_DIR)/%.o) $(CPP_SRC:%.cpp=$(BUILD_DIR)/%.o)
 DEP     := $(C_SRC:%.c=$(BUILD_DIR)/%.d) $(ASM_SRC:%.S=$(BUILD_DIR)/%.d) $(CPP_SRC:%.cpp=$(BUILD_DIR)/%.d)
 
+ALL_SRC := $(patsubst ./%,%,$(C_SRC))
+
 TARGET  := libshared.a
 
 .PHONY: all clean prepare cross kern
@@ -44,6 +46,8 @@ $(BUILD_DIR)/%.o: %.cpp
 	
 cross: 
 	$(MAKE) ARCH= SH_FLAGS=-DCROSS BUILD_DIR=./.cbuild ADDFLAGS=-std=c99 TARGET=clibshared.a
+	echo "# list of c files to compile" > simplemake
+	for f in $(ALL_SRC); do echo "$$f" >> simplemake; done
 	
 kern:
 	$(MAKE) SH_FLAGS=-DKERNEL BUILD_DIR=./.kbuild TARGET=klibshared.a
