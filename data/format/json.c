@@ -158,7 +158,7 @@ static JsonError json_parse_array(TokenStream *ts, JsonValue **out) {
         for (uint32_t i = 0; i < n; i++) tmp[i] = arr->u.array.items[i];
         tmp[n] = elem;
 
-        if (arr->u.array.items) free_sized(arr->u.array.items, n * sizeof(JsonValue *));
+        if (arr->u.array.items) release(arr->u.array.items);
         arr->u.array.items = tmp;
         arr->u.array.count = n + 1;
 
@@ -250,7 +250,7 @@ static JsonError json_parse_object(TokenStream *ts, JsonValue **out) {
         tmp[n].key = key;
         tmp[n].value = val;
 
-        if (obj->u.object.pairs) free_sized(obj->u.object.pairs, n * sizeof(JsonPair));
+        if (obj->u.object.pairs) release(obj->u.object.pairs);
         obj->u.object.pairs = tmp;
         obj->u.object.count = n + 1;
 
@@ -358,17 +358,17 @@ void json_free(JsonValue *v) {
     } else if (v->kind == JSON_ARRAY) {
         for (uint32_t i = 0; i < v->u.array.count; i++) json_free(v->u.array.items[i]);
         if (v->u.array.items)
-            free_sized(v->u.array.items, v->u.array.count * sizeof(JsonValue *));
+            release(v->u.array.items);
     } else if (v->kind == JSON_OBJECT) {
         for (uint32_t i = 0; i < v->u.object.count; i++) {
             string_free(v->u.object.pairs[i].key);
             json_free(v->u.object.pairs[i].value);
         }
         if (v->u.object.pairs)
-            free_sized(v->u.object.pairs, v->u.object.count * sizeof(JsonPair));
+            release(v->u.object.pairs);
     }
 
-    free_sized(v, sizeof(JsonValue));
+    release(v);
 }
 
 bool json_get_bool(const JsonValue *v, bool *out) {
@@ -492,7 +492,7 @@ bool json_array_push(JsonValue *arr, JsonValue *elem) {
     if (!tmp) return false;
     for (uint32_t i = 0; i < n; i++) tmp[i] = arr->u.array.items[i];
     tmp[n] = elem;
-    if (arr->u.array.items) free_sized(arr->u.array.items, n * sizeof(JsonValue *));
+    if (arr->u.array.items) release(arr->u.array.items);
     arr->u.array.items = tmp;
     arr->u.array.count = n + 1;
     return true;
@@ -526,7 +526,7 @@ bool json_obj_set(JsonValue *obj, const char *key, JsonValue *value) {
     tmp[n].key = sk;
     tmp[n].value = value;
 
-    if (obj-> u.object.pairs) free_sized(obj->u.object.pairs, n * sizeof(JsonPair));
+    if (obj-> u.object.pairs) release(obj->u.object.pairs);
     obj->u.object.pairs = tmp;
     obj->u.object.count = n + 1;
 
