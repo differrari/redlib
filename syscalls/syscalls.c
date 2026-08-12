@@ -65,10 +65,6 @@ extern void free_sized(void *ptr, size_t size){
     return release(ptr);
 }
 
-void begin_drawing(draw_ctx *ctx){
-
-}
-
 void destroy_draw_ctx(draw_ctx *ctx){
 
 }

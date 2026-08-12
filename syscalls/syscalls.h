@@ -48,7 +48,6 @@ extern int32_t kill_process(uint16_t pid);
 
 extern void request_draw_ctx(draw_ctx*);
 static inline void request_app_ctx(draw_ctx* ctx){ request_draw_ctx(ctx); }
-extern void begin_drawing(draw_ctx *);
 extern void commit_draw_ctx(draw_ctx*);
 extern void resize_draw_ctx(draw_ctx*, u32 width, u32 height);
 extern void destroy_draw_ctx(draw_ctx *ctx);
