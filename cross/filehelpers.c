@@ -7,7 +7,9 @@
 #include <stdlib.h>
 #define _DEFAULT_SOURCE
 #include <dirent.h>
+#ifndef _WIN32
 #include <pwd.h>
+#endif
 #include <sys/stat.h>
 #include "string/string.h"
 #include "syscalls/syscalls.h"
@@ -24,6 +26,9 @@ static char *homedir;
 extern long getline(char **restrict lineptr, size_t *restrict n, FILE *restrict stream);
 
 void traverse_directory(const char *directory, bool recursive, dir_traverse func){
+#ifdef _WIN32
+    print("No directory traversal on windows yet");
+#else
     DIR *dir;
     struct dirent *ent;
     if ((dir = opendir (directory)) == 0) {
@@ -39,6 +44,7 @@ void traverse_directory(const char *directory, bool recursive, dir_traverse func
         } else func(directory, ent->d_name);
     }
     closedir (dir);
+#endif
 }
 
 char* get_current_dir(){
@@ -48,7 +54,9 @@ char* get_current_dir(){
 
 char* gethomedir(){
     if ((homedir = getenv("HOME")) == NULL) {
+#ifndef _WIN32
         homedir = getpwuid(getuid())->pw_dir;
+#endif
     }
     return homedir;
 }

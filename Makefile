@@ -44,7 +44,10 @@ $(BUILD_DIR)/%.o: %.cpp
 	
 cross: 
 	$(MAKE) ARCH= SH_FLAGS=-DCROSS BUILD_DIR=./.cbuild ADDFLAGS=-std=c99\ -I../raylib/src TARGET=clibshared.a
-	
+
+win:
+	$(MAKE) ARCH=x86_64-w64-mingw32ucrt- SH_FLAGS=-DCROSS BUILD_DIR=./.cbuild ADDFLAGS=-std=c99\ -I../raylib/src TARGET=clibshared.a
+
 kern:
 	$(MAKE) SH_FLAGS=-DKERNEL BUILD_DIR=./.kbuild TARGET=klibshared.a
 

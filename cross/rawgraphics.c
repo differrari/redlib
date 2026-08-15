@@ -14,7 +14,7 @@ extern void free(void*ptr);
 
 #define CONVERT_COLOR(color) ((color & 0xFF00FF00) | ((color & 0xFF) << 16) | ((color >> 16) & 0xFF))
 
-Texture2D _screen_tex;
+Texture2D _screen_tex = {};
 
 void begin_drawing(draw_ctx *ctx){
 
@@ -26,7 +26,11 @@ void destroy_draw_ctx(draw_ctx *ctx){
 
 void commit_draw_ctx(draw_ctx *ctx){
     BeginDrawing();
-    ClearBackground(GetColor(0));
+#if _WIN32
+    for (int i = 0; i < ctx->width * ctx->height; i++){
+        ctx->fb[i] = CONVERT_COLOR(ctx->fb[i]);
+    }
+#endif
     UpdateTexture(_screen_tex, ctx->fb);
     DrawTexture(_screen_tex,0,0,WHITE);
     EndDrawing();
@@ -44,7 +48,11 @@ void resize_draw_ctx(draw_ctx *ctx, uint32_t width, uint32_t height){
        .width = width,
        .height = height,
        .mipmaps = 1,
-       .format = PIXELFORMAT_UNCOMPRESSED_B8G8R8A8 
+#if _WIN32
+       .format = PIXELFORMAT_UNCOMPRESSED_R8G8B8A8 
+#else
+        .format = PIXELFORMAT_UNCOMPRESSED_B8G8R8A8 
+#endif
     });
     SetWindowSize(width, height);
 }
@@ -70,7 +78,11 @@ void request_draw_ctx(draw_ctx *ctx){
         .width = w,
         .height = h,
         .mipmaps = 1,
-        .format = PIXELFORMAT_UNCOMPRESSED_B8G8R8A8
+#if _WIN32
+       .format = PIXELFORMAT_UNCOMPRESSED_R8G8B8A8 
+#else
+        .format = PIXELFORMAT_UNCOMPRESSED_B8G8R8A8 
+#endif
     });
     SetExitKey(0);
 
