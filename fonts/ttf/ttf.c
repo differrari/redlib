@@ -6,6 +6,14 @@
 #include "data/serialize/binary_scanner.h"
 #include "math/math.h"
 
+// #define TTF_DEBUG
+
+#ifdef TTF_DEBUG
+#define ttf_print(...) print(__VA_ARGS__)
+#else 
+#define ttf_print(...)
+#endif
+
 bool load_cmap_unicode(ttf_cmap *map, ttf_font *out_font){
     for (int i = 0; i < map->num_subtables; i++){
         ttf_cmap_sub *sub = &map->tables[i];
@@ -36,6 +44,7 @@ void ttf_parse_hhea(ttf_font *font, ttf_hhea *hhea){
     font->minLeftSideBearing = hhea->minLeftSideBearing;
     font->advanceWidthMax = hhea->advanceWidthMax;
     font->height_ratio = (float)(font->ascent-font->descent)/font->advanceWidthMax;
+    ttf_print(">>>> %i-%i/%i = %f",font->ascent,font->descent,font->advanceWidthMax,font->height_ratio);
 }
 
 bool load_ttf(char *path, ttf_font *out_font){
@@ -46,17 +55,16 @@ bool load_ttf(char *path, ttf_font *out_font){
     out_font->font = data;
 
     if (!size || !data || size < sizeof(ttf_hdr)){
-        print("BAD %s",path);
         return false;
     }
 
     ttf_hdr *hdr = (ttf_hdr*)data;
     ttf_hdr_swap(hdr);
 
-    print("version=%i.%i, numtables=%i, searchRange=%i, entrySel=%i, rangeShift=%i",hdr->version_maj,hdr->version_min,hdr->num_tables,hdr->search_range,hdr->entry_selector,hdr->range_shift);
+    ttf_print("version=%i.%i, numtables=%i, searchRange=%i, entrySel=%i, rangeShift=%i",hdr->version_maj,hdr->version_min,hdr->num_tables,hdr->search_range,hdr->entry_selector,hdr->range_shift);
 
     if (!hdr->num_tables){
-        print("No tables");
+        print("[TTF error] no tables");
         return false;
     }
 
@@ -66,7 +74,7 @@ bool load_ttf(char *path, ttf_font *out_font){
         ttf_table_hdr *table = &tables[i];
         ttf_table_hdr_swap(table);
 
-        print("%c%c%c%c checksum=%.8x offset=%i len=%i",table->NAME[0],table->NAME[1],table->NAME[2],table->NAME[3],table->checksum,table->offset,table->length);
+        ttf_print("%c%c%c%c checksum=%.8x offset=%i len=%i",table->NAME[0],table->NAME[1],table->NAME[2],table->NAME[3],table->checksum,table->offset,table->length);
 
         if (strncmp(table->NAME, "head", 4) == 0){
             ttf_head *head = (ttf_head*)(data + table->offset);
@@ -149,11 +157,7 @@ float ttf_get_glyph_advance(ttf_font *font, u16 index){
     return (float)bswap16(font->metrics[index < font->num_glyphs ? index : 0].advanceWidth)/font->advanceWidthMax;
 }
 
-u16 ttf_get_glyph_lsb(ttf_font *font, u16 index){
-    return bswap16(font->metrics[index < font->num_glyphs ? index : 0].leftSideBearing);
-}
-
-#define ttfbounds(cond) if (!(cond)){  }
+#define ttfbounds(cond) if (!(cond)){ ttf_print("Out of bounds"); }
 
 void ttf_glyph_read_coord(bool is_x, ttf_font *font, point_graph graph, u16 num_points, ttf_glyph_flags flags[], u16 index, ttf_glyph_desc *desc, binary_scanner *scanner){
     i16 coord = 0;
@@ -186,6 +190,8 @@ point_graph ttf_simple_glyph(binary_scanner *scanner, ttf_font *font, u16 index,
         .size = {ttf_get_glyph_advance(font,index), font->height_ratio}
     };
 
+    ttf_print("Size %i,%i %f",glyph.size.x,glyph.size.y,font->height_ratio);
+
     u16 num_points = 0;
 
     u16 last_countour = 0;
@@ -209,7 +215,7 @@ point_graph ttf_simple_glyph(binary_scanner *scanner, ttf_font *font, u16 index,
     u16 instrLength = 0;
     ttfbounds(bin_scan_u16(scanner, &instrLength));
 
-    print("Instruction length %x",instrLength);
+    ttf_print("Instruction length %x",instrLength);
 
     ttfbounds(bin_scan_skip(scanner, instrLength));
     
@@ -251,9 +257,9 @@ point_graph ttf_compound_glyph(ttf_font *font, binary_scanner *scanner, u16 inde
         ttf_compound_flags flags = {};
         ttfbounds(bin_scan_u16(scanner, &flags.flags));
         u16 glyphIndex = 0;
-        print("%llx flags %x",scanner->data+scanner->cursor-font->font,flags.flags);
+        ttf_print("%llx flags %x",scanner->data+scanner->cursor-font->font,flags.flags);
         ttfbounds(bin_scan_u16(scanner, &glyphIndex));
-        print("Glyph index %i",glyphIndex);
+        ttf_print("Glyph index %i",glyphIndex);
         ttf_glyph_loc glyphL = {};
         ttf_find_glyph(font, &glyphL, glyphIndex);
         i16 off_x = 0;
@@ -324,7 +330,7 @@ point_graph ttf_compound_glyph(ttf_font *font, binary_scanner *scanner, u16 inde
 point_graph ttf_read_glyph(ttf_font *font, u16 index, ttf_glyph_loc *glyph){
     if (!font || !glyph || !font->glyphs) return (point_graph){};//Return hardcoded or retrieved unknown char
 
-    print("Glyph at %llx",(uptr)glyph->offset+(uptr)font->glyphs-(uptr)font->font);
+    ttf_print("Glyph at %llx",(uptr)glyph->offset+(uptr)font->glyphs-(uptr)font->font);
 
     binary_scanner scanner = bin_scan_create((void*)((uptr)font->glyphs + glyph->offset), glyph->len, true);
 
@@ -338,9 +344,9 @@ point_graph ttf_read_glyph(ttf_font *font, u16 index, ttf_glyph_loc *glyph){
         return ttf_compound_glyph(font, &scanner, index, desc);
     }
 
-    if (!desc->numberOfCountours) return (point_graph){.size = {.width = ttf_get_glyph_advance(font, index), .height = font->height_ratio}};
+    if (!desc->numberOfCountours) return (point_graph){.size = {.x = ttf_get_glyph_advance(font, index), .y = font->height_ratio}};
 
-    print("Number of contours %i. Bounds %i,%i - %i,%i",desc->numberOfCountours,desc->xMin,desc->yMin,desc->xMax,desc->yMax);
+    ttf_print("Number of contours %i. Bounds %i,%i - %i,%i",desc->numberOfCountours,desc->xMin,desc->yMin,desc->xMax,desc->yMax);
 
     return ttf_simple_glyph(&scanner, font, index, desc);
 }

@@ -25,5 +25,5 @@ typedef struct {
     point_entry *graph;
     int num_slices;
     point_graph_slice *slices;
-    gpu_size size;
+    vec2 size;
 } point_graph;
