@@ -90,8 +90,8 @@ typedef struct {
     ttf_head_mac_style macStyle;
     u16 lowestReadablePPEM;
     i16 fontDirection;
-    i16 indexToLocFormat;
-    i16 glyphDataFormat;
+    i16 indexToLocFormat;//TODO: what are these?
+    i16 glyphDataFormat;//TODO: what are these?
 } ttf_head;
 
 static inline void ttf_head_swap(ttf_head *head){

@@ -3,8 +3,6 @@
 #include "std/memory.h"
 #include "math/math.h"
 
-#define CHUNK_ARRAY_ITEM(index) (void*)((uptr)array + sizeof(chunk_array_t) + ((index) * array->item_size))
-
 chunk_array_t* chunk_array_create_alloc(size_t item_size, size_t chunk_capacity, void* (*allocator)(size_t size), void (*free)(void*)){
     if (!allocator) allocator = zalloc;
     if (!free) free = release;
@@ -35,8 +33,8 @@ size_t chunk_array_push(chunk_array_t* array, void *data){
 void* chunk_array_get(chunk_array_t *array, uint64_t index){
     if (!array) return 0;
     if (index < array->count){
-        return CHUNK_ARRAY_ITEM(index);
-    } else if (array->next){
+        return CHUNK_ARRAY_ITEM(array,index);
+    } else if (array->next && array->chunk_capacity < index){
         return chunk_array_get(array->next, index - array->count);
     } else return 0;
 }
@@ -71,7 +69,7 @@ void chunk_array_destroy(chunk_array_t *array){
 void* chunk_array_find(chunk_array_t *array, void *query, bool (*match)(void* value, void *query)){
     if (!array) return 0;
     for (size_t i = 0; i < array->count; i++){
-        if (match(CHUNK_ARRAY_ITEM(i), query)) return CHUNK_ARRAY_ITEM(i);
+        if (match(CHUNK_ARRAY_ITEM(array,i), query)) return CHUNK_ARRAY_ITEM(array,i);
     }
     if (array->next) return chunk_array_find(array->next, query, match);
     return 0;
