@@ -298,8 +298,7 @@ point_graph ttf_read_glyph(ttf_font *font, ttf_glyph *glyph){
 
     print("Glyph at %llx",(uptr)glyph->offset+(uptr)font->glyphs-(uptr)font->font);
 
-    binary_scanner scanner = bin_scan_create((void*)((uptr)font->glyphs + glyph->offset), glyph->len);
-    scanner.swap_endian = true;
+    binary_scanner scanner = bin_scan_create((void*)((uptr)font->glyphs + glyph->offset), glyph->len, true);
 
     ttf_glyph_desc *desc = (void*)((uptr)font->glyphs + glyph->offset);
     ttf_glyph_desc_swap(desc);

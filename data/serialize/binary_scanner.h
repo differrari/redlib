@@ -50,11 +50,12 @@ typedef struct {
     bool swap_endian;
 } binary_scanner;
 
-static inline binary_scanner bin_scan_create(u8* data, size_t size){
+static inline binary_scanner bin_scan_create(u8* data, size_t size, bool swap){
     return (binary_scanner){
         .data = data,
         .size = size,
-        .cursor = 0
+        .cursor = 0,
+        .swap_endian = swap
     };
 }
 
