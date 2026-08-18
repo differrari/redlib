@@ -97,7 +97,8 @@ bool ttf_find_glyph(ttf_font *font, ttf_glyph *glyph, u16 index){
         glyph->offset = bswap32(table[index]);
         glyph->len = (bswap32(table[index+1])) - glyph->offset;
     }
-    print("Glyph is at %x of length %x",glyph->offset,glyph->len);
+    return true;
+    // print("Glyph is at %x of length %x",glyph->offset,glyph->len);
 }
 
 bool ttf_lookup_glyph_fmt4(ttf_font *font, ttf_glyph *out_glyph, u16 *out_index, u16 glyph){
@@ -350,24 +351,29 @@ point_graph ttf_get_index(ttf_font *font, u16 index){
     return cached->graph;
 }
 
-void ttf_cache_graph_char(ttf_font *font, u16 character, point_graph graph){
+void ttf_cache_graph_char(ttf_font *font, u16 character, u16 index){
     if (!font->graph_cache) font->graph_cache = hash_map_create(font->num_glyphs);
-    point_graph *new_graph = zalloc(sizeof(point_graph));
-    *new_graph = graph;
-    hash_map_put(font->graph_cache, &character, sizeof(u16), new_graph);
-    //TODO: cleanup func
+    hash_map_put(font->graph_cache, &character, sizeof(u16), (void*)(u64)((1 << 16) | index));
 }
 
 point_graph ttf_get_character(ttf_font *font, u16 character){
     if (font->graph_cache){
-        hash_map_entry_t *entry = hash_map_get(font->graph_cache, &character, sizeof(u16));
-        if (entry)
-            return ttf_get_index(font, *(u16*)entry->value);
+        u64 val = (u64)hash_map_get(font->graph_cache, &character, sizeof(u16));
+        if ((val >> 16))
+            return ttf_get_index(font, (u16)(val & 0xFFFF));
     }
     ttf_glyph glyph = {};
     u16 index = 0;
-    if (!ttf_lookup_glyph(font, &glyph, &index, character)) return ttf_get_index(font, 0);
+    if (!ttf_lookup_glyph(font, &glyph, &index, character))
+        return ttf_get_index(font, 0);
+    ttf_cache_graph_char(font, character, index);
     point_graph graph = ttf_read_glyph(font, &glyph);
     ttf_cache_graph_index(font, index, graph);
     return graph;
+}
+
+void ttf_font_destroy(ttf_font *font){
+    hash_map_destroy(font->graph_cache);
+    chunk_array_destroy(font->index_cache);
+    *font = (ttf_font){};
 }
