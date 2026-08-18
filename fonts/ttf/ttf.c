@@ -324,15 +324,30 @@ point_graph ttf_read_glyph(ttf_font *font, ttf_glyph *glyph){
     return ttf_simple_glyph(&scanner, desc);
 }
 
+typedef struct {
+    bool active;
+    point_graph graph;
+} cached_point_graph;
+
 void ttf_cache_graph_index(ttf_font *font, u16 index, point_graph graph){
-    if (!font->index_cache) font->index_cache = chunk_array_create(sizeof(point_graph), font->num_glyphs);
-    point_graph *cached = CHUNK_ARRAY_ITEM(font->index_cache, index);
-    *cached = graph;
+    if (!font->index_cache) font->index_cache = chunk_array_create(sizeof(cached_point_graph), font->num_glyphs);
+    cached_point_graph *cached = CHUNK_ARRAY_ITEM(font->index_cache, index);
+    cached->graph = graph;
+    cached->active = true;
     if (font->index_cache->count < index+1) font->index_cache->count = index+1;
 }
 
 point_graph ttf_get_index(ttf_font *font, u16 index){
-    return CHUNK_ARRAY_GET(point_graph, font->index_cache, index);
+    cached_point_graph *cached = chunk_array_get(font->index_cache, index);
+    if (!cached || !cached->active){
+        ttf_glyph glyph = {};
+        ttf_find_glyph(font, &glyph, index);
+        
+        point_graph graph = ttf_read_glyph(font, &glyph);
+        ttf_cache_graph_index(font, index, graph);
+        return graph;
+    }
+    return cached->graph;
 }
 
 void ttf_cache_graph_char(ttf_font *font, u16 character, point_graph graph){
@@ -355,15 +370,4 @@ point_graph ttf_get_character(ttf_font *font, u16 character){
     point_graph graph = ttf_read_glyph(font, &glyph);
     ttf_cache_graph_index(font, index, graph);
     return graph;
-}
-
-void ttf_tmp_cache_all(ttf_font *font){
-
-    for (int i = 0; i < font->num_glyphs; i++){
-        ttf_glyph glyph = {};
-        ttf_find_glyph(font, &glyph, i);
-        
-        point_graph graph = ttf_read_glyph(font, &glyph);
-        ttf_cache_graph_index(font, i, graph);//TODO: we don't know which character this is
-    }
 }

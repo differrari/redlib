@@ -31,5 +31,3 @@ point_graph ttf_read_glyph(ttf_font *font, ttf_glyph *glyph);
 
 point_graph ttf_get_index(ttf_font *font, u16 index);
 point_graph ttf_get_character(ttf_font *font, u16 character);
-
-void ttf_tmp_cache_all(ttf_font *font);
