@@ -220,3 +220,21 @@ typedef union {
     };
     u8 flags;
 } ttf_glyph_flags;
+
+typedef union {
+    struct {
+        u16 args_are_words: 1;
+        u16 args_are_values: 1;
+        u16 round_to_grid: 1;
+        u16 have_scale: 1;
+        u16 rsvd: 1;
+        u16 more_components: 1;
+        u16 separate_scale: 1;
+        u16 two_by_two: 1;
+        u16 instructions: 1;
+        u16 metrics: 1;
+        u16 overlap: 1;
+        u16 rsvd2: 5;
+    };
+    u16 flags;
+} ttf_compound_flags;

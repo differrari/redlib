@@ -6,6 +6,7 @@
 #include "draw/point_graph.h"
 
 typedef struct {
+    u8 *font;
     ttf_cmap_table_fmt4 *character_map;
     size_t glyph_size_multiplier;
     u8 *location_map;
@@ -20,5 +21,6 @@ typedef struct {
 bool load_ttf(char *path, ttf_font *out_font);
 
 bool ttf_lookup_glyph(ttf_font *font, ttf_glyph *out_glyph, u16 glyph);
+bool ttf_find_glyph(ttf_font *font, ttf_glyph *glyph, u16 index);
 
 point_graph ttf_read_glyph(ttf_font *font, ttf_glyph *glyph);

@@ -34,6 +34,9 @@ bool load_ttf(char *path, ttf_font *out_font){
     if (!out_font) return false;
     size_t size = 0;
     u8 *data = (u8*)read_full_file(path, &size);
+
+    out_font->font = data;
+
     if (!size || !data || size < sizeof(ttf_hdr)){
         print("BAD %s",path);
         return false;
@@ -100,19 +103,16 @@ bool ttf_lookup_glyph_fmt4(ttf_font *font, ttf_glyph *out_glyph, u16 glyph){
     u16 *startRange = (u16*)((uptr)endRange + (sizeof(u16)*segments) + sizeof(u16));
     u16 *delta = (u16*)((uptr)startRange + (sizeof(u16)*segments));
     u16 *rangeOffset = (u16*)((uptr)delta + (sizeof(u16)*segments));
-    print("Range %llx",(uptr)rangeOffset-(uptr)table);
 
-    uptr end = (uptr)rangeOffset + (sizeof(u16)*segments);
     for (int i = 0; segments; i++){
-        if (glyph >= bswap16(startRange[i]) && glyph <= bswap16(endRange[i])){
+        u16 start = bswap16(startRange[i]);
+        if (glyph >= start && glyph <= bswap16(endRange[i])){
             u16 range = bswap16(rangeOffset[i]);
             u16 index = 0;
-            if (range){
-                index = range + 2 * (glyph - bswap16(startRange[i]));
-            } else {
-                index = bswap16(delta[i]) + glyph;
-            }
-            print("Location %llx with range %i",index,range);
+            if (range)
+                index = bswap16(*(&rangeOffset[i] + range / 2 + (glyph - start)));
+            else 
+                index = (bswap16(delta[i]) + glyph) % 65536;
             return ttf_find_glyph(font, out_glyph, index);
         }
     }
@@ -127,7 +127,7 @@ bool ttf_lookup_glyph(ttf_font *font, ttf_glyph *out_glyph, u16 glyph){
     }
 }
 
-#define tffbounds(cond) if (!(cond)){ print("Failed to read"); }
+#define ttfbounds(cond) if (!(cond)){ print("Failed to read"); }
 
 void ttf_glyph_read_coord(bool is_x, point_graph graph, u16 num_points, ttf_glyph_flags flags[], ttf_glyph_desc *desc, binary_scanner *scanner){
     i16 coord = 0;
@@ -139,11 +139,11 @@ void ttf_glyph_read_coord(bool is_x, point_graph graph, u16 num_points, ttf_glyp
         bool is_same_or_pos = is_x ? flag.x_is_same_or_positive_x_short_vector : flag.y_is_same_or_positive_y_short_vector;
         if (is_short){
             u8 val = 0;
-            tffbounds(bin_scan_u8(scanner, &val));
+            ttfbounds(bin_scan_u8(scanner, &val));
             coord += val * (is_same_or_pos ? 1 : -1);
         } else if (!is_same_or_pos) {
             i16 val = 0;
-            tffbounds(bin_scan_i16(scanner, &val));
+            ttfbounds(bin_scan_i16(scanner, &val));
             coord += val;
         }
 
@@ -155,26 +155,7 @@ void ttf_glyph_read_coord(bool is_x, point_graph graph, u16 num_points, ttf_glyp
     }
 }
 
-point_graph ttf_read_glyph(ttf_font *font, ttf_glyph *glyph){
-    if (!font || !glyph || !font->glyphs) return (point_graph){};//Return hardcoded or retrieved unknown char
-
-    binary_scanner scanner = bin_scan_create((void*)((uptr)font->glyphs + glyph->offset), glyph->len);
-    scanner.swap_endian = true;
-
-    ttf_glyph_desc *desc = (void*)((uptr)font->glyphs + glyph->offset);
-    ttf_glyph_desc_swap(desc);
-
-    tffbounds(bin_scan_skip(&scanner, sizeof(ttf_glyph_desc)));
-
-    if (desc->numberOfCountours < 0){
-        print("[TTF implementation error] compound glyphs not supported yet");
-        return (point_graph){};//Return hardcoded or retrieved unknown char
-    }
-
-    if (!desc->numberOfCountours) return (point_graph){.num_points = 0,.num_slices = 0};
-
-    print("Number of contours %i. Bounds %i,%i - %i,%i",desc->numberOfCountours,desc->xMin,desc->yMin,desc->xMax,desc->yMax);
-
+point_graph ttf_simple_glyph(binary_scanner *scanner, ttf_glyph_desc *desc){
     point_graph graph = {
         .num_slices = desc->numberOfCountours,
         .slices = zalloc(desc->numberOfCountours * sizeof(point_graph_slice))
@@ -185,12 +166,12 @@ point_graph ttf_read_glyph(ttf_font *font, ttf_glyph *glyph){
     u16 last_countour = 0;
     for (int i = 0; i < desc->numberOfCountours; i++){
         u16 new_countour = 0;
-        tffbounds(bin_scan_u16(&scanner, &new_countour));
+        ttfbounds(bin_scan_u16(scanner, &new_countour));
         new_countour++;
         num_points = max(new_countour,num_points);
         graph.slices[i].start = last_countour;
         graph.slices[i].end = new_countour;
-        print("countour %i: %i - %i",i,graph.slices[i].start,graph.slices[i].end);
+        // print("countour %i: %i - %i",i,graph.slices[i].start,graph.slices[i].end);
         last_countour = new_countour;
     }
 
@@ -198,22 +179,22 @@ point_graph ttf_read_glyph(ttf_font *font, ttf_glyph *glyph){
     graph.graph = zalloc(num_points * sizeof(point_entry));
 
     u16 instrLength = 0;
-    tffbounds(bin_scan_u16(&scanner, &instrLength));
+    ttfbounds(bin_scan_u16(scanner, &instrLength));
 
     print("Instruction length %x",instrLength);
 
-    tffbounds(bin_scan_skip(&scanner, instrLength));
+    ttfbounds(bin_scan_skip(scanner, instrLength));
     
     ttf_glyph_flags flags[num_points] = {};
     for (int i = 0; i < num_points; i++){
         ttf_glyph_flags *current = &flags[i];
-        bin_scan_u8(&scanner, &current->flags);
+        bin_scan_u8(scanner, &current->flags);
 
         graph.graph[i].on_curve = current->on_curve;
 
         if (current->repeat){
             u8 amount = 0;
-            tffbounds(bin_scan_u8(&scanner, &amount));
+            ttfbounds(bin_scan_u8(scanner, &amount));
 
             for (int j = 0; j < amount; j++){
                 
@@ -224,13 +205,115 @@ point_graph ttf_read_glyph(ttf_font *font, ttf_glyph *glyph){
         }
     }
 
-    ttf_glyph_read_coord(true, graph, num_points, flags, desc, &scanner);
-    ttf_glyph_read_coord(false, graph, num_points, flags, desc, &scanner);
+    ttf_glyph_read_coord(true, graph, num_points, flags, desc, scanner);
+    ttf_glyph_read_coord(false, graph, num_points, flags, desc, scanner);
 
-    // for (int i = 0; i < num_points; i++){
-    //     point_entry *entry = chunk_array_get(points, i);
-    //     print("%i - %f,%f",entry->on_curve,entry->x,entry->y);
-    // }
+    for (int i = 0; i < num_points; i++){
+        point_entry entry = graph.graph[i];
+        print("%i - %f,%f",entry.on_curve,entry.x,entry.y);
+    }
 
     return graph;
+}
+
+point_graph ttf_compound_glyph(ttf_font *font, binary_scanner *scanner, ttf_glyph_desc *desc){
+    bool repeat = false;
+    point_graph graph = {};
+    do {
+        ttf_compound_flags flags = {};
+        ttfbounds(bin_scan_u16(scanner, &flags.flags));
+        u16 glyphIndex = 0;
+        print("%llx flags %x",scanner->data+scanner->cursor-font->font,flags.flags);
+        ttfbounds(bin_scan_u16(scanner, &glyphIndex));
+        print("Glyph index %i",glyphIndex);
+        ttf_glyph glyph = {};
+        ttf_lookup_glyph(font, &glyph, glyphIndex);
+        i16 off_x = 0;
+        i16 off_y = 0;
+
+        if (flags.args_are_words){
+            ttfbounds(bin_scan_i16(scanner,&off_x));
+            ttfbounds(bin_scan_i16(scanner,&off_y));
+        } else {
+            if (flags.args_are_values){
+                i8 ox = 0;
+                i8 oy = 0;
+                ttfbounds(bin_scan_i8(scanner,&ox));
+                ttfbounds(bin_scan_i8(scanner,&oy));
+                off_x = ox;
+                off_y = oy;
+            } else {
+                u8 ox = 0;
+                u8 oy = 0;
+                ttfbounds(bin_scan_u8(scanner,&ox));
+                ttfbounds(bin_scan_u8(scanner,&oy));
+                off_x = ox;
+                off_y = oy;
+            }
+        }
+
+        i16 scale_x = 1, scale_y = 1, scale_01 = 1, scale_10 = 1;
+
+        // if (flags.args_are_words && flags.args_are_values){
+        //     ttfbounds(bin_scan_i16(scanner, &scale_x));
+        //     ttfbounds(bin_scan_i16(scanner, &scale_x));
+        // } else if (!flags.args_are_words && flags.args_are_values){
+        //     i8 f, u= 0;
+        //     ttfbounds(bin_scan_i8(scanner, &f));
+        //     ttfbounds(bin_scan_i8(scanner, &u));
+        // } else if (flags.args_are_words && !flags.args_are_values){
+        //     ttfbounds(bin_scan_i16(scanner, &scale_x));
+        //     ttfbounds(bin_scan_i16(scanner, &scale_x));
+        //     // 1st short contains the index of matching point in compound being constructed
+        //     // 2nd short contains index of matching point in component
+        // } else if (!flags.args_are_words && !flags.args_are_values){
+        //     i8 f, u= 0;
+        //     // 1st byte containing index of matching point in compound being constructed
+        //     // 2nd byte containing index of matching point in component
+        //     ttfbounds(bin_scan_i8(scanner, &f));
+        //     ttfbounds(bin_scan_i8(scanner, &u));
+        // }
+        if (flags.have_scale){
+            ttfbounds(bin_scan_i16(scanner, &scale_x));
+            scale_y = scale_x;
+        } else if (flags.separate_scale) {
+            ttfbounds(bin_scan_i16(scanner, &scale_x));
+            ttfbounds(bin_scan_i16(scanner, &scale_y));
+        } else if (flags.two_by_two){
+            ttfbounds(bin_scan_i16(scanner, &scale_x));
+            ttfbounds(bin_scan_i16(scanner, &scale_01));
+            ttfbounds(bin_scan_i16(scanner, &scale_10));
+            ttfbounds(bin_scan_i16(scanner, &scale_y));
+        }
+        repeat = flags.more_components;
+        graph = ttf_read_glyph(font, &glyph);
+        return graph;
+    } while (repeat);
+
+    return graph;
+}
+
+point_graph ttf_read_glyph(ttf_font *font, ttf_glyph *glyph){
+    if (!font || !glyph || !font->glyphs) return (point_graph){};//Return hardcoded or retrieved unknown char
+
+    print("Glyph at %llx",(uptr)glyph->offset+(uptr)font->glyphs-(uptr)font->font);
+
+    binary_scanner scanner = bin_scan_create((void*)((uptr)font->glyphs + glyph->offset), glyph->len);
+    scanner.swap_endian = true;
+
+    ttf_glyph_desc *desc = (void*)((uptr)font->glyphs + glyph->offset);
+    ttf_glyph_desc_swap(desc);
+
+    ttfbounds(bin_scan_skip(&scanner, sizeof(ttf_glyph_desc)));
+
+    if (desc->numberOfCountours < 0){
+        return (point_graph){};
+        return ttf_compound_glyph(font, &scanner, desc);
+    }
+
+    if (!desc->numberOfCountours) return (point_graph){.num_points = 0,.num_slices = 0};
+
+    print("Number of contours %i. Bounds %i,%i - %i,%i",desc->numberOfCountours,desc->xMin,desc->yMin,desc->xMax,desc->yMax);
+
+    return ttf_simple_glyph(&scanner, desc);
 }

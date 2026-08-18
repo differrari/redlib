@@ -412,17 +412,17 @@ void fb_draw_cursor(draw_ctx *ctx, uint32_t color) {
     }
 }
 
-void fb_draw_path(draw_ctx *ctx, u32 scale, point_graph graph){
+void fb_draw_path(draw_ctx *ctx, gpu_point point, u32 scale, point_graph graph){
     for (int s = 0; s < graph.num_slices; s++){
         size_t count = min(graph.num_points,graph.slices[s].end); 
         point_entry entry = graph.graph[count-1];
-        gpu_point loc = {entry.x*scale*CHAR_SIZE,entry.y*scale*CHAR_SIZE};
+        gpu_point loc = {point.x+(entry.x*scale*CHAR_SIZE),point.y+(entry.y*scale*CHAR_SIZE)};
         // print("Slice %i - %i to %i",s, graph.slices[s].start,count);
-        for (int i = max(0,graph.slices[s].start); i < count; i++){
+        for (size_t i = max(0,graph.slices[s].start); i < count; i++){
             point_entry entry = graph.graph[i];
-            gpu_point nloc = {entry.x*scale*CHAR_SIZE,entry.y*scale*CHAR_SIZE};
+            gpu_point nloc = {point.x+(entry.x*scale*CHAR_SIZE),point.y+(entry.y*scale*CHAR_SIZE)};
             // print("%i,%i -> %i,%i",loc.x,loc.y,nloc.x,nloc.y);
-            if (loc.x < 0  || loc.y < 0  || nloc.x < 0  || nloc.y < 0 ) continue;
+            if (nloc.x < 0 || nloc.y < 0) continue;
             // if (entry->on_curve)
                 fb_draw_line(ctx, loc.x, loc.y, nloc.x, nloc.y, 0xFFb4dd13);
             loc = nloc;
