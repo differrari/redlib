@@ -230,7 +230,7 @@ point_graph ttf_compound_glyph(ttf_font *font, binary_scanner *scanner, ttf_glyp
         ttfbounds(bin_scan_u16(scanner, &glyphIndex));
         print("Glyph index %i",glyphIndex);
         ttf_glyph glyph = {};
-        ttf_lookup_glyph(font, &glyph, glyphIndex);
+        ttf_find_glyph(font, &glyph, glyphIndex);
         i16 off_x = 0;
         i16 off_y = 0;
 
@@ -290,7 +290,7 @@ point_graph ttf_compound_glyph(ttf_font *font, binary_scanner *scanner, ttf_glyp
         }
         repeat = flags.more_components;
         graph = ttf_read_glyph(font, &glyph);
-        return graph;
+        // return graph;
     } while (repeat);
 
     return graph;
