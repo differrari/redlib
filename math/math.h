@@ -10,6 +10,10 @@ extern "C" {
 #define INFINITY __builtin_inff()
 #endif
 
+#ifndef EPSILON
+#define EPSILON 1e-5
+#endif
+
 static inline i64 powi(i64 n, i64 e){
     if (e == 1) return n;
     if (e == 2) return n << e;
@@ -63,6 +67,10 @@ static inline double absd(double n){
 static inline float clampf(float v, float min, float max){
     float t = v < min ? min : v;
     return t > max ? max : t;
+}
+
+static inline float saturate(float v){
+    return clampf(v, 0, 1.f);
 }
 
 static inline int sign(int x) {
