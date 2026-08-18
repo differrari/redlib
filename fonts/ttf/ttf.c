@@ -373,6 +373,13 @@ point_graph ttf_get_character(ttf_font *font, u16 character){
 }
 
 void ttf_font_destroy(ttf_font *font){
+    size_t count = chunk_array_count(font->index_cache);
+    for (u64 i = 0; i < count; i++){
+        cached_point_graph *graph = CHUNK_ARRAY_ITEM(font->index_cache, i);
+        if (!graph->active) continue;
+        release(graph->graph.graph);
+        release(graph->graph.slices);
+    }
     hash_map_destroy(font->graph_cache);
     chunk_array_destroy(font->index_cache);
     *font = (ttf_font){};
