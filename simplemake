@@ -53,3 +53,4 @@ syscalls/syscalls.c
 net/checksums.c
 compression/huffman.c
 compression/deflate.c
+fonts/ttf/ttf.c

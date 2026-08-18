@@ -1,6 +1,7 @@
 #include "draw.h"
 #include "ui/font8x8_bridge.h"
 #include "std/memory.h"
+#include "math/math.h"
 #include "string/slice.h"
 
 int try_merge(gpu_rect* a, gpu_rect* b) {
@@ -241,7 +242,7 @@ void fb_draw_partial_img(draw_ctx *ctx, uint32_t *img, uint32_t x, uint32_t y, u
     mark_dirty(ctx, x,y,w, h);
 }
 
-gpu_rect fb_draw_line(draw_ctx *ctx, uint32_t x0, uint32_t y0, uint32_t x1, uint32_t y1, color color){
+gpu_rect fb_draw_line(draw_ctx *ctx, uint32_t x0, uint32_t y0, uint32_t x1, uint32_t y1, color color){//TODO: can cause an infinite loop with negative values
     const uint32_t ox0 = x0, oy0 = y0, ox1 = x1, oy1 = y1;
 
     int dx = (x1 > x0) ? (x1 - x0) : (x0 - x1);
@@ -407,6 +408,24 @@ void fb_draw_cursor(draw_ctx *ctx, uint32_t color) {
             {
                 dst[x] = color;
             }
+        }
+    }
+}
+
+void fb_draw_path(draw_ctx *ctx, u32 scale, point_graph graph){
+    for (int s = 0; s < graph.num_slices; s++){
+        size_t count = min(graph.num_points,graph.slices[s].end); 
+        point_entry entry = graph.graph[count-1];
+        gpu_point loc = {entry.x*scale*CHAR_SIZE,entry.y*scale*CHAR_SIZE};
+        // print("Slice %i - %i to %i",s, graph.slices[s].start,count);
+        for (int i = max(0,graph.slices[s].start); i < count; i++){
+            point_entry entry = graph.graph[i];
+            gpu_point nloc = {entry.x*scale*CHAR_SIZE,entry.y*scale*CHAR_SIZE};
+            // print("%i,%i -> %i,%i",loc.x,loc.y,nloc.x,nloc.y);
+            if (loc.x < 0  || loc.y < 0  || nloc.x < 0  || nloc.y < 0 ) continue;
+            // if (entry->on_curve)
+                fb_draw_line(ctx, loc.x, loc.y, nloc.x, nloc.y, 0xFFb4dd13);
+            loc = nloc;
         }
     }
 }

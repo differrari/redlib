@@ -7,7 +7,7 @@ extern "C" {
 #include "types.h"
 #include "graphic_types.h"
 #include "string/slice.h"
-#include "textdraw.h"
+#include "point_graph.h"
 
 #define CHAR_SIZE 8
 
@@ -24,6 +24,7 @@ typedef struct {
 
 void mark_dirty(draw_ctx *ctx, uint32_t x, uint32_t y, uint32_t w, uint32_t h);
 
+//TODO: just use the types i provide in these functions to make them more readable
 uint32_t pixel_blend(uint32_t p1, uint32_t p2);
 void fb_clear(draw_ctx *ctx, uint32_t color);
 void fb_draw_pixel(draw_ctx *ctx, uint32_t x, uint32_t y, color color);
@@ -39,6 +40,7 @@ gpu_size fb_draw_slice(draw_ctx *ctx, string_slice slice, uint32_t x0, uint32_t 
 gpu_size fb_draw_string(draw_ctx *ctx, const char* s, uint32_t x, uint32_t y, uint32_t scale, uint32_t color);
 uint32_t fb_get_char_size(uint32_t scale);
 void fb_draw_cursor(draw_ctx *ctx, uint32_t color);
+void fb_draw_path(draw_ctx *ctx, u32 scale, point_graph graph);
 
 #ifdef __cplusplus
 }
