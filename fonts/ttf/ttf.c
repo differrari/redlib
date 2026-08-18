@@ -149,16 +149,16 @@ void ttf_glyph_read_coord(bool is_x, point_graph graph, u16 num_points, ttf_glyp
 
         point_entry *entry = &graph.graph[i];
         if (is_x)
-            entry->x = (float)(coord-min)/max;
+            entry->pos.x = (float)(coord-min)/max;
         else  
-            entry->y = 1.f-((float)(coord-min)/max);
+            entry->pos.y = 1.f-((float)(coord-min)/max);
     }
 }
 
 point_graph ttf_simple_glyph(binary_scanner *scanner, ttf_glyph_desc *desc){
     point_graph graph = {
         .num_slices = desc->numberOfCountours,
-        .slices = zalloc(desc->numberOfCountours * sizeof(point_graph_slice))
+        .slices = zalloc(desc->numberOfCountours * sizeof(point_graph_slice)),
     };
 
     u16 num_points = 0;
@@ -171,6 +171,9 @@ point_graph ttf_simple_glyph(binary_scanner *scanner, ttf_glyph_desc *desc){
         num_points = max(new_countour,num_points);
         graph.slices[i].start = last_countour;
         graph.slices[i].end = new_countour;
+        graph.slices[i].close = true;
+        graph.slices[i].curve_type = point_graph_curve_quad_only;
+        graph.slices[i].max_curve_points = 32;
         // print("countour %i: %i - %i",i,graph.slices[i].start,graph.slices[i].end);
         last_countour = new_countour;
     }
@@ -210,7 +213,7 @@ point_graph ttf_simple_glyph(binary_scanner *scanner, ttf_glyph_desc *desc){
 
     for (int i = 0; i < num_points; i++){
         point_entry entry = graph.graph[i];
-        print("%i - %f,%f",entry.on_curve,entry.x,entry.y);
+        //print("%i - %f,%f",entry.on_curve,entry.pos.x,entry.pos.y);
     }
 
     return graph;
