@@ -97,6 +97,16 @@ static inline void yield(){
     msleep(0);
 }
 
+#ifndef CROSS
+static inline void* malloc(size_t size){
+    return zalloc(size);
+}
+
+static inline void free_sized(void* ptr, size_t size){
+    release(ptr);
+}
+#endif
+
 #ifdef __cplusplus
 }
 #endif
