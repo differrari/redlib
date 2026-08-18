@@ -25,6 +25,11 @@ char* gethomedir();
 char* read_full_file(const char *path, size_t *out_size);
 COMMAND(read_full_file, "read", REQUIRE(path, char, ""), HARDCODED(out_size, size_t, "", 0));
 
+static inline string_slice read_file_slice(const char *path){
+    size_t s = 0;
+    return (string_slice){.data = read_full_file(path, &s), .length = s};
+}
+
 bool write_full_file(const char *path, void* buf, size_t size);
 
 void read_lines(char *file, void *ctx, void (*handle_line)(void *ctx, string_slice line));
