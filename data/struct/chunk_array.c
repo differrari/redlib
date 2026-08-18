@@ -32,9 +32,11 @@ size_t chunk_array_push(chunk_array_t* array, void *data){
 
 void* chunk_array_get(chunk_array_t *array, uint64_t index){
     if (!array) return 0;
-    if (index < array->count){
-        return CHUNK_ARRAY_ITEM(array,index);
-    } else if (array->next && array->chunk_capacity < index){
+    if (index < array->chunk_capacity){
+        if (index < array->count)
+            return CHUNK_ARRAY_ITEM(array,index);
+        return 0;
+    } else if (array->next){
         return chunk_array_get(array->next, index - array->count);
     } else return 0;
 }
