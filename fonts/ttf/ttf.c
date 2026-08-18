@@ -25,9 +25,17 @@ bool load_cmap_unicode(ttf_cmap *map, ttf_font *out_font){
     return false;
 }
 
-bool ttf_parse_head(ttf_font *font, ttf_head *head){
+void ttf_parse_head(ttf_font *font, ttf_head *head){
     font->glyph_size_multiplier = head->indexToLocFormat ? sizeof(u32) : sizeof(u16);
-    return true;
+}
+
+void ttf_parse_hhea(ttf_font *font, ttf_hhea *hhea){
+    font->num_glyphs = hhea->numOfLongHorMetrics;
+    font->ascent = hhea->ascent;
+    font->descent = hhea->descent;
+    font->minLeftSideBearing = hhea->minLeftSideBearing;
+    font->advanceWidthMax = hhea->advanceWidthMax;
+    font->height_ratio = (float)(font->ascent-font->descent)/font->advanceWidthMax;
 }
 
 bool load_ttf(char *path, ttf_font *out_font){
@@ -67,7 +75,8 @@ bool load_ttf(char *path, ttf_font *out_font){
         }
         if (strncmp(table->NAME, "hhea", 4) == 0){
             ttf_hhea *hhea = (ttf_hhea*)(data + table->offset);
-            out_font->num_glyphs = bswap16(hhea->numOfLongHorMetrics);
+            ttf_hhea_swap(hhea);
+            ttf_parse_hhea(out_font, hhea);
         }
         if (strncmp(table->NAME, "loca", 4) == 0){
             out_font->location_map = (u8*)(data + table->offset);
@@ -80,13 +89,17 @@ bool load_ttf(char *path, ttf_font *out_font){
             ttf_cmap_swap(cmap);
             if (!load_cmap_unicode(cmap, out_font)) return false;
         }
+        if (strncmp(table->NAME, "hmtx", 4) == 0){
+            ttf_hmetric *hmtx = (ttf_hmetric*)(data + table->offset);
+            out_font->metrics = hmtx;
+        }
 
     }
     
     return true;
 }
 
-bool ttf_find_glyph(ttf_font *font, ttf_glyph *glyph, u16 index){
+bool ttf_find_glyph(ttf_font *font, ttf_glyph_loc *glyph, u16 index){
     if (!glyph) return false;
     if (font->glyph_size_multiplier == sizeof(u16)){
         u16 *table = (u16*)font->location_map;
@@ -101,7 +114,7 @@ bool ttf_find_glyph(ttf_font *font, ttf_glyph *glyph, u16 index){
     // print("Glyph is at %x of length %x",glyph->offset,glyph->len);
 }
 
-bool ttf_lookup_glyph_fmt4(ttf_font *font, ttf_glyph *out_glyph, u16 *out_index, u16 glyph){
+bool ttf_lookup_glyph_fmt4(ttf_font *font, ttf_glyph_loc *out_glyph, u16 *out_index, u16 glyph){
     if (!out_index) return false;
     ttf_cmap_table_fmt4 *table = font->character_map;
     u16 segments = table->segCountX2/2;
@@ -124,7 +137,7 @@ bool ttf_lookup_glyph_fmt4(ttf_font *font, ttf_glyph *out_glyph, u16 *out_index,
     return false;
 }
 
-bool ttf_lookup_glyph(ttf_font *font, ttf_glyph *out_glyph, u16 *out_index, u16 glyph){
+bool ttf_lookup_glyph(ttf_font *font, ttf_glyph_loc *out_glyph, u16 *out_index, u16 glyph){
     switch (font->character_map->hdr.format){
         case 4:
             return ttf_lookup_glyph_fmt4(font, out_glyph, out_index, glyph);
@@ -132,12 +145,18 @@ bool ttf_lookup_glyph(ttf_font *font, ttf_glyph *out_glyph, u16 *out_index, u16 
     }
 }
 
+float ttf_get_glyph_advance(ttf_font *font, u16 index){
+    return (float)bswap16(font->metrics[index < font->num_glyphs ? index : 0].advanceWidth)/font->advanceWidthMax;
+}
+
+u16 ttf_get_glyph_lsb(ttf_font *font, u16 index){
+    return bswap16(font->metrics[index < font->num_glyphs ? index : 0].leftSideBearing);
+}
+
 #define ttfbounds(cond) if (!(cond)){  }
 
-void ttf_glyph_read_coord(bool is_x, point_graph graph, u16 num_points, ttf_glyph_flags flags[], ttf_glyph_desc *desc, binary_scanner *scanner){
+void ttf_glyph_read_coord(bool is_x, ttf_font *font, point_graph graph, u16 num_points, ttf_glyph_flags flags[], u16 index, ttf_glyph_desc *desc, binary_scanner *scanner){
     i16 coord = 0;
-    i16 max = is_x ? desc->xMax : desc->yMax;
-    i16 min = is_x ? desc->xMin : desc->yMin;
     for (int i = 0; i < num_points; i++){
         ttf_glyph_flags flag = flags[i];
         bool is_short = is_x ? flag.x_short_vector : flag.y_short_vector;
@@ -153,17 +172,18 @@ void ttf_glyph_read_coord(bool is_x, point_graph graph, u16 num_points, ttf_glyp
         }
 
         point_entry *entry = &graph.graph[i];
-        if (is_x)
-            entry->pos.x = (float)(coord-min)/max;
-        else  
-            entry->pos.y = 1.f-((float)(coord-min)/max);
+        if (is_x){
+            entry->pos.x = ((float)(coord)/(font->advanceWidthMax));
+        } else  
+            entry->pos.y = ((float)(coord-font->ascent)/(font->descent-font->ascent))*font->height_ratio;
     }
 }
 
-point_graph ttf_simple_glyph(binary_scanner *scanner, ttf_glyph_desc *desc){
-    point_graph graph = {
+point_graph ttf_simple_glyph(binary_scanner *scanner, ttf_font *font, u16 index, ttf_glyph_desc *desc){
+    point_graph glyph = {
         .num_slices = desc->numberOfCountours,
         .slices = zalloc(desc->numberOfCountours * sizeof(point_graph_slice)),
+        .size = {ttf_get_glyph_advance(font,index), font->height_ratio}
     };
 
     u16 num_points = 0;
@@ -174,17 +194,17 @@ point_graph ttf_simple_glyph(binary_scanner *scanner, ttf_glyph_desc *desc){
         ttfbounds(bin_scan_u16(scanner, &new_countour));
         new_countour++;
         num_points = max(new_countour,num_points);
-        graph.slices[i].start = last_countour;
-        graph.slices[i].end = new_countour;
-        graph.slices[i].close = true;
-        graph.slices[i].curve_type = point_graph_curve_quad_only;
-        graph.slices[i].max_curve_points = 32;
+        glyph.slices[i].start = last_countour;
+        glyph.slices[i].end = new_countour;
+        glyph.slices[i].close = true;
+        glyph.slices[i].curve_type = point_graph_curve_quad_only;
+        glyph.slices[i].max_curve_points = 32;
         // print("countour %i: %i - %i",i,graph.slices[i].start,graph.slices[i].end);
         last_countour = new_countour;
     }
 
-    graph.num_points = num_points;
-    graph.graph = zalloc(num_points * sizeof(point_entry));
+    glyph.num_points = num_points;
+    glyph.graph = zalloc(num_points * sizeof(point_entry));
 
     u16 instrLength = 0;
     ttfbounds(bin_scan_u16(scanner, &instrLength));
@@ -198,7 +218,7 @@ point_graph ttf_simple_glyph(binary_scanner *scanner, ttf_glyph_desc *desc){
         ttf_glyph_flags *current = &flags[i];
         bin_scan_u8(scanner, &current->flags);
 
-        graph.graph[i].on_curve = current->on_curve;
+        glyph.graph[i].on_curve = current->on_curve;
 
         if (current->repeat){
             u8 amount = 0;
@@ -207,26 +227,26 @@ point_graph ttf_simple_glyph(binary_scanner *scanner, ttf_glyph_desc *desc){
             for (int j = 0; j < amount; j++){
                 
                 i++;
-                graph.graph[i].on_curve = current->on_curve;
+                glyph.graph[i].on_curve = current->on_curve;
                 flags[i] = *current;
             }
         }
     }
 
-    ttf_glyph_read_coord(true, graph, num_points, flags, desc, scanner);
-    ttf_glyph_read_coord(false, graph, num_points, flags, desc, scanner);
+    ttf_glyph_read_coord(true, font, glyph, num_points, flags, index, desc, scanner);
+    ttf_glyph_read_coord(false, font, glyph, num_points, flags, index, desc, scanner);
 
     // for (int i = 0; i < num_points; i++){
     //     point_entry entry = graph.graph[i];
     //     print("%i - %f,%f",entry.on_curve,entry.pos.x,entry.pos.y);
     // }
 
-    return graph;
+    return glyph;
 }
 
-point_graph ttf_compound_glyph(ttf_font *font, binary_scanner *scanner, ttf_glyph_desc *desc){
+point_graph ttf_compound_glyph(ttf_font *font, binary_scanner *scanner, u16 index, ttf_glyph_desc *desc){
     bool repeat = false;
-    point_graph graph = {};
+    point_graph glyph = {};
     do {
         ttf_compound_flags flags = {};
         ttfbounds(bin_scan_u16(scanner, &flags.flags));
@@ -234,8 +254,8 @@ point_graph ttf_compound_glyph(ttf_font *font, binary_scanner *scanner, ttf_glyp
         print("%llx flags %x",scanner->data+scanner->cursor-font->font,flags.flags);
         ttfbounds(bin_scan_u16(scanner, &glyphIndex));
         print("Glyph index %i",glyphIndex);
-        ttf_glyph glyph = {};
-        ttf_find_glyph(font, &glyph, glyphIndex);
+        ttf_glyph_loc glyphL = {};
+        ttf_find_glyph(font, &glyphL, glyphIndex);
         i16 off_x = 0;
         i16 off_y = 0;
 
@@ -294,14 +314,14 @@ point_graph ttf_compound_glyph(ttf_font *font, binary_scanner *scanner, ttf_glyp
             ttfbounds(bin_scan_i16(scanner, &scale_y));
         }
         repeat = flags.more_components;
-        graph = ttf_read_glyph(font, &glyph);
-        return graph;
+        glyph = ttf_read_glyph(font, glyphIndex, &glyphL);
+        return glyph;
     } while (repeat);
 
-    return graph;
+    return glyph;
 }
 
-point_graph ttf_read_glyph(ttf_font *font, ttf_glyph *glyph){
+point_graph ttf_read_glyph(ttf_font *font, u16 index, ttf_glyph_loc *glyph){
     if (!font || !glyph || !font->glyphs) return (point_graph){};//Return hardcoded or retrieved unknown char
 
     print("Glyph at %llx",(uptr)glyph->offset+(uptr)font->glyphs-(uptr)font->font);
@@ -315,40 +335,40 @@ point_graph ttf_read_glyph(ttf_font *font, ttf_glyph *glyph){
 
     if (desc->numberOfCountours < 0){
         // return (point_graph){};
-        return ttf_compound_glyph(font, &scanner, desc);
+        return ttf_compound_glyph(font, &scanner, index, desc);
     }
 
-    if (!desc->numberOfCountours) return (point_graph){.num_points = 0,.num_slices = 0};
+    if (!desc->numberOfCountours) return (point_graph){.size = {.width = ttf_get_glyph_advance(font, index), .height = font->height_ratio}};
 
     print("Number of contours %i. Bounds %i,%i - %i,%i",desc->numberOfCountours,desc->xMin,desc->yMin,desc->xMax,desc->yMax);
 
-    return ttf_simple_glyph(&scanner, desc);
+    return ttf_simple_glyph(&scanner, font, index, desc);
 }
 
 typedef struct {
     bool active;
-    point_graph graph;
-} cached_point_graph;
+    point_graph glyph;
+} cached_glyph;
 
-void ttf_cache_graph_index(ttf_font *font, u16 index, point_graph graph){
-    if (!font->index_cache) font->index_cache = chunk_array_create(sizeof(cached_point_graph), font->num_glyphs);
-    cached_point_graph *cached = CHUNK_ARRAY_ITEM(font->index_cache, index);
-    cached->graph = graph;
+void ttf_cache_graph_index(ttf_font *font, u16 index, point_graph glyph){
+    if (!font->index_cache) font->index_cache = chunk_array_create(sizeof(cached_glyph), font->num_glyphs);
+    cached_glyph *cached = CHUNK_ARRAY_ITEM(font->index_cache, index);
+    cached->glyph = glyph;
     cached->active = true;
     if (font->index_cache->count < index+1) font->index_cache->count = index+1;
 }
 
 point_graph ttf_get_index(ttf_font *font, u16 index){
-    cached_point_graph *cached = chunk_array_get(font->index_cache, index);
+    cached_glyph *cached = chunk_array_get(font->index_cache, index);
     if (!cached || !cached->active){
-        ttf_glyph glyph = {};
+        ttf_glyph_loc glyph = {};
         ttf_find_glyph(font, &glyph, index);
         
-        point_graph graph = ttf_read_glyph(font, &glyph);
+        point_graph graph = ttf_read_glyph(font, index, &glyph);
         ttf_cache_graph_index(font, index, graph);
         return graph;
     }
-    return cached->graph;
+    return cached->glyph;
 }
 
 void ttf_cache_graph_char(ttf_font *font, u16 character, u16 index){
@@ -362,12 +382,12 @@ point_graph ttf_get_character(ttf_font *font, u16 character){
         if ((val >> 16))
             return ttf_get_index(font, (u16)(val & 0xFFFF));
     }
-    ttf_glyph glyph = {};
+    ttf_glyph_loc glyph = {};
     u16 index = 0;
     if (!ttf_lookup_glyph(font, &glyph, &index, character))
         return ttf_get_index(font, 0);
     ttf_cache_graph_char(font, character, index);
-    point_graph graph = ttf_read_glyph(font, &glyph);
+    point_graph graph = ttf_read_glyph(font, index, &glyph);
     ttf_cache_graph_index(font, index, graph);
     return graph;
 }
@@ -375,10 +395,10 @@ point_graph ttf_get_character(ttf_font *font, u16 character){
 void ttf_font_destroy(ttf_font *font){
     size_t count = chunk_array_count(font->index_cache);
     for (u64 i = 0; i < count; i++){
-        cached_point_graph *graph = CHUNK_ARRAY_ITEM(font->index_cache, i);
+        cached_glyph *graph = CHUNK_ARRAY_ITEM(font->index_cache, i);
         if (!graph->active) continue;
-        release(graph->graph.graph);
-        release(graph->graph.slices);
+        release(graph->glyph.graph);
+        release(graph->glyph.slices);
     }
     hash_map_destroy(font->graph_cache);
     chunk_array_destroy(font->index_cache);

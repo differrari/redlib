@@ -2,6 +2,7 @@
 
 #include "types.h"
 #include "math/vector_types.h"
+#include "graphic_types.h"
 
 typedef struct {
     vec2 pos;
@@ -24,4 +25,5 @@ typedef struct {
     point_entry *graph;
     int num_slices;
     point_graph_slice *slices;
+    gpu_size size;
 } point_graph;

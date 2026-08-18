@@ -134,6 +134,28 @@ typedef struct {
     u16	numOfLongHorMetrics;// 	number of advance widths in metrics table
 } ttf_hhea;
 
+static inline void ttf_hhea_swap(ttf_hhea *hhea){
+    hhea->version_maj = bswap16(hhea->version_maj);
+    hhea->version_min = bswap16(hhea->version_min);
+    hhea->ascent = bswap16(hhea->ascent);
+    hhea->descent = bswap16(hhea->descent);
+    hhea->lineGap = bswap16(hhea->lineGap);
+    hhea->advanceWidthMax = bswap16(hhea->advanceWidthMax);
+    hhea->minLeftSideBearing = bswap16(hhea->minLeftSideBearing);
+    hhea->minRightSideBearing = bswap16(hhea->minRightSideBearing);
+    hhea->xMaxExtent = bswap16(hhea->xMaxExtent);
+    hhea->caretSlopeRise = bswap16(hhea->caretSlopeRise);
+    hhea->caretSlopeRun = bswap16(hhea->caretSlopeRun);
+    hhea->caretOffset = bswap16(hhea->caretOffset);
+    hhea->metricDataFormat = bswap16(hhea->metricDataFormat);
+    hhea->numOfLongHorMetrics = bswap16(hhea->numOfLongHorMetrics);
+}
+
+typedef struct {
+    u16 advanceWidth;
+    i16 leftSideBearing;
+} ttf_hmetric;
+
 typedef struct {
     u16 platform_id;
     u16 platform_specific_id;

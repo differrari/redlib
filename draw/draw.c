@@ -486,7 +486,6 @@ void fb_draw_path(draw_ctx *ctx, gpu_point point, u32 scale, point_graph graph){
                 num_controls = 0;
                 loc = nloc;
             } else {
-                fb_fill_rect(ctx, nloc.x, nloc.y, 2, 2, 0xFFb4dd13);
                 if (num_controls >= max_points){
                     return;
                 }
@@ -494,4 +493,78 @@ void fb_draw_path(draw_ctx *ctx, gpu_point point, u32 scale, point_graph graph){
             }
         }
     }
+}
+
+#include "syscalls/syscalls.h"
+
+#define line_int_check(a,b,c) line_bezier_coverage(vector2_sub(a,start),vector2_sub(b,start),vector2_sub(c,start))
+
+void fb_fill_path(draw_ctx *ctx, gpu_point point, u32 scale, point_graph graph){
+    gpu_size size = {(scale*CHAR_SIZE*graph.size.width), (scale*CHAR_SIZE*graph.size.height)};
+    fb_fill_rect(ctx, point.x, point.y, size.width, size.height, 0xFF663300);
+    for (u32 y = 0; y < size.height; y++){
+        for (u32 x = 0; x < size.width; x++){
+            vec2 start = {point.x + x,point.y + y };
+            // fb_draw_line(ctx, start.x, start.y, end.x, end.y, 0xFFFF0000);
+            float alpha = 0;
+            for (int s = 0; s < graph.num_slices; s++){
+                size_t count = min(graph.num_points,graph.slices[s].end); 
+                vec2 loc = {};
+                i8 max_points = graph.slices[s].max_curve_points;
+                point_graph_curve_type curve = graph.slices[s].curve_type;
+                if (graph.slices[s].close){
+                    point_entry entry = graph.graph[count-1];
+                    loc = (vec2){point.x+(entry.pos.x*scale*CHAR_SIZE),point.y+(entry.pos.y*scale*CHAR_SIZE)};
+                } else {
+                    point_entry entry = graph.graph[graph.slices[s].start];
+                    loc = (vec2){point.x+(entry.pos.x*scale*CHAR_SIZE),point.y+(entry.pos.y*scale*CHAR_SIZE)};
+                }
+                vec2 controls[max_points] = {};
+                int num_controls = 0;
+                for (size_t i = max(0,graph.slices[s].start) + !graph.slices[s].close; i < count; i++){
+                    point_entry entry = graph.graph[i];
+                    vec2 nloc = {point.x+(entry.pos.x*scale*CHAR_SIZE),point.y+(entry.pos.y*scale*CHAR_SIZE)};
+                    // print("%i,%i -> %i,%i",loc.x,loc.y,nloc.x,nloc.y);
+                    if (nloc.x < 0 || nloc.y < 0) continue;
+                    if (entry.on_curve || curve == point_graph_curve_none || i == count-1){
+
+                        if (curve == point_graph_curve_none || num_controls == 0 || num_controls > max_points){
+                            vec2 c = (vec2){(loc.x+nloc.x)/2.f, (loc.y+nloc.y)/2.f};
+                            alpha += line_int_check(loc,c,nloc);
+                            // fb_draw_line(ctx, 0, loc.y, 0, nloc.y, 0xFFb4dd13);
+                        } else if (num_controls == 2 && curve == point_graph_curve_quad_cube){
+                            // print("[DRAW error] fill path does not support cubic beziers");
+                            return;
+                        } else {
+                            if (num_controls > 1){
+                                vec2 last = loc;
+                                for (int j = 1; j < num_controls; j++){
+                                    vec2 l2 = (vec2){(controls[j-1].x+controls[j].x)/2.f, (controls[j-1].y+controls[j].y)/2.f};
+                                    alpha += line_int_check(last,controls[j-1],l2);
+                                    last = l2;
+                                }
+                                alpha += line_int_check(last,controls[num_controls-1],nloc);
+                            } else {
+                                alpha += line_int_check(loc,controls[0],nloc);
+                            }
+                        }
+
+                        num_controls = 0;
+                        loc = nloc;
+                    } else {
+                        if (num_controls >= max_points){
+                            return;
+                        }
+                        controls[num_controls++] = nloc;
+                    }
+                }
+            }
+            if (alpha){
+                alpha = saturate(absf(alpha));
+                u8 al = alpha * 255;
+                fb_draw_pixel(ctx, start.x, start.y, (al << 24) | 0x121212);
+            }
+        }
+    }
+    // fb_draw_path(ctx, point, scale, graph);
 }

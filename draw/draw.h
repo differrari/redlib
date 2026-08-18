@@ -40,6 +40,7 @@ gpu_size fb_draw_slice(draw_ctx *ctx, string_slice slice, uint32_t x0, uint32_t 
 gpu_size fb_draw_string(draw_ctx *ctx, const char* s, uint32_t x, uint32_t y, uint32_t scale, uint32_t color);
 uint32_t fb_get_char_size(uint32_t scale);
 void fb_draw_cursor(draw_ctx *ctx, uint32_t color);
+void fb_fill_path(draw_ctx *ctx, gpu_point point, u32 scale, point_graph graph);
 void fb_draw_path(draw_ctx *ctx, gpu_point point, u32 scale, point_graph graph);
 
 #ifdef __cplusplus
