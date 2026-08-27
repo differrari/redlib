@@ -44,11 +44,14 @@ $(BUILD_DIR)/%.o: %.cpp
 	@mkdir -p $(dir $@)
 	$(VCXX) $(CXXFLAGS) $(SH_FLAGS) -c -MMD -MP $< -o $@
 	
-cross: 
+cross:
 	$(MAKE) ARCH= SH_FLAGS=-DCROSS BUILD_DIR=./.cbuild ADDFLAGS=-std=c99 TARGET=clibshared.a
 	echo "# list of c files to compile" > simplemake
 	for f in $(ALL_SRC); do echo "$$f" >> simplemake; done
-	
+
+win:
+	$(MAKE) ARCH=x86_64-w64-mingw32ucrt- SH_FLAGS=-DCROSS BUILD_DIR=./.cbuild ADDFLAGS=-std=c99\ -I../raylib/src TARGET=clibshared.a
+
 kern:
 	$(MAKE) SH_FLAGS=-DKERNEL BUILD_DIR=./.kbuild TARGET=klibshared.a
 
