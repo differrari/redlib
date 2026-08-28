@@ -53,6 +53,8 @@ void fb_continuous_draw_text(draw_ctx *ctx, draw_text_op operation, gpu_point *c
     bool can_indent = true;
     u32 char_width = 0, line_height = 0;
     size_t current_lookahead = 0;
+    bounds.point.x += scroll.x;
+    bounds.point.y += scroll.y;
     if (operation != draw_text_delete){
         if (render_range->start > slice.length-1|| render_range->size > slice.length-render_range->start) return;
     }

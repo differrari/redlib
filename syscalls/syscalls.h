@@ -30,9 +30,6 @@ void put(const char *fmt, ...);
 
 extern void serial_transmit(u8);
 
-void* malloc(size_t size);//NOTE: malloc can return a faulty address for allocations smaller than 0x1000. Use zalloc/allocate until this is fixed, or allocate full pages (0x1000) if you wish to manage memory manually
-void free_sized(void *ptr, size_t size);//NOTE: this function should be used in conjunction with malloc. For zalloc, use release(void*) instead
-
 extern void* page_alloc(size_t size);
 extern void page_free(void* ptr);
 
@@ -48,7 +45,6 @@ extern int32_t kill_process(uint16_t pid);
 
 extern void request_draw_ctx(draw_ctx*);
 static inline void request_app_ctx(draw_ctx* ctx){ request_draw_ctx(ctx); }
-extern void begin_drawing(draw_ctx *);
 extern void commit_draw_ctx(draw_ctx*);
 extern void resize_draw_ctx(draw_ctx*, u32 width, u32 height);
 extern void destroy_draw_ctx(draw_ctx *ctx);
@@ -100,6 +96,16 @@ void register_behavior();
 static inline void yield(){
     msleep(0);
 }
+
+#ifndef CROSS
+static inline void* malloc(size_t size){
+    return zalloc(size);
+}
+
+static inline void free_sized(void* ptr, size_t size){
+    release(ptr);
+}
+#endif
 
 #ifdef __cplusplus
 }

@@ -10,7 +10,7 @@ bool bin_ser_define_structure(binary_serializer *serializer, char *structure, si
     }
     arr_stack_t *stack = stack_create(sizeof(structdef), 3);
 
-    binary_scanner scanner = bin_scan_create((u8*)structure, length);
+    binary_scanner scanner = bin_scan_create((u8*)structure, length, false);
 
     bool success = true;
     while (true){
@@ -110,7 +110,7 @@ buffer bin_ser_serialize(binary_serializer *serializer, void* data, size_t lengt
 bool bin_ser_deserialize(binary_serializer *serializer, sizedptr data, void (*on_read)(structdef field, sizedptr data, bool is_allocated)){
     if (!serializer || !serializer->field_count) return 0;
 
-    binary_scanner scanner = bin_scan_create((u8*)data.ptr, data.size);
+    binary_scanner scanner = bin_scan_create((u8*)data.ptr, data.size, false);
     // hash_map_t *data = hash_map_create(uint64_t initial_capacity)
     while (true){
         for (size_t i = 0; i < serializer->field_count; i++){

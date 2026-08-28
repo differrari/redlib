@@ -11,6 +11,8 @@ typedef struct chunk_array_t {
     void (*free)(void*);
 } chunk_array_t;
 
+#define CHUNK_ARRAY_ITEM(array, index) (void*)((uptr)array + sizeof(chunk_array_t) + ((index) * array->item_size))
+
 chunk_array_t* chunk_array_create_alloc(size_t item_size, size_t chunk_capacity, void* (*allocator)(size_t size), void (*free)(void*));
 chunk_array_t* chunk_array_create(size_t item_size, size_t chunk_capacity);
 size_t chunk_array_push(chunk_array_t* array, void *data);

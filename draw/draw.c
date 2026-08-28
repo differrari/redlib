@@ -1,7 +1,9 @@
 #include "draw.h"
 #include "ui/font8x8_bridge.h"
 #include "std/memory.h"
+#include "math/math.h"
 #include "string/slice.h"
+#include "math/bezier.h"
 
 int try_merge(gpu_rect* a, gpu_rect* b) {
     uint32_t ax1 = a->point.x;
@@ -241,15 +243,24 @@ void fb_draw_partial_img(draw_ctx *ctx, uint32_t *img, uint32_t x, uint32_t y, u
     mark_dirty(ctx, x,y,w, h);
 }
 
-gpu_rect fb_draw_line(draw_ctx *ctx, uint32_t x0, uint32_t y0, uint32_t x1, uint32_t y1, color color){
+gpu_rect fb_draw_line(draw_ctx *ctx, i32 x0, i32 y0, i32 x1, i32 y1, color color){
     const uint32_t ox0 = x0, oy0 = y0, ox1 = x1, oy1 = y1;
 
-    int dx = (x1 > x0) ? (x1 - x0) : (x0 - x1);
+    if (x0 < 0) x0 = 0;
+    if (x0 >= (i32)ctx->width) x0 = ctx->width-1;
+    if (x1 < 0) x1 = 0;
+    if (x1 >= (i32)ctx->width) x1 = ctx->width-1;
+    if (y0 < 0) y0 = 0;
+    if (y0 >= (i32)ctx->height) y0 = ctx->height-1;
+    if (y1 < 0) y1 = 0;
+    if (y1 >= (i32)ctx->height) y1 = ctx->height-1;
+
+    int dx = abs(x0 - x1);
     int sx = (x0 < x1) ? 1 : -1;
-    int dy = (y1 > y0) ? (y0 - y1) : (y1 - y0);
+    int dy = abs(y1 - y0);
     dy = dy < 0 ? -dy : dy;
     int sy = (y0 < y1) ? 1 : -1;
-    int err = (dx > dy ? dx : -dy) / 2, e2;
+    int err = (dx > dy ? dx : -dy) / 2, e2 = 0;
 
     for (;;) {
         fb_draw_raw_pixel(ctx, x0, y0, color);
@@ -406,6 +417,80 @@ void fb_draw_cursor(draw_ctx *ctx, uint32_t color) {
             if (cursor_bitmap[y][x])
             {
                 dst[x] = color;
+            }
+        }
+    }
+}
+
+void fb_draw_bezier_quadratic(draw_ctx *ctx, vec2 p1, vec2 c1, vec2 p2){
+    vec2 last = {};
+    for (int i = 0; i <= 10; i++){
+        vec2 v = vec2_quad_bezier(p1,c1,p2,i/10.f);
+        if (i > 0)
+            fb_draw_line(ctx, last.x, last.y, v.x, v.y, 0xFF13b4dd);
+        last = v;
+    }
+}
+
+void fb_draw_bezier_cubic(draw_ctx *ctx, vec2 p1, vec2 c1, vec2 c2, vec2 p2){
+    vec2 last = {}; 
+    for (int i = 0; i <= 10; i++){
+        vec2 v = vec2_cube_bezier(p1,c1,c2,p2,i/10.f);
+        if (i > 0)
+            fb_draw_line(ctx, last.x, last.y, v.x, v.y, 0xFF13b4dd);
+        last = v;
+    }
+}
+
+void fb_draw_path(draw_ctx *ctx, gpu_point point, u32 scale, point_graph graph){
+    for (int s = 0; s < graph.num_slices; s++){
+        size_t count = min(graph.num_points,graph.slices[s].end); 
+        vec2 loc = {};
+        i8 max_points = graph.slices[s].max_curve_points;
+        point_graph_curve_type curve = graph.slices[s].curve_type;
+        if (graph.slices[s].close){
+            point_entry entry = graph.graph[count-1];
+            loc = (vec2){point.x+(entry.pos.x*scale*CHAR_SIZE),point.y+(entry.pos.y*scale*CHAR_SIZE)};
+        } else {
+            point_entry entry = graph.graph[graph.slices[s].start];
+            loc = (vec2){point.x+(entry.pos.x*scale*CHAR_SIZE),point.y+(entry.pos.y*scale*CHAR_SIZE)};
+        }
+        vec2 controls[max_points] = {};
+        int num_controls = 0;
+        // print("Slice %i - %i to %i",s, graph.slices[s].start,count);
+        for (size_t i = max(0,graph.slices[s].start) + !graph.slices[s].close; i < count; i++){
+            point_entry entry = graph.graph[i];
+            vec2 nloc = {point.x+(entry.pos.x*scale*CHAR_SIZE),point.y+(entry.pos.y*scale*CHAR_SIZE)};
+            // print("%i,%i -> %i,%i",loc.x,loc.y,nloc.x,nloc.y);
+            if (nloc.x < 0 || nloc.y < 0) continue;
+            if (entry.on_curve || curve == point_graph_curve_none || i == count-1){
+
+                if (curve == point_graph_curve_none || num_controls == 0 || num_controls > max_points){
+                    fb_draw_line(ctx, loc.x, loc.y, nloc.x, nloc.y, 0xFFb4dd13);
+                } else if (num_controls == 2 && curve == point_graph_curve_quad_cube){
+                    fb_draw_bezier_cubic(ctx, loc, controls[0], controls[1], nloc);
+                } else {
+                    if (num_controls > 1){
+                        vec2 last = loc;
+                        for (int j = 1; j < num_controls; j++){
+                            vec2 l2 = (vec2){(controls[j-1].x+controls[j].x)/2.f, (controls[j-1].y+controls[j].y)/2.f};
+                            fb_draw_bezier_quadratic(ctx, last, controls[j-1], l2);
+                            last = l2;
+                        }
+                        fb_draw_bezier_quadratic(ctx, last, controls[num_controls-1], nloc);
+                    } else {
+                        fb_draw_bezier_quadratic(ctx, loc, controls[0], nloc);
+                    }
+                }
+
+                num_controls = 0;
+                loc = nloc;
+            } else {
+                fb_fill_rect(ctx, nloc.x, nloc.y, 2, 2, 0xFFb4dd13);
+                if (num_controls >= max_points){
+                    return;
+                }
+                controls[num_controls++] = nloc;
             }
         }
     }

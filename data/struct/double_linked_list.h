@@ -18,9 +18,6 @@ typedef struct cdouble_linked_list {
     uint64_t length;
 } cdouble_linked_list_t;
 
-extern void* malloc(size_t size);
-extern void free_sized(void* ptr, size_t size);
-
 cdouble_linked_list_t* cdouble_linked_list_create();
 void cdouble_linked_list_destroy(cdouble_linked_list_t* list);
 cdouble_linked_list_t* cdouble_linked_list_clone(const cdouble_linked_list_t* list);

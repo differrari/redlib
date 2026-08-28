@@ -1,6 +1,6 @@
 #pragma once
-#include "types.h"
 #include "math.h"
+#include "vector_types.h"
 #if defined(__x86_64__)
 #include "ammintrin.h"
 #endif
@@ -157,10 +157,6 @@ static __inline__ __attribute__((always_inline)) float32x2_t vrsqrte_f32_b(float
 # error "no vrsqrte_f32_b builtin"
 #endif
 }
-
-typedef struct vector2 {
-    float x,y;
-} vector2;
 
 static __inline__ __attribute__((always_inline)) float vmagnitude_vector2(float32x2_t v)
 {

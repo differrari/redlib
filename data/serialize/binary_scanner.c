@@ -22,16 +22,23 @@ bool bin_scan_size_buf(binary_scanner *scanner, size_t size, buffer *buf){
     return true;
 }
 
-#define bin_scan_type(_type) bool bin_scan_##_type(binary_scanner *scanner, _type *out_val){\
-    return bin_scan_size(scanner, sizeof(_type), out_val);\
+static inline i8 bswap8(i8 v){
+    return v;
 }
 
-bin_scan_type(i8)
-bin_scan_type(i16)
-bin_scan_type(i32)
-bin_scan_type(i64)
-bin_scan_type(float)
-bin_scan_type(double)
+#define bin_scan_type(_type,_bits) bool bin_scan_##_type(binary_scanner *scanner, _type *out_val){\
+    bool res = bin_scan_size(scanner, sizeof(_type), out_val);\
+    if (!res) return res;\
+    if (scanner->swap_endian) *out_val = bswap##_bits(*out_val);\
+    return true;\
+}
+
+bin_scan_type(i8,8)
+bin_scan_type(i16,16)
+bin_scan_type(i32,16)
+bin_scan_type(i64,64)
+bin_scan_type(float,32)
+bin_scan_type(double,64)
 
 bool bin_scan_string(binary_scanner *scanner, string *out_val){
     if (!out_val) return false;
@@ -46,5 +53,12 @@ bool bin_scan_string(binary_scanner *scanner, string *out_val){
     char *string_start = (char*)(scanner->data + scanner->cursor);
     scanner->cursor += size;
     *out_val = string_from_literal_length(string_start, size);
+    return true;
+}
+
+bool bin_scan_skip(binary_scanner *scanner, size_t amount){
+    if (!amount) return true;
+    if (scanner->cursor + amount >= scanner->size) return false;
+    scanner->cursor += amount;
     return true;
 }

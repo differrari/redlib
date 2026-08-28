@@ -19,6 +19,14 @@ static inline i64 powi(i64 n, i64 e){
     return acc;
 }
 
+static inline double pow2(double v){
+    return v*v;
+}
+
+static inline double pow3(double v){
+    return v*v*v;
+}
+
 static inline int min(int a, int b){
     return a < b ? a : b;
 }
@@ -75,14 +83,12 @@ static inline bool float_zero(float a){
 }
 
 static inline float lerpf(float a, float b, float t) {
-  // Exact, monotonic, bounded, determinate, and (for a=b=0) consistent:
   if((a<=0 && b>=0) || (a>=0 && b<=0)) return t*b + (1-t)*a;
 
-  if(t==1) return b;                        // exact
-  // Exact at t=0, monotonic except near t=1,
-  // bounded, determinate, and consistent:
+  if(t==1) return b;
+  
   const float x = a + t*(b-a);
-  return (t>1) == (b>a) ? maxf(b,x) : minf(b,x);  // monotonic near t=1
+  return (t>1) == (b>a) ? maxf(b,x) : minf(b,x);
 }
 
 static inline i64 ceil_to_int(double val){

@@ -57,18 +57,6 @@ void* realloc_sized(void* old_ptr, size_t old_size, size_t new_size){
 
 #ifndef CROSS
 
-void* malloc(size_t size){
-    return zalloc(size);
-}
-
-extern void free_sized(void *ptr, size_t size){
-    return release(ptr);
-}
-
-void begin_drawing(draw_ctx *ctx){
-
-}
-
 void destroy_draw_ctx(draw_ctx *ctx){
 
 }

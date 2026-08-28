@@ -47,22 +47,42 @@ typedef struct {
     u8 *data;
     size_t size;
     uptr cursor;
+    bool swap_endian;
 } binary_scanner;
 
-static inline binary_scanner bin_scan_create(u8* data, size_t size){
+static inline binary_scanner bin_scan_create(u8* data, size_t size, bool swap){
     return (binary_scanner){
         .data = data,
         .size = size,
-        .cursor = 0
+        .cursor = 0,
+        .swap_endian = swap
     };
 }
 
 bool bin_scan_size(binary_scanner *scanner, size_t size, void *out_val);
 bool bin_scan_size_buf(binary_scanner *scanner, size_t size, buffer *buf);
+
 bool bin_scan_i8(binary_scanner *scanner, i8 *out_val);
+static inline bool bin_scan_u8(binary_scanner *scanner, u8 *out_val){
+    return bin_scan_i8(scanner, (i8*)out_val);
+}
+
 bool bin_scan_i16(binary_scanner *scanner, i16 *out_val);
+static inline bool bin_scan_u16(binary_scanner *scanner, u16 *out_val){
+    return bin_scan_i16(scanner, (i16*)out_val);
+}
+
 bool bin_scan_i32(binary_scanner *scanner, i32 *out_val);
+static inline bool bin_scan_u32(binary_scanner *scanner, u32 *out_val){
+    return bin_scan_i32(scanner, (i32*)out_val);
+}
+
 bool bin_scan_i64(binary_scanner *scanner, i64 *out_val);
+static inline bool bin_scan_u64(binary_scanner *scanner, u64 *out_val){
+    return bin_scan_i64(scanner, (i64*)out_val);
+}
+
 bool bin_scan_float(binary_scanner *scanner, float *out_val);
 bool bin_scan_double(binary_scanner *scanner, double *out_val);
 bool bin_scan_string(binary_scanner *scanner, string *out_val);
+bool bin_scan_skip(binary_scanner *scanner, size_t amount);
