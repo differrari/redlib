@@ -6,7 +6,6 @@ string/string.c
 string/slice.c
 ui/uno/uno.c
 ui/color/color.c
-ui/font8x8_bridge.c
 shell/shell.c
 shell/sheldon/sheldon.c
 shell/sheldon/builtin_handler.c
@@ -50,6 +49,7 @@ utils/embedded_fmt/tcf.c
 draw/draw.c
 draw/textdraw.c
 draw/pathdraw.c
+draw/rects.c
 syscalls/syscalls.c
 net/checksums.c
 compression/huffman.c

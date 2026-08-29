@@ -12,14 +12,6 @@ typedef struct {
     int num_glyphs;
 } font_hdr;
 
-typedef struct {
-    path_render_options glyph;
-    font_hdr *font;
-    bool crop;
-    float line_spacing;
-    float character_spacing;
-} simple_text_render_options;
-
 font_hdr* font_load(const char *location, font_type type);
 
 void font_destroy(font_hdr *hdr);

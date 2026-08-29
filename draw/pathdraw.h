@@ -2,7 +2,7 @@
 
 #include "graphic_types.h"
 #include "point_graph.h"
-#include "draw.h"
+#include "draw/draw.h"
 
 #define PATH_SIZE {(options.scale*CHAR_SIZE*graph.size.x), (options.scale*CHAR_SIZE*graph.size.y)}
 

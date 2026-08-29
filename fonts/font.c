@@ -32,7 +32,7 @@ gpu_size font_render_glyph_index(font_hdr *hdr, path_render_options options, dra
     if (!options.type) options.type = path_render_fill;
     if (!options.scale) options.scale = 1;
     if (!hdr || hdr->type == font_type_embedded){
-        fb_draw_char(ctx, location.x, location.y, index, options.scale, options.color);
+        fb_draw_raw_char(ctx, location.x, location.y, index, options.scale, options.color);
         return (gpu_size){CHAR_SIZE * options.scale, CHAR_SIZE * options.scale};
     }
     if (hdr->type == font_type_ttf){
@@ -46,7 +46,7 @@ gpu_size font_render_glyph_character(font_hdr *hdr, path_render_options options,
     if (!options.type) options.type = path_render_fill;
     if (!options.scale) options.scale = 1;
     if (!hdr || hdr->type == font_type_embedded){
-        fb_draw_char(ctx, location.x, location.y, character, options.scale, options.color);
+        fb_draw_raw_char(ctx, location.x, location.y, character, options.scale, options.color);
         return (gpu_size){CHAR_SIZE * options.scale, CHAR_SIZE * options.scale};
     }
     if (hdr->type == font_type_ttf){

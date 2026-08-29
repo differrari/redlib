@@ -8,10 +8,8 @@ extern "C" {
 #include "graphic_types.h"
 #include "string/slice.h"
 #include "point_graph.h"
-
-#define CHAR_SIZE 8
-
-#define FULL_REDRAW_THRESHOLD_PCT 35u
+#include "textdraw.h"
+#include "rects.h"
 
 typedef struct {
     uint32_t img_width;
@@ -22,10 +20,8 @@ typedef struct {
     bool flip_y;
 } image_transform;
 
-void mark_dirty(draw_ctx *ctx, uint32_t x, uint32_t y, uint32_t w, uint32_t h);
-
 //TODO: just use the types i provide in these functions to make them more readable
-uint32_t pixel_blend(uint32_t p1, uint32_t p2);
+u32 pixel_blend(u32 p1, u32 p2);
 void fb_clear(draw_ctx *ctx, uint32_t color);
 void fb_draw_pixel(draw_ctx *ctx, uint32_t x, uint32_t y, color color);
 void fb_fill_rect(draw_ctx *ctx, int32_t x, int32_t y, uint32_t width, uint32_t height, color color);
@@ -34,11 +30,9 @@ void fb_fill_partial_rect(draw_ctx *ctx, uint32_t x, uint32_t y, uint32_t width,
 void fb_draw_img(draw_ctx *ctx, uint32_t x, uint32_t y, uint32_t *img, uint32_t img_width, uint32_t img_height);
 void fb_draw_partial_img(draw_ctx *ctx, uint32_t *img, uint32_t x, uint32_t y, uint32_t full_width, uint32_t full_height, image_transform transform);
 gpu_rect fb_draw_line(draw_ctx *ctx, i32 x0, i32 y0, i32 x1, i32 y1, color color);
-void fb_draw_raw_char(draw_ctx *ctx, uint32_t x, uint32_t y, char c, uint32_t scale, uint32_t color);
-void fb_draw_char(draw_ctx *ctx, uint32_t x, uint32_t y, char c, uint32_t scale, uint32_t color);
-gpu_size fb_draw_slice(draw_ctx *ctx, string_slice slice, uint32_t x0, uint32_t y0, uint32_t scale, uint32_t color);
-gpu_size fb_draw_string(draw_ctx *ctx, const char* s, uint32_t x, uint32_t y, uint32_t scale, uint32_t color);
-uint32_t fb_get_char_size(uint32_t scale);
+
+uint32_t fb_get_char_size(uint32_t scale);//DEPRECATED
+
 void fb_draw_cursor(draw_ctx *ctx, uint32_t color);
 
 #ifdef __cplusplus

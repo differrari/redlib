@@ -4,8 +4,20 @@
 #include "graphic_types.h"
 #include "string/slice.h"
 #include "data/struct/stack.h"
+#include "fonts/font.h"
+#include "rects.h"
+
+#define CHAR_SIZE 8
 
 typedef enum { wrap_none, wrap_word, wrap_word_preserve_indent } wrap_policy;
+
+typedef struct {
+    path_render_options glyph;
+    font_hdr *font;
+    bool crop;
+    float line_spacing;
+    float character_spacing;
+} simple_text_format;
 
 typedef struct {
     u32 scale;
@@ -48,3 +60,24 @@ text_draw_result fb_draw_text(draw_ctx *ctx, string_slice slice, gpu_rect bounds
 
 u32 lin_col_to_pos(i32 line, i32 col, string_slice content);
 void pos_to_lin_col(u32 pos, string_slice content, i32 *lin, i32 *col);
+
+gpu_size fb_write_slice(draw_ctx *ctx, string_slice slice, gpu_point loc, simple_text_format options);
+
+void fb_draw_raw_char(draw_ctx *ctx, uint32_t x, uint32_t y, char c, uint32_t scale, uint32_t color);
+static inline void fb_draw_char(draw_ctx *ctx, uint32_t x, uint32_t y, char c, uint32_t scale, uint32_t color){
+    fb_draw_raw_char(ctx, x, y, c, scale, color);
+    mark_dirty(ctx, x,y,CHAR_SIZE*scale,CHAR_SIZE*scale);
+}
+
+static inline gpu_size fb_draw_slice(draw_ctx *ctx, string_slice slice, uint32_t x0, uint32_t y0, uint32_t scale, uint32_t color){
+    return fb_write_slice(ctx, slice, (gpu_point){x0, y0}, (simple_text_format){
+        .glyph = {
+            .color = color,
+            .scale = scale
+        }
+    });
+}
+
+static inline gpu_size fb_draw_string(draw_ctx *ctx, const char* s, uint32_t x0, uint32_t y0, uint32_t scale, uint32_t color){
+    return fb_draw_slice(ctx, slice_from_literal(s), x0, y0, scale, color);
+}

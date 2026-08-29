@@ -1,5 +1,4 @@
 #include "uno.h"
-#include "ui/draw/draw.h"
 #include "syscalls/syscalls.h"
 
 gpu_size calculate_label_size(text_ui_config text_config){
