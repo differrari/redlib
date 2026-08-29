@@ -10,6 +10,7 @@
 #include "net/socket_types.h"
 #include "files/system_module.h"
 #include "signals/signal_types.h"
+#include "draw/draw.h"
 
 #ifdef __cplusplus
 extern "C" {

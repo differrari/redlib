@@ -23,6 +23,14 @@ static inline i64 powi(i64 n, i64 e){
     return acc;
 }
 
+static inline float sqrtf(float v){
+#if defined(__aarch64__)
+    return __builtin_aarch64_sqrtdf(v);
+#else 
+    return __builtin_sqrtf(v);
+#endif
+}
+
 static inline double pow2(double v){
     return v*v;
 }

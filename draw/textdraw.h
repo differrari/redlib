@@ -70,11 +70,18 @@ static inline void fb_draw_char(draw_ctx *ctx, uint32_t x, uint32_t y, char c, u
 }
 
 static inline gpu_size fb_draw_slice(draw_ctx *ctx, string_slice slice, uint32_t x0, uint32_t y0, uint32_t scale, uint32_t color){
-    return fb_write_slice(ctx, slice, (gpu_point){x0, y0}, (simple_text_format){
+    return fb_write_slice(ctx, slice, (gpu_point){(i32)x0, (i32)y0}, (simple_text_format){
         .glyph = {
+            .scale = scale,
+            .background_color = 0,
+            .outline_color = 0,
             .color = color,
-            .scale = scale
-        }
+            .type = path_render_fill,
+        },
+        .font = 0,
+        .crop = 0,
+        .line_spacing = 0,
+        .character_spacing = 0
     });
 }
 

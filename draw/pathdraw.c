@@ -85,7 +85,7 @@ static inline vec2 quad_roots(float a, float b, float c){
         float discriminant = pow2(b) - 4*a*c;
 
         if (discriminant > -EPSILON) {
-            float s = __builtin_sqrtf(maxf(0, discriminant));
+            float s = sqrtf(maxf(0, discriminant));
             roots.x = (-b+s)/(2*a);
             roots.y = (-b-s)/(2*a);
         }

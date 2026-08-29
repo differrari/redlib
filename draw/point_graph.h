@@ -35,7 +35,7 @@ typedef enum {
 } path_render_type;
 
 typedef struct {
-    int scale;
+    u32 scale;
     color background_color;
     color outline_color;
     color color;
