@@ -49,8 +49,10 @@ utils/package_info.c
 utils/embedded_fmt/tcf.c
 draw/draw.c
 draw/textdraw.c
+draw/pathdraw.c
 syscalls/syscalls.c
 net/checksums.c
 compression/huffman.c
 compression/deflate.c
 fonts/ttf/ttf.c
+fonts/font.c

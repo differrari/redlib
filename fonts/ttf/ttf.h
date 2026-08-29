@@ -5,8 +5,10 @@
 #include "types.h"
 #include "ttf_types.h"
 #include "draw/point_graph.h"
+#include "fonts/font.h"
 
 typedef struct {
+    font_hdr hdr;
     u8 *font;
     ttf_cmap_table_fmt4 *character_map;
     size_t glyph_size_multiplier;
@@ -17,12 +19,10 @@ typedef struct {
     hash_map_t *graph_cache;
     chunk_array_t *index_cache;
     
-    u16 num_glyphs;
     i16 ascent;
     i16 descent;
 
     u16 advanceWidthMax;
-    i16 minLeftSideBearing;
 
     float height_ratio;
 

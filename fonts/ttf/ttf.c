@@ -38,10 +38,9 @@ void ttf_parse_head(ttf_font *font, ttf_head *head){
 }
 
 void ttf_parse_hhea(ttf_font *font, ttf_hhea *hhea){
-    font->num_glyphs = hhea->numOfLongHorMetrics;
+    font->hdr.num_glyphs = hhea->numOfLongHorMetrics;
     font->ascent = hhea->ascent;
     font->descent = hhea->descent;
-    font->minLeftSideBearing = hhea->minLeftSideBearing;
     font->advanceWidthMax = hhea->advanceWidthMax;
     font->height_ratio = (float)(font->ascent-font->descent)/font->advanceWidthMax;
     ttf_print(">>>> %i-%i/%i = %f",font->ascent,font->descent,font->advanceWidthMax,font->height_ratio);
@@ -104,6 +103,7 @@ bool load_ttf(char *path, ttf_font *out_font){
 
     }
     
+    out_font->hdr.type = font_type_ttf;
     return true;
 }
 
@@ -154,7 +154,7 @@ bool ttf_lookup_glyph(ttf_font *font, ttf_glyph_loc *out_glyph, u16 *out_index, 
 }
 
 float ttf_get_glyph_advance(ttf_font *font, u16 index){
-    return (float)bswap16(font->metrics[index < font->num_glyphs ? index : 0].advanceWidth)/font->advanceWidthMax;
+    return (float)bswap16(font->metrics[index < font->hdr.num_glyphs ? index : 0].advanceWidth)/font->advanceWidthMax;
 }
 
 #define ttfbounds(cond) if (!(cond)){ ttf_print("Out of bounds"); }
@@ -357,7 +357,7 @@ typedef struct {
 } cached_glyph;
 
 void ttf_cache_graph_index(ttf_font *font, u16 index, point_graph glyph){
-    if (!font->index_cache) font->index_cache = chunk_array_create(sizeof(cached_glyph), font->num_glyphs);
+    if (!font->index_cache) font->index_cache = chunk_array_create(sizeof(cached_glyph), font->hdr.num_glyphs);
     cached_glyph *cached = CHUNK_ARRAY_ITEM(font->index_cache, index);
     cached->glyph = glyph;
     cached->active = true;
@@ -378,7 +378,7 @@ point_graph ttf_get_index(ttf_font *font, u16 index){
 }
 
 void ttf_cache_graph_char(ttf_font *font, u16 character, u16 index){
-    if (!font->graph_cache) font->graph_cache = hash_map_create(font->num_glyphs);
+    if (!font->graph_cache) font->graph_cache = hash_map_create(font->hdr.num_glyphs);
     hash_map_put(font->graph_cache, &character, sizeof(u16), (void*)(u64)((1 << 16) | index));
 }
 

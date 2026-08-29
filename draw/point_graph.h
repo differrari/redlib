@@ -27,3 +27,17 @@ typedef struct {
     point_graph_slice *slices;
     vec2 size;
 } point_graph;
+
+typedef enum {
+    path_render_fill = 1 << 0,
+    path_render_outline = 1 << 1,
+    path_render_background = 1 << 2,
+} path_render_type;
+
+typedef struct {
+    int scale;
+    color background_color;
+    color outline_color;
+    color color;
+    path_render_type type;
+} path_render_options;
