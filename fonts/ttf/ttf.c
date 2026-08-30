@@ -18,12 +18,12 @@ bool load_cmap_unicode(ttf_cmap *map, ttf_font *out_font){
     for (int i = 0; i < map->num_subtables; i++){
         ttf_cmap_sub *sub = &map->tables[i];
         ttf_cmap_sub_swap(sub);
-        if (sub->platform_id == 0){
+        if (sub->platform_id == 3 || sub->platform_id == 0){
             ttf_cmap_table_hdr *cmap_hdr = (ttf_cmap_table_hdr*)((uptr)map + sub->offset);
             ttf_cmap_table_hdr_swap(cmap_hdr);
             if (cmap_hdr->format != 4){
                 print("[TTF implementation error] only format 4 is supported %i",cmap_hdr->format);
-                return false;
+                continue;
             }
             out_font->character_map = (ttf_cmap_table_fmt4*)cmap_hdr;
             ttf_cmap_table_fmt4_swap(out_font->character_map);
@@ -38,7 +38,6 @@ void ttf_parse_head(ttf_font *font, ttf_head *head){
 }
 
 void ttf_parse_hhea(ttf_font *font, ttf_hhea *hhea){
-    font->hdr.num_glyphs = hhea->numOfLongHorMetrics;
     font->ascent = hhea->ascent;
     font->descent = hhea->descent;
     font->advanceWidthMax = hhea->advanceWidthMax;
@@ -100,6 +99,10 @@ bool load_ttf(const char *path, ttf_font *out_font){
         if (strncmp(table->NAME, "hmtx", 4) == 0){
             ttf_hmetric *hmtx = (ttf_hmetric*)(data + table->offset);
             out_font->metrics = hmtx;
+        }
+        if (strncmp(table->NAME,"maxp", 4) == 0){
+            ttf_maxp *maxp = (ttf_maxp*)(data + table->offset);
+            out_font->hdr.num_glyphs = maxp->numGlyphs;
         }
 
     }

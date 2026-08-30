@@ -78,7 +78,7 @@ typedef struct {
     u16 revision_maj;
     u16 revision_min;
     u32 checksum;
-    u32 magic;//0x5f0f3cf5
+    u32 magic;//Should always be 0x5f0f3cf5
     ttf_head_flags flags;
     u16 unitsPerEm;
     i64 created;
@@ -92,7 +92,7 @@ typedef struct {
     i16 fontDirection;
     i16 indexToLocFormat;//TODO: what are these?
     i16 glyphDataFormat;//TODO: what are these?
-} ttf_head;
+}__attribute__((packed)) ttf_head;
 
 static inline void ttf_head_swap(ttf_head *head){
     head->version_maj = bswap16(head->version_maj);
@@ -100,7 +100,7 @@ static inline void ttf_head_swap(ttf_head *head){
     head->revision_maj = bswap16(head->revision_maj);
     head->revision_min = bswap16(head->revision_min);
     head->checksum = bswap32(head->checksum);
-    head->magic = bswap16(head->magic);//0x5f0f3cf5
+    head->magic = bswap32(head->magic);//0x5f0f3cf5
     head->flags.flags = bswap16(head->flags.flags);
     head->unitsPerEm = bswap16(head->unitsPerEm);
     head->created = bswap64(head->created);
@@ -260,3 +260,41 @@ typedef union {
     };
     u16 flags;
 } ttf_compound_flags;
+
+typedef struct {
+    u16 version_maj;
+    u16 version_min;
+    u16 numGlyphs;// 	the number of glyphs in the font
+    u16 maxPoints;// 	points in non-compound glyph
+    u16 maxContours;// 	contours in non-compound glyph
+    u16 maxComponentPoints;// 	points in compound glyph
+    u16 maxComponentContours;// 	contours in compound glyph
+    u16 maxZones;// 	set to 2
+    u16 maxTwilightPoints;// 	points used in Twilight Zone (Z0)
+    u16 maxStorage;// 	number of Storage Area locations
+    u16 maxFunctionDefs;// 	number of FDEFs
+    u16 maxInstructionDefs;// 	number of IDEFs
+    u16 maxStackElements;// 	maximum stack depth
+    u16 maxSizeOfInstructions;// 	byte count for glyph instructions
+    u16 maxComponentElements;// 	number of glyphs referenced at top level
+    u16 maxComponentDepth;// 	levels of recursion, set to 0 if font has only simple glyphs
+} ttf_maxp;
+
+static inline void ttf_maxp_swap(ttf_maxp* max){
+    max->version_maj = bswap16(max->version_maj);
+    max->version_min = bswap16(max->version_min);
+    max->numGlyphs = bswap16(max->numGlyphs);
+    max->maxPoints = bswap16(max->maxPoints);
+    max->maxContours = bswap16(max->maxContours);
+    max->maxComponentPoints = bswap16(max->maxComponentPoints);
+    max->maxComponentContours = bswap16(max->maxComponentContours);
+    max->maxZones = bswap16(max->maxZones);
+    max->maxTwilightPoints = bswap16(max->maxTwilightPoints);
+    max->maxStorage = bswap16(max->maxStorage);
+    max->maxFunctionDefs = bswap16(max->maxFunctionDefs);
+    max->maxInstructionDefs = bswap16(max->maxInstructionDefs);
+    max->maxStackElements = bswap16(max->maxStackElements);
+    max->maxSizeOfInstructions = bswap16(max->maxSizeOfInstructions);
+    max->maxComponentElements = bswap16(max->maxComponentElements);
+    max->maxComponentDepth = bswap16(max->maxComponentDepth);
+}
