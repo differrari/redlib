@@ -76,3 +76,12 @@ string_slice slice_seek_to(string_slice slice, char character){
             return (string_slice){slice.data+i+1,slice.length-i-1};
     return (string_slice){};
 }
+
+bool slice_ends_with(string_slice slice, string_slice seek){
+    i32 diff = slice.length-seek.length;
+    if (diff < 0) return false;
+    for (u32 i = 0; i < seek.length; i++){
+        if (slice.data[i+diff] != seek.data[i]) return false;
+    }
+    return true;
+}

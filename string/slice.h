@@ -53,6 +53,8 @@ static inline int slice_index(string_slice a, const char *b){
 
 string_slice slice_trim_ws(string_slice slice, bool include_newline);
 
+bool slice_ends_with(string_slice slice, string_slice seek);
+
 typedef struct {
     char seek;
     char *str;

@@ -46,6 +46,25 @@ void ttf_parse_hhea(ttf_font *font, ttf_hhea *hhea){
     // hhea->caretSlopeRun; 
 }
 
+void ttf_parse_name(ttf_font *font, ttf_name *name){
+    for (int i = 0; i < name->count; i++){
+        ttf_name_record *record = &name->records[i];
+        ttf_name_record_swap(record);
+        if (record->name_id != 1 || record->language_id != 1033) continue;//TODO: this is just based on observation, might break, same for the u16 encoding
+        print("pid %i psid %i lid %i nid %i %i %i",record->platform_id,record->platform_specific_id,record->language_id,record->name_id,record->offset,record->length);
+        string_slice s = {(char*)((uptr)name + name->string_offset + record->offset),record->length};
+        char *str = zalloc(record->length/2);
+        for (int i = 0; i < record->length; i++)
+            if (i % 2 != 0) str[i/2] = s.data[i];
+        font->hdr.name = (string){
+            .data = str,
+            .length = record->length/2,
+            .mem_length = record->length/2
+        };
+        return;
+    }
+}
+
 bool load_ttf(const char *path, ttf_font *out_font){
     if (!out_font) return false;
     size_t size = 0;
@@ -104,7 +123,11 @@ bool load_ttf(const char *path, ttf_font *out_font){
             ttf_maxp *maxp = (ttf_maxp*)(data + table->offset);
             out_font->hdr.num_glyphs = maxp->numGlyphs;
         }
-
+        if (strncmp(table->NAME,"name", 4) == 0){
+            ttf_name *name = (ttf_name*)(data + table->offset);
+            ttf_name_swap(name);
+            ttf_parse_name(out_font, name);
+        }
     }
     
     out_font->hdr.type = font_type_ttf;

@@ -3,6 +3,7 @@
 #include "types.h"
 #include "graphic_types.h"
 #include "draw/point_graph.h"
+#include "string/string.h"
 
 typedef enum { font_type_embedded/*, font_type_bitmap*/, font_type_ttf } font_type;
 
@@ -10,6 +11,8 @@ typedef struct {
     font_type type;
 
     int num_glyphs;
+
+    string name;
 } font_hdr;
 
 font_hdr* font_load(const char *location, font_type type);

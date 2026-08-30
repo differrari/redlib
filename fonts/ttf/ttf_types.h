@@ -14,7 +14,7 @@ typedef struct {
     u16 search_range;
     u16 entry_selector;
     u16 range_shift;
-} ttf_hdr;
+}__attribute__((packed)) ttf_hdr;
 
 static inline void ttf_hdr_swap(ttf_hdr *hdr){
     if (!hdr) return;
@@ -31,7 +31,7 @@ typedef struct {
     u32 checksum;
     u32 offset;
     u32 length;
-} ttf_table_hdr;
+}__attribute__((packed)) ttf_table_hdr;
 
 static inline void ttf_table_hdr_swap(ttf_table_hdr *hdr){
     if (!hdr) return;
@@ -57,7 +57,7 @@ typedef union {
         u16 idk_14: 1;
     };
     u16 flags;
-} ttf_head_flags;
+}__attribute__((packed)) ttf_head_flags;
 
 typedef union {
     struct {
@@ -70,7 +70,7 @@ typedef union {
         u16 extended: 1;
     };
     u16 mac_style;
-} ttf_head_mac_style;
+}__attribute__((packed)) ttf_head_mac_style;
 
 typedef struct {
     u16 version_maj;
@@ -132,7 +132,7 @@ typedef struct {
     i16	reserved[4];// 	set value to 0
     i16	metricDataFormat;// 	0 for current format
     u16	numOfLongHorMetrics;// 	number of advance widths in metrics table
-} ttf_hhea;
+}__attribute__((packed)) ttf_hhea;
 
 static inline void ttf_hhea_swap(ttf_hhea *hhea){
     hhea->version_maj = bswap16(hhea->version_maj);
@@ -154,13 +154,13 @@ static inline void ttf_hhea_swap(ttf_hhea *hhea){
 typedef struct {
     u16 advanceWidth;
     i16 leftSideBearing;
-} ttf_hmetric;
+}__attribute__((packed)) ttf_hmetric;
 
 typedef struct {
     u16 platform_id;
     u16 platform_specific_id;
     u32 offset;
-} ttf_cmap_sub;
+}__attribute__((packed)) ttf_cmap_sub;
 
 static inline void ttf_cmap_sub_swap(ttf_cmap_sub *sub){
     sub->platform_id = bswap16(sub->platform_id);
@@ -172,7 +172,7 @@ typedef struct {
     u16 version;
     u16 num_subtables;
     ttf_cmap_sub tables[];
-} ttf_cmap;
+}__attribute__((packed)) ttf_cmap;
 
 static inline void ttf_cmap_swap(ttf_cmap *map){
     map->version = bswap16(map->version);
@@ -181,7 +181,7 @@ static inline void ttf_cmap_swap(ttf_cmap *map){
 
 typedef struct {
     u16 format;//NOTE: only format 4 currently supported
-} ttf_cmap_table_hdr;
+}__attribute__((packed)) ttf_cmap_table_hdr;
 
 static inline void ttf_cmap_table_hdr_swap(ttf_cmap_table_hdr *hdr){
     hdr->format = bswap16(hdr->format);
@@ -195,7 +195,7 @@ typedef struct {
     u16	searchRange;// 	2 * (2**FLOOR(log2(segCount)))
     u16	entrySelector;// 	log2(searchRange/2)
     u16	rangeShift;// 	(2 * segCount) - searchRange
-} ttf_cmap_table_fmt4;
+}__attribute__((packed)) ttf_cmap_table_fmt4;
 
 // u16	endCode;//[segCount] 	Ending character code for each segment, last = 0xFFFF.
 // u16	reservedPad;// 	This value should be zero
@@ -241,7 +241,7 @@ typedef union {
         u8 rsvd: 1;
     };
     u8 flags;
-} ttf_glyph_flags;
+}__attribute__((packed)) ttf_glyph_flags;
 
 typedef union {
     struct {
@@ -259,7 +259,7 @@ typedef union {
         u16 rsvd2: 5;
     };
     u16 flags;
-} ttf_compound_flags;
+}__attribute__((packed)) ttf_compound_flags;
 
 typedef struct {
     u16 version_maj;
@@ -278,7 +278,7 @@ typedef struct {
     u16 maxSizeOfInstructions;// 	byte count for glyph instructions
     u16 maxComponentElements;// 	number of glyphs referenced at top level
     u16 maxComponentDepth;// 	levels of recursion, set to 0 if font has only simple glyphs
-} ttf_maxp;
+}__attribute__((packed)) ttf_maxp;
 
 static inline void ttf_maxp_swap(ttf_maxp* max){
     max->version_maj = bswap16(max->version_maj);
@@ -297,4 +297,35 @@ static inline void ttf_maxp_swap(ttf_maxp* max){
     max->maxSizeOfInstructions = bswap16(max->maxSizeOfInstructions);
     max->maxComponentElements = bswap16(max->maxComponentElements);
     max->maxComponentDepth = bswap16(max->maxComponentDepth);
+}
+
+typedef struct {
+    u16 platform_id;
+    u16 platform_specific_id;
+    u16 language_id;
+    u16 name_id;
+    u16 length;
+    u16 offset;
+}__attribute__((packed)) ttf_name_record;
+
+static void ttf_name_record_swap(ttf_name_record *name){
+    name->platform_id = bswap16(name->platform_id);
+    name->platform_specific_id = bswap16(name->platform_specific_id);
+    name->language_id = bswap16(name->language_id);
+    name->name_id = bswap16(name->name_id);
+    name->length = bswap16(name->length);
+    name->offset = bswap16(name->offset);
+}
+
+typedef struct {
+    u16 format;
+    u16 count;
+    u16 string_offset;
+    ttf_name_record records[];
+}__attribute__((packed)) ttf_name;
+
+static void ttf_name_swap(ttf_name *name){
+    name->format = bswap16(name->format);
+    name->count = bswap16(name->count);
+    name->string_offset = bswap16(name->string_offset);
 }

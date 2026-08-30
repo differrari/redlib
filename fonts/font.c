@@ -49,7 +49,9 @@ gpu_size font_render_glyph_index(font_hdr *hdr, path_render_options options, dra
     }
     if (hdr->type == font_type_ttf){
         point_graph graph = ttf_get_index((ttf_font*)hdr, index);
-        return fb_render_path(ctx, location, graph, options);
+        gpu_size size = fb_render_path(ctx, location, graph, options);
+        mark_dirty(ctx, location.x, location.y, size.width, size.height);
+        return size;
     }
     return (gpu_size){};
 }
