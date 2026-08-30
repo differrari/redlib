@@ -6,6 +6,7 @@
 #include "ttf_types.h"
 #include "draw/point_graph.h"
 #include "fonts/font.h"
+#include "cache/cache.h"
 
 typedef struct {
     font_hdr hdr;
@@ -26,6 +27,8 @@ typedef struct {
 
     float height_ratio;
 
+    cache_config character_cache;
+
 } ttf_font;
 
 typedef struct {
@@ -33,7 +36,7 @@ typedef struct {
     u32 len;
 } ttf_glyph_loc;
 
-bool load_ttf(char *path, ttf_font *out_font);
+bool load_ttf(const char *path, ttf_font *out_font);
 point_graph ttf_get_index(ttf_font *font, u16 index);
 point_graph ttf_get_character(ttf_font *font, u16 character);
 void ttf_font_destroy(ttf_font *font);

@@ -5,6 +5,7 @@
 //TODO: all functions should include this with the (if alpha < 0xFF) check
 uint32_t pixel_blend(uint32_t p1, uint32_t p2){
     uint16_t a1 = (p1 >> 24) & 0xFF;
+    if (!a1) return p2;
     uint16_t a2 = (p2 >> 24) & 0xFF;
     if (a2 == 0) return p1;
     if (a1 == 0) return p2;

@@ -43,10 +43,11 @@ void ttf_parse_hhea(ttf_font *font, ttf_hhea *hhea){
     font->descent = hhea->descent;
     font->advanceWidthMax = hhea->advanceWidthMax;
     font->height_ratio = (float)(font->ascent-font->descent)/font->advanceWidthMax;
-    ttf_print(">>>> %i-%i/%i = %f",font->ascent,font->descent,font->advanceWidthMax,font->height_ratio);
+    // hhea->caretSlopeRise; TODO: use these for italic and weird fonts
+    // hhea->caretSlopeRun; 
 }
 
-bool load_ttf(char *path, ttf_font *out_font){
+bool load_ttf(const char *path, ttf_font *out_font){
     if (!out_font) return false;
     size_t size = 0;
     u8 *data = (u8*)read_full_file(path, &size);
