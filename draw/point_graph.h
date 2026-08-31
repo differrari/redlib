@@ -26,6 +26,7 @@ typedef struct {
     int num_slices;
     point_graph_slice *slices;
     vec2 size;
+    vec2 offset;
 } point_graph;
 
 typedef enum {

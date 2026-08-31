@@ -26,6 +26,8 @@ typedef struct {
     u16 max_number_contours_compound;
 
     u16 unitsPerEm;
+    u16 xMaxExtent;
+    i16 minLeftSideBearing;
 
     float height_ratio;
 

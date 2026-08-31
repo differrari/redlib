@@ -49,6 +49,8 @@ void ttf_parse_hhea(ttf_font *font, ttf_hhea *hhea){
         font->height_ratio = -(float)(font->ascent-font->descent);//NOTE: If the head table hasn't been parsed yet, save this as negative and calculate it properly later
     // hhea->caretSlopeRise; TODO: use these for italic and weird fonts
     // hhea->caretSlopeRun; 
+    font->xMaxExtent = hhea->xMaxExtent;
+    font->minLeftSideBearing = hhea->minLeftSideBearing;
 }
 
 void ttf_parse_name(ttf_font *font, ttf_name *name){
@@ -192,7 +194,7 @@ float ttf_get_glyph_advance(ttf_font *font, u16 index){
 
 #define ttfbounds(cond) if (!(cond)){ ttf_print("Out of bounds"); }
 
-void ttf_glyph_read_coord(bool is_x, ttf_font *font, point_graph graph, u16 num_points, ttf_glyph_flags flags[], u16 index, ttf_glyph_desc *desc, binary_scanner *scanner){
+void ttf_glyph_read_coord(bool is_x, ttf_font *font, point_graph graph, u16 num_points, ttf_glyph_flags flags[], u16 index, float lsb, ttf_glyph_desc *desc, binary_scanner *scanner){
     i16 coord = 0;
     for (int i = 0; i < num_points; i++){
         ttf_glyph_flags flag = flags[i];
@@ -210,7 +212,7 @@ void ttf_glyph_read_coord(bool is_x, ttf_font *font, point_graph graph, u16 num_
 
         point_entry *entry = &graph.graph[i];
         if (is_x){
-            entry->pos.x = ((float)(coord)/(font->unitsPerEm));
+            entry->pos.x = ((float)(coord+lsb)/(font->unitsPerEm));
         } else  
             entry->pos.y = ((float)(coord-font->ascent)/(font->descent-font->ascent))*font->height_ratio;
     }
@@ -220,8 +222,20 @@ point_graph ttf_simple_glyph(binary_scanner *scanner, ttf_font *font, u16 index,
     point_graph glyph = {
         .num_slices = desc->numberOfCountours,
         .slices = zalloc(desc->numberOfCountours * sizeof(point_graph_slice)),
-        .size = {ttf_get_glyph_advance(font,index), font->height_ratio}
+        .size = {ttf_get_glyph_advance(font, index), font->height_ratio}
     };
+
+    i16 lsb = bswap16(font->metrics[index < font->hdr.num_glyphs ? index : 0].leftSideBearing);
+
+    if (lsb < 0){
+        glyph.offset.x = (float)lsb/font->unitsPerEm;
+        glyph.size.x += (float)-lsb/font->unitsPerEm;
+    }
+
+    if (font->minLeftSideBearing < 0){
+        float alt_w = (float)(desc->xMax-desc->xMin+(lsb > 0 ? lsb : 0))/font->unitsPerEm;
+        if (alt_w > glyph.size.x) glyph.size.x = alt_w;
+    }
 
     ttf_print("Size %f,%f %f",glyph.size.x,glyph.size.y,font->height_ratio);
 
@@ -271,8 +285,8 @@ point_graph ttf_simple_glyph(binary_scanner *scanner, ttf_font *font, u16 index,
         }
     }
 
-    ttf_glyph_read_coord(true, font, glyph, num_points, flags, index, desc, scanner);
-    ttf_glyph_read_coord(false, font, glyph, num_points, flags, index, desc, scanner);
+    ttf_glyph_read_coord(true, font, glyph, num_points, flags, index, lsb < 0 ? -lsb : 0, desc, scanner);
+    ttf_glyph_read_coord(false, font, glyph, num_points, flags, index, lsb < 0 ? -lsb : 0, desc, scanner);
 
     // for (int i = 0; i < num_points; i++){
     //     point_entry entry = graph.graph[i];
@@ -406,7 +420,7 @@ point_graph ttf_read_glyph(ttf_font *font, u16 index, ttf_glyph_loc *glyph){
         return ttf_compound_glyph(font, &scanner, index, desc);
     }
 
-    if (!desc->numberOfCountours) return (point_graph){.size = {.x = ttf_get_glyph_advance(font, index), .y = font->height_ratio}};
+    if (!desc->numberOfCountours) return (point_graph){.size = {.x = ttf_get_glyph_advance(font, index), .y = font->height_ratio}, .offset = {}};
 
     ttf_print("Number of contours %i. Bounds %i,%i - %i,%i",desc->numberOfCountours,desc->xMin,desc->yMin,desc->xMax,desc->yMax);
 
