@@ -23,7 +23,9 @@ typedef struct {
     i16 ascent;
     i16 descent;
 
-    u16 advanceWidthMax;
+    u16 max_number_contours_compound;
+
+    u16 unitsPerEm;
 
     float height_ratio;
 
