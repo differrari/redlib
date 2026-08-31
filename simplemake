@@ -1,4 +1,3 @@
-# list of c files to compile
 math/aabb2.c
 math/rng.c
 input_keycodes.c

@@ -24,7 +24,7 @@ static inline i64 powi(i64 n, i64 e){
 }
 
 static __attribute__((always_inline)) inline float sqrtf(float v){
-#if defined(__aarch64__)
+#if defined(__aarch64__) && !defined(__APPLE__)
     return __builtin_aarch64_sqrtdf(v);
 #else 
     return __builtin_sqrtf(v);
