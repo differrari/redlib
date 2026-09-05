@@ -2,11 +2,11 @@
 #include "alloc/allocate.h"
 #include "syscalls/syscalls.h"
 
-linked_list_t *linked_list_create_alloc(void* (*alloc)(size_t size), void (*free)(void *ptr)){
-    uintptr_t mem = (uintptr_t)alloc(sizeof(linked_list_t));
+linked_list_t *linked_list_create_alloc(void* (*allocator)(size_t size), void (*free)(void *ptr)){
+    uintptr_t mem = (uintptr_t)allocator(sizeof(linked_list_t));
     if((void *)mem == NULL) return NULL;
     linked_list_t *list = (linked_list_t *)mem;
-    list->alloc = alloc;
+    list->alloc = allocator;
     list->free = free;
     return list;
 }

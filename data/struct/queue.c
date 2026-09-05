@@ -16,14 +16,14 @@ void cqueue_free(CQueue *q, void *ptr) {
     release(ptr);
 }
 
-void cqueue_init(CQueue* q, uint64_t max_capacity, uint64_t elem_size, cqueue_alloc_fn alloc, cqueue_free_fn free) {
+void cqueue_init(CQueue* q, uint64_t max_capacity, uint64_t elem_size, cqueue_alloc_fn allocator, cqueue_free_fn free) {
     if (!q) return;
     q->buffer = NULL;
     q->capacity = max_capacity;
     q->max_capacity = max_capacity;
     q->elem_size = elem_size;
     q->head = q->tail = q->length = 0;
-    q->alloc = alloc ? alloc : zalloc;
+    q->alloc = allocator ? allocator : zalloc;
     q->free = free ? free : release;
     if (max_capacity > 0) {
         uintptr_t b = (uintptr_t)cqueue_alloc(q, max_capacity * elem_size);
