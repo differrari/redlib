@@ -61,8 +61,8 @@ syscall_def unload_fsmodule, UNLOAD_FSMODULE_CODE
 
 syscall_def in_case_of_js_break_glass, IN_CASE_OF_JS_CODE
 
-#endif
 syscall_def msleep, SLEEP_CODE
 syscall_def halt, HALT_CODE
 syscall_def halt_thread, HALT_THREAD_CODE
+#endif
 #endif
