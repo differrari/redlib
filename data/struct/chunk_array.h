@@ -25,4 +25,6 @@ size_t chunk_array_count(chunk_array_t *array);
 void* chunk_array_find(chunk_array_t *array, void *query, bool (*match)(void* value, void *query));
 bool chunk_array_test();
 
+#define chunk_array_new_item(array, type) (type*)chunk_array_get(array,chunk_array_push(array,&(type){}))
+
 #define CHUNK_ARRAY_GET(type,array,index) (*(type*)chunk_array_get(array,index))

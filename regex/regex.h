@@ -62,3 +62,10 @@ void regex_debug(regex_handle *handle);
 
 regex_result regex_find_one(regex_handle *handle, string_slice str);
 bool regex_find_many(regex_handle *handle, string_slice str, bool (*on_find)(regex_result));
+
+static inline string_slice regex_get_substring(regex_result result, int index){
+    if (index > result.capture_count) return (string_slice){};
+    range_t r = result.capture_groups[index];
+    if (r.start > result.full_slice.length || r.start + r.size > result.full_slice.length) return (string_slice){};
+    return (string_slice){ result.full_slice.data + r.start, r.size};
+}

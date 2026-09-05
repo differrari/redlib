@@ -55,3 +55,4 @@ compression/huffman.c
 compression/deflate.c
 fonts/ttf/ttf.c
 fonts/font.c
+regex/regex.c

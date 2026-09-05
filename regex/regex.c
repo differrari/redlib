@@ -3,8 +3,8 @@
 
 #include "regex.h"
 #include "syscalls/syscalls.h"
-#include "utils/indent.h"
 #include "memory/memory.h"
+#include "data/format/scanner/scanner.h"
 
 // #define REGEX_DEBUG
 #ifdef REGEX_DEBUG
@@ -204,87 +204,102 @@ static inline bool regex_does_match(char c, regex_node *node){
     return node->invert ^ condition;
 }
 
+#define MAX_CAPTURE 8
+
+static inline void close_group(Scanner *scanner, regex_result *result, int *capture_positions, int *capture_index){
+    int index = *capture_index;
+    int start = capture_positions[--index];
+    *capture_index = index;
+    int length = scanner->pos - start;
+    result->capture_groups[result->capture_count++] = (range_t){.start = start, .size = length };
+}
+
+static inline bool handle_result(regex_result *result, Scanner *scanner, bool (*on_find)(regex_result)){
+    regex_print("[REGEX debug] End of regex pattern");
+    result->found = true;
+    result->result_range.size = scanner->pos - result->result_range.start;
+    char next = scan_peek(scanner);
+    if (!on_find(*result) || !next){
+        return true;
+    }
+    return false;
+}
+
 bool regex_find_many(regex_handle *handle, string_slice str, bool (*on_find)(regex_result)){
-    if (!handle || !handle->regex_stack || !str.length)        
+    if (!handle || !handle->regex_stack || !str.length)
         return false;
-    int node_index = 0;
     regex_result result = {.full_slice = str};
-    bool ever_found = false;
     result.found = false;
-    bool is_capture_group = false;
-    size_t count = stack_count(handle->regex_stack);
-    for (u64 i = 0; i < str.length; i++){
-        regex_node *current_node = regex_get_node(handle, node_index);
-        if (!current_node) break;
-        if (current_node->type != regex_node_match){
-            regex_print("Node type is %i",current_node->type);
-            switch (current_node->type){
-                case regex_node_start_group:
-                    if (is_capture_group){
-                        print("[REGEX implementation error] nesting capture groups not allowed");
-                        return false;
-                    }
-                    if (result.capture_count >= MAX_CAPTURE_GROUPS){
-                        print("[REGEX implementation error] there is a maximum of %i capture groups",MAX_CAPTURE_GROUPS);
-                        return false;
-                    }
-                    is_capture_group = true;
-                    result.capture_count++;
-                    result.capture_groups[result.capture_count].start = i;
-                    node_index += current_node->success;
-                    i--;
-                    continue;
-                case regex_node_end_group:
-                    if (!is_capture_group){
-                        print("[REGEX error] ending unknown capture group");
-                        return false;
-                    }
-                    is_capture_group = false;
-                    node_index += current_node->success;
-                    i--;
-                    continue;
-                    break;
-                default:
-                    break;
+
+    int node_index = 0;
+    
+    Scanner scanner = scanner_make(str.data, str.length);
+
+    int capture_positions[MAX_CAPTURE] = {};
+    int capture_index = 0;
+
+    char current = 0;
+
+    bool range_started = false;
+    while (true){
+        regex_node *node = stack_get(handle->regex_stack, node_index);
+        if (!node){
+            if (handle_result(&result, &scanner, on_find)){
+                regex_print("[REGEX debug] Stop");
+                return true;
             }
+            regex_print("[REGEX debug] Continue");
+            node_index = 0;
+            capture_index = 0;
+            range_started = false;
+            result = (regex_result){ .full_slice = str };
+            continue;
+        }
+
+        if (node->type == regex_node_start_group){
+            regex_print("[REGEX debug] capture group start");
+            if (capture_index + 1 >= MAX_CAPTURE){
+                print("[REGEX error] too many nested captures");
+                return false;
+            }
+            capture_positions[capture_index++] = scanner.pos;
+            node_index += node->success ?: 1;
+            continue;
+        } else if (node->type == regex_node_end_group){
+            regex_print("[REGEX debug] capture group end");
+            close_group(&scanner, &result, capture_positions, &capture_index);
+            node_index += node->success ?: 1;
             continue;
         }
         
-        char current_char = str.data[i];
-        if (current_node->any) regex_print("[ANY]");
-        else regex_print("%c vs %c",current_node->literal,current_char);
-        
-        if (current_node->any || regex_does_match(current_char, current_node)){
-            regex_print("Succeded");
-            if (is_capture_group){
-                result.capture_groups[result.capture_count].size++;
+        current = scan_next(&scanner);
+        regex_print("[REGEX debug] Next character %c and index %i",current,node_index);
+        // if (!current) continue;
+        if (current && regex_does_match(current, node)){
+            regex_print("[REGEX debug] success");
+            if (!range_started){
+                range_started = true;
+                result.result_range.start = scanner.pos-1;
             }
-            if (current_node == regex_get_node(handle, 0)) result.result_range.start = i;
-            if (current_node->success && node_index + current_node->success < (i64)count) node_index += current_node->success;
-            else {
-                ever_found = true;
-                result.found = true;
-                result.result_range.size = i-result.result_range.start;
-                result.full_slice = str;
-                if (!on_find(result)) break;
-                result = (regex_result){};
-                continue;
-            }
-        } else if (node_index != 0 || current_node->fail) {
-            regex_print("Did not match");
-            if (current_node->fail){
-                i--;
-                node_index += current_node->fail;
-            } 
-            else {
-                regex_print("Found %c instead of expected %c",current_char, current_node->literal);
+            node_index += node->success;
+        } else {
+            regex_print("[REGEX debug] failure");
+            regex_print("[REGEX debug] Backtrack because at %i %c didn't match %c",node_index,current, node->literal);
+            if (!node->fail){
+                if (range_started) scanner.pos--;
+                if (!current) return false;
+                capture_index = 0;
                 node_index = 0;
-                result = (regex_result){};
-                continue;
+                range_started = false;
+                result = (regex_result){.full_slice = str};
+            } else {
+                if (current) scanner.pos--;
+                node_index += node->fail;
             }
         }
     }
-    return ever_found;
+    
+    return false;
 }
 
 #endif
