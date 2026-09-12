@@ -14,12 +14,13 @@ typedef struct btnode {
     };
     struct btnode* parent;
     i64 key;
-} btnode;
+    u8 data[];
+} bt_node;
 
 typedef enum { bt_balancing_none, bt_balancing_rb } bt_balancing;
 
 typedef struct {
-    btnode *root;
+    bt_node *root;
     size_t data_size;
     void* (*allocator)(size_t size);
     void (*free)(void*);
@@ -36,17 +37,12 @@ static inline bt_tree bt_tree_create(size_t data_size, bt_balancing balancing){
 void bt_tree_insert(bt_tree *tree, void* data, i64 key);
 void bt_tree_debug(bt_tree *tree);
 
-bool bt_tree_test();
+bool bt_test();
 
 typedef struct {
     u64 index;
     bt_tree *tree;
-    btnode *current;
+    bt_node *current;
 } bt_tree_traversal;
 
-btnode* bt_tree_next(bt_tree_traversal *traversal);
-
-static inline void* bt_tree_get_node_data(bt_tree *tree, btnode *node){
-    if (!tree->data_size) return 0;
-    return (void*)((uptr)node) + sizeof(btnode);
-}
+bt_node* bt_tree_next(bt_tree_traversal *traversal);

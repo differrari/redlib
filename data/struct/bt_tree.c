@@ -2,6 +2,7 @@
 #include "memory/memory.h"
 #include "syscalls/syscalls.h"
 #include "utils/indent.h"
+#include "debug/assert.h"
 
 static inline void* bt_tree_alloc(bt_tree *tree, size_t size){
     return tree && tree->allocator ? tree->allocator(size) : zalloc(size);
@@ -11,15 +12,15 @@ static inline void bt_tree_free(bt_tree *tree, void *ptr){
     return tree && tree->free ? tree->free(ptr) : release(ptr);
 }
 
-btnode* bt_tree_new_node(bt_tree *tree){
-    return bt_tree_alloc(tree, tree->data_size + sizeof(btnode));
+bt_node* bt_tree_new_node(bt_tree *tree){
+    return bt_tree_alloc(tree, tree->data_size + sizeof(bt_node));
 }
 
-static inline bool bt_tree_is_nil(btnode *node){
+static inline bool bt_tree_is_nil(bt_node *node){
     return !node;
 }
 
-static inline bool bt_tree_is_leaf(btnode *node){
+static inline bool bt_tree_is_leaf(bt_node *node){
     return node && bt_tree_is_nil(node->lh) && bt_tree_is_nil(node->rh);
 }
 
@@ -33,13 +34,13 @@ bt_tree bt_tree_create_alloc(size_t data_size, bt_balancing balancing, void *(*a
     };
 }
 
-extern void rb_tree_balance(bt_tree *tree, btnode *new_node);
+extern void rb_tree_balance(bt_tree *tree, bt_node *new_node);
 
 void bt_tree_insert(bt_tree *tree, void* data, i64 key){
     if (!tree) return;
 
-    btnode *new_node = bt_tree_new_node(tree);
-    if (tree->data_size) memcpy(new_node+sizeof(btnode), data, tree->data_size);
+    bt_node *new_node = bt_tree_new_node(tree);
+    if (tree->data_size) memcpy(new_node+sizeof(bt_node), data, tree->data_size);
     new_node->key = key;
 
     tree->count++;
@@ -49,8 +50,8 @@ void bt_tree_insert(bt_tree *tree, void* data, i64 key){
         return;
     }
 
-    btnode *parent = 0;
-    btnode *current = tree->root;
+    bt_node *parent = 0;
+    bt_node *current = tree->root;
 
     while (current){
         if (current->key > key){
@@ -79,7 +80,7 @@ void bt_tree_insert(bt_tree *tree, void* data, i64 key){
 
 }
 
-void bt_tree_debug_node(btnode *node, int depth){
+void bt_tree_debug_node(bt_node *node, int depth){
     if (!node) {
         // print("NIL");
         return;
@@ -97,7 +98,7 @@ void bt_tree_debug(bt_tree *tree){
 }
 
 
-btnode* bt_tree_leftmost(btnode *node){
+bt_node* bt_tree_leftmost(bt_node *node){
     if (!node) return 0;
     if (node->lh) return bt_tree_leftmost(node->lh);
     return node;
@@ -108,7 +109,7 @@ void* bt_traversal_reset(bt_tree_traversal *traversal){
     return 0;
 }
 
-btnode* bt_tree_next(bt_tree_traversal *traversal){
+bt_node* bt_tree_next(bt_tree_traversal *traversal){
     print("%llx",traversal->index);
     if (!traversal || !traversal->tree || !traversal->tree->root || traversal->tree->count <= traversal->index) return bt_traversal_reset(traversal);
 
@@ -138,8 +139,29 @@ btnode* bt_tree_next(bt_tree_traversal *traversal){
 
 }
 
-bool bt_tree_test(){
-    bt_tree testtree = bt_tree_create(0, bt_balancing_rb);
+bool bt_tree_test_ascending(bt_tree *tree){
+    bt_tree_traversal traversal = {
+        .tree = tree
+    };
+    
+    bt_node *node = 0;
+    i64 cur_value = 0;
+    int index = 0;
+    while ((node = bt_tree_next(&traversal))){
+        index = traversal.index;
+        if (index){
+            assert_false(node->key < cur_value, "Nodes are not in ascending order, value %i is smaller than value %i",node->key,cur_value);
+        }
+        cur_value = node->key;
+    }
+
+    return true;
+}
+
+extern bool rb_tree_test();
+
+bool bt_test(){
+    bt_tree testtree = bt_tree_create(0, bt_balancing_none);
 
     bt_tree_insert(&testtree, 0, 13);
     bt_tree_insert(&testtree, 0, 1);
@@ -154,21 +176,10 @@ bool bt_tree_test(){
 
     bt_tree_debug(&testtree);
 
-    bt_tree_traversal traversal = {
-        .tree = &testtree
-    };
+    assert(bt_tree_test_ascending(&testtree));
     
-    btnode *node = 0;
-    int count = 0;
-    int index = 0;
-    while ((node = bt_tree_next(&traversal))){
-        print("Node %i",node->key);
-        count++;
-        index = traversal.index;
-        if (count > 10) return false;
-    }
+    assert(rb_tree_test());
 
-    print("Index %i",traversal.index);
+    return true;
 
-    return index == 9;
 }
