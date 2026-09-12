@@ -63,7 +63,7 @@ void* allocate(void* page, size_t size, page_allocator fallback){
         while (*blk_ptr){
             free_block *block = *blk_ptr;
             if ((uintptr_t)block < (uintptr_t)hdr + sizeof(allocator_header) || (uintptr_t)block + sizeof(free_block) > (uintptr_t)hdr + PAGE_SIZE){
-                print("[ALLOC error] Wrong allocation, a free block points outside its page %llx + %llx >= %llx",(uintptr_t)block & ~(0xFFF), block->block_size,(uintptr_t)hdr & ~(0xFFF));
+                print("[ALLOC error] Wrong allocation on page %llx, a free block points outside its page %llx + size >= %llx",hdr,(uintptr_t)block & ~(0xFFF),(uintptr_t)hdr & ~(0xFFF));
                 return 0;
             }
             if ((uintptr_t)block + block->block_size > (uintptr_t)hdr + PAGE_SIZE){
