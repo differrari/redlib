@@ -42,6 +42,8 @@ void bt_tree_insert(bt_tree *tree, void* data, i64 key){
     if (tree->data_size) memcpy(new_node+sizeof(btnode), data, tree->data_size);
     new_node->key = key;
 
+    tree->count++;
+
     if (!tree->root) {
         tree->root = new_node;
         return;
@@ -94,6 +96,48 @@ void bt_tree_debug(bt_tree *tree){
     bt_tree_debug_node(tree->root,0);
 }
 
+
+btnode* bt_tree_leftmost(btnode *node){
+    if (!node) return 0;
+    if (node->lh) return bt_tree_leftmost(node->lh);
+    return node;
+}
+
+void* bt_traversal_reset(bt_tree_traversal *traversal){
+    memset(traversal, 0, sizeof(bt_tree_traversal));
+    return 0;
+}
+
+btnode* bt_tree_next(bt_tree_traversal *traversal){
+    print("%llx",traversal->index);
+    if (!traversal || !traversal->tree || !traversal->tree->root || traversal->tree->count <= traversal->index) return bt_traversal_reset(traversal);
+
+    if (!traversal->current){
+        if (traversal->index != 0) return bt_traversal_reset(traversal);
+        traversal->current = bt_tree_leftmost(traversal->tree->root);
+        return traversal->current;
+    }
+
+    if (traversal->current->rh){
+        traversal->index++;
+        traversal->current = bt_tree_leftmost(traversal->current->rh);
+        return traversal->current;
+    }
+
+    i64 key = traversal->current->key;
+
+    if (traversal->current->parent){
+        do {
+            traversal->current = traversal->current->parent;
+        } while (traversal->current && traversal->current->key < key);
+        traversal->index++;
+        return traversal->current;
+    }
+
+    return 0;
+
+}
+
 bool bt_tree_test(){
     bt_tree testtree = bt_tree_create(0, bt_balancing_rb);
 
@@ -110,5 +154,21 @@ bool bt_tree_test(){
 
     bt_tree_debug(&testtree);
 
-    return true;
+    bt_tree_traversal traversal = {
+        .tree = &testtree
+    };
+    
+    btnode *node = 0;
+    int count = 0;
+    int index = 0;
+    while ((node = bt_tree_next(&traversal))){
+        print("Node %i",node->key);
+        count++;
+        index = traversal.index;
+        if (count > 10) return false;
+    }
+
+    print("Index %i",traversal.index);
+
+    return index == 9;
 }

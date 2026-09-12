@@ -24,6 +24,7 @@ typedef struct {
     void* (*allocator)(size_t size);
     void (*free)(void*);
     bt_balancing balancing;
+    size_t count;
 } bt_tree;
 
 bt_tree bt_tree_create_alloc(size_t data_size, bt_balancing balancing, void* (*allocator)(size_t size), void (*free)(void*));
@@ -36,3 +37,16 @@ void bt_tree_insert(bt_tree *tree, void* data, i64 key);
 void bt_tree_debug(bt_tree *tree);
 
 bool bt_tree_test();
+
+typedef struct {
+    u64 index;
+    bt_tree *tree;
+    btnode *current;
+} bt_tree_traversal;
+
+btnode* bt_tree_next(bt_tree_traversal *traversal);
+
+static inline void* bt_tree_get_node_data(bt_tree *tree, btnode *node){
+    if (!tree->data_size) return 0;
+    return (void*)((uptr)node) + sizeof(btnode);
+}
