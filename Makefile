@@ -46,7 +46,6 @@ $(BUILD_DIR)/%.o: %.cpp
 	
 cross:
 	$(MAKE) ARCH= SH_FLAGS=-DCROSS BUILD_DIR=./.cbuild ADDFLAGS=-std=c99 TARGET=clibshared.a
-	echo "# list of c files to compile" > simplemake
 	for f in $(ALL_SRC); do echo "$$f" >> simplemake; done
 
 win:

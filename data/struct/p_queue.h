@@ -2,7 +2,7 @@
 
 #include "types.h"
 
-//TODO: replace with new version
+//TODO: replace with bt_tree
 
 //lower number = higher priority
 typedef struct p_queue_item {

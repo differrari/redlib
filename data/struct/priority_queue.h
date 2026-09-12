@@ -3,6 +3,8 @@
 #include "types.h"
 #include "alloc/allocate.h"
 
+//TODO: replace with bt_tree
+
 typedef struct priority_queue_item_hdr {
     i64 priority;
     struct priority_queue_item_hdr *lh;
