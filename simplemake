@@ -44,6 +44,7 @@ fonts/ttf/ttf.c
 files/buffer.c
 files/helpers.c
 files/dir_list.c
+files/module_loader.c
 alloc/allocate.c
 alloc/page_index.c
 utils/indent.c
