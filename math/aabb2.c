@@ -1,7 +1,7 @@
 #include "aabb2.h"
 #include "math.h"
 
-bool aabb2_line_intersect(aabb2 bb, vector2 origin, vector2 dir, float *t_hit)
+bool aabb2_line_intersect(aabb2 bb, vector2 origin, vector2 dir, float *t_hit, vector2 *hit_loc)
 {
     vector2 t_min = (vector2) {-INFINITY, -INFINITY};
     vector2 t_max = (vector2) { INFINITY,  INFINITY};
@@ -40,6 +40,10 @@ bool aabb2_line_intersect(aabb2 bb, vector2 origin, vector2 dir, float *t_hit)
     // * entry: origin outside AABB
     // * exit:  origin inside AABB
     if (t_hit) *t_hit = (t_enter >= 0.0f) ? t_enter : t_exit;
+    if (hit_loc){
+        hit_loc->x = origin.x + (dir.x * ((dir.x >= 0.0f) ? t_min.x : t_max.x));
+        hit_loc->y = origin.y + (dir.y * ((dir.y <= 0.0f) ? t_min.y : t_max.x));
+    }
 
     return true;
 }
@@ -58,7 +62,7 @@ bool aabb2_check_movement(aabb2 moving_bb, aabb2 static_bb, vector2 dir, float *
         vector2_scale(vector2_add(moving_bb.min, moving_bb.max), 0.5f),
         dir
     };
-    bool collision = aabb2_ray_intersect(expanded_sbb, reduced_mbb, t_hit);
+    bool collision = aabb2_ray_intersect(expanded_sbb, reduced_mbb, t_hit, 0);
     if (!collision || !t_hit) return false;
 
     if (float_zero(*t_hit)){

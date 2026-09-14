@@ -3,16 +3,16 @@
 #include "types.h"
 #include "alloc/allocate.h"
 
-typedef struct btnode {
+typedef struct bt_node {
     u64 metadata;
     union {
         struct {
-            struct btnode* lh;
-            struct btnode* rh;
+            struct bt_node* lh;
+            struct bt_node* rh;
         };
-        struct btnode* children[2];
+        struct bt_node* children[2];
     };
-    struct btnode* parent;
+    struct bt_node* parent;
     i64 key;
     u8 data[];
 } bt_node;
@@ -38,6 +38,10 @@ void bt_tree_insert(bt_tree *tree, void* data, i64 key);
 void bt_tree_debug(bt_tree *tree);
 
 bool bt_test();
+
+void bt_reset(bt_tree *tree);
+
+void bt_destroy(bt_tree *tree);
 
 typedef struct {
     u64 index;

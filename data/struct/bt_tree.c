@@ -1,8 +1,10 @@
 #include "bt_tree.h"
+#include "alloc/allocate.h"
 #include "memory/memory.h"
 #include "syscalls/syscalls.h"
 #include "utils/indent.h"
 #include "debug/assert.h"
+#include "math/rng.h"
 
 static inline void* bt_tree_alloc(bt_tree *tree, size_t size){
     return tree && tree->allocator ? tree->allocator(size) : zalloc(size);
@@ -40,7 +42,7 @@ void bt_tree_insert(bt_tree *tree, void* data, i64 key){
     if (!tree) return;
 
     bt_node *new_node = bt_tree_new_node(tree);
-    if (tree->data_size) memcpy(new_node+sizeof(bt_node), data, tree->data_size);
+    if (tree->data_size && data) memcpy(&new_node->data, data, tree->data_size);
     new_node->key = key;
 
     tree->count++;
@@ -110,7 +112,6 @@ void* bt_traversal_reset(bt_tree_traversal *traversal){
 }
 
 bt_node* bt_tree_next(bt_tree_traversal *traversal){
-    print("%llx",traversal->index);
     if (!traversal || !traversal->tree || !traversal->tree->root || traversal->tree->count <= traversal->index) return bt_traversal_reset(traversal);
 
     if (!traversal->current){
@@ -161,18 +162,30 @@ bool bt_tree_test_ascending(bt_tree *tree){
 extern bool rb_tree_test();
 
 bool bt_test(){
-    bt_tree testtree = bt_tree_create(0, bt_balancing_none);
+    
+    bt_tree testtree = bt_tree_create(sizeof(i64), bt_balancing_none);
+    
+    rng_t rng = {};
+    rng_seed(&rng, get_time());
 
-    bt_tree_insert(&testtree, 0, 13);
-    bt_tree_insert(&testtree, 0, 1);
-    bt_tree_insert(&testtree, 0, 15);
-    bt_tree_insert(&testtree, 0, 6);
-    bt_tree_insert(&testtree, 0, 8);
-    bt_tree_insert(&testtree, 0, 22);
-    bt_tree_insert(&testtree, 0, 11);
-    bt_tree_insert(&testtree, 0, 17);
-    bt_tree_insert(&testtree, 0, 25);
-    bt_tree_insert(&testtree, 0, 27);
+    u8 node_count = rng_next8(&rng);
+    
+    i64 testval = 0x7E57BEEF;
+
+    for (int i = 0; i < node_count; i++){
+        bt_tree_insert(&testtree, &testval, rng_next64(&rng));
+    }
+    
+    assert_eq(node_count, testtree.count, "Node count mismatch, inserted %i found %i",node_count,testtree.count);
+    
+    bt_tree_traversal traversal = {
+        .tree = &testtree
+    };
+    
+    bt_node *node = 0;
+    while ((node = bt_tree_next(&traversal))){
+        assert_eq(*(i64*)node->data, testval, "Inserted value does not match expected %llx found %llx",testval,*(i64*)node->data);
+    }
 
     bt_tree_debug(&testtree);
 
@@ -181,5 +194,24 @@ bool bt_test(){
     assert(rb_tree_test());
 
     return true;
+}
 
+void bt_destroy_node(bt_tree *tree, bt_node *node){
+    if (!node) return;
+    for (int i = 0; i < 2; i++)
+        bt_destroy_node(tree, node->children[i]);
+    bt_tree_free(tree, node);
+}
+
+void bt_reset(bt_tree *tree){
+    if (!tree) return;
+    bt_destroy_node(tree,tree->root);
+    tree->root = 0;
+    tree->count = 0;
+}
+
+void bt_destroy(bt_tree *tree){
+    if (!tree) return;
+    bt_destroy_node(tree,tree->root);
+    *tree = (bt_tree){};
 }

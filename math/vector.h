@@ -167,7 +167,7 @@ static __inline__ __attribute__((always_inline)) float vmagnitude_vector2(float3
     return 1.f/rinv[0];
 }
 
-static inline float vector2_magnitude(vector2 v)
+static  __inline__ __attribute__((always_inline)) float vector2_magnitude(vector2 v)
 {
     float32x2_t xy = vld1_f32_b(&v.x);  // [x, y]
     return vmagnitude_vector2(xy);
@@ -203,4 +203,8 @@ static inline vector2 vector2_lerp(vector2 a, vector2 b, float f){
 
 static inline float vector2_dot(vector2 a, vector2 b){
     return a.x * b.x + a.y * b.y;
+}
+
+static inline bool vector2_eq(vector2 a, vector2 b){
+  return abs(a.x - b.x) < EPSILON && abs(a.y - b.y) < EPSILON;
 }
