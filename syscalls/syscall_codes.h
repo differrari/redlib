@@ -60,3 +60,5 @@
 #define SIGNAL_HANDLER_CODE         81
 
 #define IN_CASE_OF_JS_CODE          99
+
+#define THREAD_INSPECT_CODE         100
