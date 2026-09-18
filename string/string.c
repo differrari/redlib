@@ -390,7 +390,7 @@ size_t string_format_va_buf(const char *restrict fmt, char *restrict out, size_t
         if (precision_set && precision < 0) precision_set = 0;
         int had_precision = precision_set;
 
-        enum { LEN_DEF, LEN_HH, LEN_H, LEN_L, LEN_LL, LEN_Z, LEN_T, LEN_J } len = LEN_DEF;
+        enum { LEN_HH, LEN_H, LEN_L, LEN_LL, LEN_Z, LEN_T, LEN_J } len = LEN_LL;
         switch (fmt[i]) {
             case 'h': if (fmt[i + 1] == 'h') { len = LEN_HH; i += 2; } else { len = LEN_H; i++; } break;
             case 'l': if (fmt[i + 1] == 'l') { len = LEN_LL; i += 2; } else { len = LEN_L; i++; } break;
@@ -469,11 +469,23 @@ size_t string_format_va_buf(const char *restrict fmt, char *restrict out, size_t
                 const string_slice sv = va_arg(args, string_slice);
                 append_strn(&p, &rem, sv.data, sv.length, &truncated_all);
             } continue;
+            
+            case 'r': {
+                const range_t rg = va_arg(args, range_t);
+                uint32_t n = 0;
+                numtmp[n++] = 'r';
+                numtmp[n++] = '{';
+                n += u64_to_dec(numtmp + n, rg.start);
+                numtmp[n++] = ',';
+                n += u64_to_dec(numtmp + n, rg.size);
+                numtmp[n++] = '}';
+                obuf = numtmp;
+                outlen = n;
+            } break;
 
             case 'p': {
-                uintptr_t v = (uintptr_t)va_arg(args, void *);
-                uint64_t x = (uint64_t)v;
-                for (int nib = 15; nib >= 0; --nib) sbuf[15 - nib] = "0123456789abcdef"[(x >> (nib * 4)) & 0xF];
+                uptr v = (uptr)va_arg(args, void *);
+                for (int nib = 15; nib >= 0; --nib) sbuf[15 - nib] = "0123456789abcdef"[(v >> (nib * 4)) & 0xF];
                 obuf = sbuf; outlen = 16; is_num = 1;
             } break;
 
