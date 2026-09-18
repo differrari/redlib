@@ -23,4 +23,6 @@ typedef chunk_array_t arr_stack_t;
 
 #define stack_test chunk_array_test
 
+#define stack_new_item chunk_array_new_item
+
 #define STACK_GET(type,array,index) (*(type*)stack_get(array,index))
