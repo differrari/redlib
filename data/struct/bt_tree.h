@@ -3,6 +3,7 @@
 #include "types.h"
 #include "alloc/allocate.h"
 
+//TODO: removal can leave nodes orphaned and not clean them up. This is currently by design (but might change) in case they still need to be addressed (by undo-redo for example). They should be stored somewhere to be cleaned up manually if this remains.
 typedef struct bt_node {
     u64 metadata;
     union {
@@ -34,7 +35,11 @@ static inline bt_tree bt_tree_create(size_t data_size, bt_balancing balancing){
     return bt_tree_create_alloc(data_size, balancing, zalloc, release);
 }
 
-void bt_tree_insert(bt_tree *tree, void* data, i64 key);
+bt_node* bt_tree_insert(bt_tree *tree, void* data, i64 key);
+bt_node* bt_tree_find_node(bt_tree *tree, i64 exact_key, void *ctx, tern (*find_query)(void *ctx, bt_tree *tree, bt_node *node));
+
+void bt_tree_remove(bt_tree *tree, bt_node *node);
+
 void bt_tree_debug(bt_tree *tree);
 
 bool bt_test();
@@ -47,6 +52,7 @@ typedef struct {
     u64 index;
     bt_tree *tree;
     bt_node *current;
+    bool backwards;
 } bt_tree_traversal;
 
 bt_node* bt_tree_next(bt_tree_traversal *traversal);

@@ -81,6 +81,12 @@ void rb_tree_balance(bt_tree *tree, bt_node *node){
     if (tree->root) tree->root->metadata = bt_tree_black;
 }
 
+void rb_tree_swap_balance(bt_tree *tree, bt_node *node, bt_node *replacement){
+    if (node->metadata == replacement->metadata) return;
+    print("Need to rebalance");
+    //TODO: rebalance rb tree
+}
+
 extern bool bt_tree_test_ascending(bt_tree *tree);
 
 bool rb_tree_test(){

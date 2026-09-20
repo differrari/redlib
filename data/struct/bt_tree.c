@@ -38,8 +38,8 @@ bt_tree bt_tree_create_alloc(size_t data_size, bt_balancing balancing, void *(*a
 
 extern void rb_tree_balance(bt_tree *tree, bt_node *new_node);
 
-void bt_tree_insert(bt_tree *tree, void* data, i64 key){
-    if (!tree) return;
+bt_node* bt_tree_insert(bt_tree *tree, void* data, i64 key){
+    if (!tree) return 0;
 
     bt_node *new_node = bt_tree_new_node(tree);
     if (tree->data_size && data) memcpy(&new_node->data, data, tree->data_size);
@@ -49,7 +49,7 @@ void bt_tree_insert(bt_tree *tree, void* data, i64 key){
 
     if (!tree->root) {
         tree->root = new_node;
-        return;
+        return new_node;
     }
 
     bt_node *parent = 0;
@@ -76,10 +76,102 @@ void bt_tree_insert(bt_tree *tree, void* data, i64 key){
     switch (tree->balancing){
         case bt_balancing_rb:
             rb_tree_balance(tree,new_node);
-            return;
+            return new_node;
+        default: return new_node;
+    }
+}
+
+bt_node* bt_tree_leftmost(bt_node *node){
+    if (!node) return 0;
+    if (node->lh) return bt_tree_leftmost(node->lh);
+    return node;
+}
+
+bt_node* bt_tree_rightmost(bt_node *node){
+    if (!node) return 0;
+    if (node->rh) return bt_tree_rightmost(node->rh);
+    return node;
+}
+
+void bt_remove_from_parent(bt_node *node){
+    if (!node->parent) return;
+    if (node->parent->lh == node) node->parent->lh = 0;
+    else node->parent->rh = 0;
+}
+
+void bt_tree_swap_with_parent(bt_tree *tree, bt_node *node){
+    if (!node->parent) return;
+    if (node->parent == tree->root || !node->parent->parent){
+        tree->root = node;
+        node->parent = 0;
+        return;
+    }
+    if (node->parent->parent->lh == node->parent){
+        node->parent->parent->lh = node;
+    } else {
+        node->parent->parent->rh = node;
+    }
+    node->parent = node->parent->parent;
+}
+
+extern void rb_tree_swap_balance(bt_tree *tree, bt_node *node, bt_node *replacement);
+
+void bt_tree_swap(bt_tree *tree, bt_node *node, bt_node *replacement){
+    i64 tmp_key = replacement->key;
+    replacement->key = node->key;
+    node->key = tmp_key;
+    if (tree->data_size){
+        void *tmp_data = bt_tree_alloc(tree, tree->data_size);
+        memcpy(tmp_data, replacement->data, tree->data_size);
+        memcpy(replacement->data, node->data, tree->data_size);
+        memcpy(node->data, tmp_data, tree->data_size);
+        bt_tree_free(tree, tmp_data);
+    }
+    switch (tree->balancing){
+        case bt_balancing_rb:
+            return rb_tree_swap_balance(tree, node,replacement);;
         default: return;
     }
+}
 
+void bt_tree_remove(bt_tree *tree, bt_node *node){
+    if (!tree || !node) return;
+    if (!node->lh && !node->rh){
+        print("Leaf");
+        return bt_remove_from_parent(node);
+    } 
+    if (!node->lh ^ !node->rh){
+        print("Single child");
+        return bt_tree_swap_with_parent(tree, node->lh ?: node->rh);
+    }
+    
+    print("Swap");
+    
+    bt_node *replacement = bt_tree_leftmost(node->rh);
+    
+    bt_tree_swap(tree,node,replacement);
+    bt_tree_remove(tree, replacement);
+}
+
+bt_node* bt_tree_find_node(bt_tree *tree, i64 exact_key, void* ctx, tern (*find_query)(void* ctx, bt_tree *tree, bt_node *node)){
+    bt_node *current = tree->root;
+
+    while (current){
+        tern cond = 0;
+        if (find_query) cond = find_query(ctx, tree,current);
+        else {
+            if (current->key == exact_key) cond = 0;
+            else if (current->key > exact_key) cond = -1;
+            else cond = 1;
+        }
+        if (cond == 0) return current;
+        if (cond == -1){
+            current = current->lh;
+        } else {
+            current = current->rh;
+        }
+    }
+    return 0;
 }
 
 void bt_tree_debug_node(bt_node *node, int depth){
@@ -99,13 +191,6 @@ void bt_tree_debug(bt_tree *tree){
     bt_tree_debug_node(tree->root,0);
 }
 
-
-bt_node* bt_tree_leftmost(bt_node *node){
-    if (!node) return 0;
-    if (node->lh) return bt_tree_leftmost(node->lh);
-    return node;
-}
-
 void* bt_traversal_reset(bt_tree_traversal *traversal){
     memset(traversal, 0, sizeof(bt_tree_traversal));
     return 0;
@@ -116,13 +201,13 @@ bt_node* bt_tree_next(bt_tree_traversal *traversal){
 
     if (!traversal->current){
         if (traversal->index != 0) return bt_traversal_reset(traversal);
-        traversal->current = bt_tree_leftmost(traversal->tree->root);
+        traversal->current = traversal->backwards ? bt_tree_rightmost(traversal->tree->root) : bt_tree_leftmost(traversal->tree->root);
         return traversal->current;
     }
 
-    if (traversal->current->rh){
+    if (traversal->backwards ? traversal->current->lh : traversal->current->rh){
         traversal->index++;
-        traversal->current = bt_tree_leftmost(traversal->current->rh);
+        traversal->current = traversal->backwards ? bt_tree_rightmost(traversal->current->lh) : bt_tree_leftmost(traversal->current->rh);
         return traversal->current;
     }
 
@@ -131,7 +216,7 @@ bt_node* bt_tree_next(bt_tree_traversal *traversal){
     if (traversal->current->parent){
         do {
             traversal->current = traversal->current->parent;
-        } while (traversal->current && traversal->current->key < key);
+        } while (traversal->current && (traversal->backwards ? traversal->current->key > key : traversal->current->key < key));
         traversal->index++;
         return traversal->current;
     }
@@ -140,9 +225,10 @@ bt_node* bt_tree_next(bt_tree_traversal *traversal){
 
 }
 
-bool bt_tree_test_ascending(bt_tree *tree){
+bool bt_tree_test_direction(bt_tree *tree, bool descending){
     bt_tree_traversal traversal = {
-        .tree = tree
+        .tree = tree,
+        .backwards = descending
     };
     
     bt_node *node = 0;
@@ -151,12 +237,20 @@ bool bt_tree_test_ascending(bt_tree *tree){
     while ((node = bt_tree_next(&traversal))){
         index = traversal.index;
         if (index){
-            assert_false(node->key < cur_value, "Nodes are not in ascending order, value %i is smaller than value %i",node->key,cur_value);
+            assert_false(descending ? node->key > cur_value : node->key < cur_value, "Nodes are not in order, value %i is smaller than value %i",node->key,cur_value);
         }
         cur_value = node->key;
     }
 
     return true;
+}
+
+bool bt_tree_test_ascending(bt_tree *tree){
+    return bt_tree_test_direction(tree, false);
+}
+
+bool bt_tree_test_descending(bt_tree *tree){
+    return bt_tree_test_direction(tree, true);
 }
 
 extern bool rb_tree_test();
@@ -190,6 +284,7 @@ bool bt_test(){
     bt_tree_debug(&testtree);
 
     assert(bt_tree_test_ascending(&testtree));
+    assert(bt_tree_test_descending(&testtree));
     
     assert(rb_tree_test());
 
