@@ -6,7 +6,6 @@ bool aabb2_line_intersect(aabb2 bb, vector2 origin, vector2 dir, float *t_hit, v
     vector2 t_min = (vector2) {-INFINITY, -INFINITY};
     vector2 t_max = (vector2) { INFINITY,  INFINITY};
 
-    // vertical (x_min...x_max) slab of AABB intersecting with line
     if (dir.x != 0.0f) {
         float invx = 1.0f / dir.x;
         float t1 = (bb.min.x - origin.x) * invx;
@@ -17,7 +16,6 @@ bool aabb2_line_intersect(aabb2 bb, vector2 origin, vector2 dir, float *t_hit, v
         if ((origin.x < bb.min.x) || (origin.x > bb.max.x)) return false;
     }
 
-    // horizontal (y_min...y_max) slab of AABB intersecting with line
     if (dir.y != 0.0f) {
         float invy = 1.0f / dir.y;
         float t1 = (bb.min.y - origin.y) * invy;
@@ -25,24 +23,19 @@ bool aabb2_line_intersect(aabb2 bb, vector2 origin, vector2 dir, float *t_hit, v
         t_min.y = minf(t1, t2);
         t_max.y = maxf(t1, t2);
     } else {
-        // horizontal case (check if line is outside)
         if ((origin.y < bb.min.y) || (origin.y > bb.max.y)) return false;
     }
 
-    // enter and exit intersection (if ray was an infinite line)
     float t_enter = maxf(t_min.x, t_min.y);
     float t_exit  = minf(t_max.x, t_max.y);
 
-    // limit line to ray (t=0..1) and check interval validity
-    if (minf(t_exit, 1.0f) < maxf(t_enter, 0.0f)) return false;
+    if (t_exit < t_enter || t_exit < 0.0f) return false;
 
-    // select first valid hit (if we want to know)
-    // * entry: origin outside AABB
-    // * exit:  origin inside AABB
-    if (t_hit) *t_hit = (t_enter >= 0.0f) ? t_enter : t_exit;
+    float t = (t_enter >= 0.0f) ? t_enter : t_exit;
+    if (t_hit) *t_hit = t;
     if (hit_loc){
-        hit_loc->x = origin.x + (dir.x * ((dir.x >= 0.0f) ? t_min.x : t_max.x));
-        hit_loc->y = origin.y + (dir.y * ((dir.y <= 0.0f) ? t_min.y : t_max.x));
+        hit_loc->x = origin.x + (dir.x * t);
+        hit_loc->y = origin.y + (dir.y * t);
     }
 
     return true;

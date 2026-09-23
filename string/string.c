@@ -390,7 +390,7 @@ size_t string_format_va_buf(const char *restrict fmt, char *restrict out, size_t
         if (precision_set && precision < 0) precision_set = 0;
         int had_precision = precision_set;
 
-        enum { LEN_HH, LEN_H, LEN_L, LEN_LL, LEN_Z, LEN_T, LEN_J } len = LEN_LL;
+        enum { LEN_DEF, LEN_HH, LEN_H, LEN_L, LEN_LL, LEN_Z, LEN_T, LEN_J } len = LEN_DEF;
         switch (fmt[i]) {
             case 'h': if (fmt[i + 1] == 'h') { len = LEN_HH; i += 2; } else { len = LEN_H; i++; } break;
             case 'l': if (fmt[i + 1] == 'l') { len = LEN_LL; i += 2; } else { len = LEN_L; i++; } break;
@@ -532,11 +532,12 @@ size_t string_format_va_buf(const char *restrict fmt, char *restrict out, size_t
                         case LEN_HH: u = (unsigned char)va_arg(args, int); break;
                         case LEN_H: u = (unsigned short)va_arg(args, int); break;
                         case LEN_L: u = va_arg(args, unsigned long); break;
-                        case LEN_LL: u = va_arg(args, unsigned long long); break;
                         case LEN_Z: u = (uint64_t)va_arg(args, size_t); break;
                         case LEN_T: u = (uint64_t)va_arg(args, uintptr_t); break;
                         case LEN_J: u = (uint64_t)va_arg(args, uint64_t); break;
-                        default: u = va_arg(args, unsigned int); break;
+                        default:
+                        case LEN_LL: u = va_arg(args, unsigned long long); break;
+                        // default: u = va_arg(args, unsigned int); break;
                     }
                     if (base == 10) {
                         char dtmp[32];

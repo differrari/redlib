@@ -172,6 +172,7 @@ static  __inline__ __attribute__((always_inline)) float vector2_magnitude(vector
     float32x2_t xy = vld1_f32_b(&v.x);  // [x, y]
     return vmagnitude_vector2(xy);
 }
+
 static inline vector2 vector2_sub(vector2 a, vector2 b){
     return (vector2){a.x-b.x,a.y-b.y};
 }
