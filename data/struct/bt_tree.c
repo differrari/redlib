@@ -173,7 +173,6 @@ void bt_tree_remove(bt_tree *tree, bt_node *node){
 
 bt_node* bt_tree_update(bt_tree *tree, bt_node *node, i64 new_key){
     bt_tree_remove(tree, node);
-    node->key = new_key;
     return bt_tree_insert(tree, node->data, new_key);
 }
 
@@ -239,7 +238,7 @@ bt_node* bt_tree_next(bt_tree_traversal *traversal){
     if (traversal->current->parent){
         do {
             traversal->current = traversal->current->parent;
-        } while (traversal->current && (traversal->backwards ? traversal->current->key > key : traversal->current->key < key));
+        } while (traversal->current && (traversal->backwards ? traversal->current->key >= key : traversal->current->key <= key));
         traversal->index++;
         return traversal->current;
     }
