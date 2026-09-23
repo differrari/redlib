@@ -11,6 +11,7 @@
 #include "files/system_module.h"
 #include "signals/signal_types.h"
 #include "draw/draw.h"
+#include "debug/inspect.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -92,6 +93,8 @@ int system_focus(const char *command, u32 focus_mode);
 void in_case_of_js_break_glass();
 
 void register_behavior();
+
+bool thread_inspect(debug_inspect_types type, u16 pid, u16 tid);
 
 static inline void yield(){
     msleep(0);
