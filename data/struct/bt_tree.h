@@ -35,18 +35,40 @@ static inline bt_tree bt_tree_create(size_t data_size, bt_balancing balancing){
     return bt_tree_create_alloc(data_size, balancing, zalloc, release);
 }
 
+bt_node* bt_tree_leftmost(bt_node *node);
+
+static inline bt_node* bt_tree_lowest(bt_node *node){
+    return bt_tree_leftmost(node);
+}
+
+bt_node* bt_tree_rightmost(bt_node *node);
+
+static inline bt_node* bt_tree_highest(bt_node *node){
+    return bt_tree_rightmost(node);
+}
+
 bt_node* bt_tree_insert(bt_tree *tree, void* data, i64 key);
+
+static inline bt_node* bt_tree_insert_ptr(bt_tree *tree, void* ptr, i64 key){
+    if (tree->data_size != sizeof(uptr)) return 0;
+    return bt_tree_insert(tree, &ptr, key);
+}
+
 bt_node* bt_tree_find_node(bt_tree *tree, i64 exact_key, void *ctx, tern (*find_query)(void *ctx, bt_tree *tree, bt_node *node));
 
 void bt_tree_remove(bt_tree *tree, bt_node *node);
 
 void bt_tree_debug(bt_tree *tree);
 
+size_t bt_tree_count(bt_tree *tree);
+
 bool bt_test();
 
 void bt_reset(bt_tree *tree);
 
 void bt_destroy(bt_tree *tree);
+
+bt_node* bt_tree_update(bt_tree *tree, bt_node *node, i64 new_key);
 
 typedef struct {
     u64 index;

@@ -93,25 +93,34 @@ bt_node* bt_tree_rightmost(bt_node *node){
     return node;
 }
 
-void bt_remove_from_parent(bt_node *node){
-    if (!node->parent) return;
+void bt_remove_from_parent(bt_tree *tree, bt_node *node){
+    if (!node || !tree) return;
+    if (!node->parent){
+        if (tree->root != node) return;
+        tree->root = 0;
+        bt_tree_debug(tree);
+        return;
+    }
     if (node->parent->lh == node) node->parent->lh = 0;
-    else node->parent->rh = 0;
+    else if (node->parent->rh == node) node->parent->rh = 0;
+    else return;
+    node->parent = 0;
 }
 
 void bt_tree_swap_with_parent(bt_tree *tree, bt_node *node){
     if (!node->parent) return;
-    if (node->parent == tree->root || !node->parent->parent){
+    bt_node *parent = node->parent;    
+    bt_node *grandparent = parent->parent;
+    
+    if (node->parent == tree->root || !grandparent){
         tree->root = node;
-        node->parent = 0;
-        return;
-    }
-    if (node->parent->parent->lh == node->parent){
-        node->parent->parent->lh = node;
-    } else {
-        node->parent->parent->rh = node;
-    }
-    node->parent = node->parent->parent;
+    } else if (grandparent->lh == parent){
+        grandparent->lh = node;
+    } else if (grandparent->rh == parent) {
+        grandparent->rh = node;
+    } else return;
+    node->parent = grandparent;
+    parent->parent = 0;
 }
 
 extern void rb_tree_swap_balance(bt_tree *tree, bt_node *node, bt_node *replacement);
@@ -138,11 +147,19 @@ void bt_tree_remove(bt_tree *tree, bt_node *node){
     if (!tree || !node) return;
     if (!node->lh && !node->rh){
         print("Leaf");
-        return bt_remove_from_parent(node);
+        bt_remove_from_parent(tree,node);
+        tree->count = bt_tree_count(tree);
+        return;
     } 
     if (!node->lh ^ !node->rh){
         print("Single child");
-        return bt_tree_swap_with_parent(tree, node->lh ?: node->rh);
+        bt_node *new_parent = node->lh ?: node->rh;
+        bt_tree_swap_with_parent(tree, new_parent);
+        node->lh = 0;
+        node->rh = 0;
+        node->parent = 0;
+        tree->count = bt_tree_count(tree);
+        return;
     }
     
     print("Swap");
@@ -151,6 +168,13 @@ void bt_tree_remove(bt_tree *tree, bt_node *node){
     
     bt_tree_swap(tree,node,replacement);
     bt_tree_remove(tree, replacement);
+    tree->count = bt_tree_count(tree);
+}
+
+bt_node* bt_tree_update(bt_tree *tree, bt_node *node, i64 new_key){
+    bt_tree_remove(tree, node);
+    node->key = new_key;
+    return bt_tree_insert(tree, node->data, new_key);
 }
 
 bt_node* bt_tree_find_node(bt_tree *tree, i64 exact_key, void* ctx, tern (*find_query)(void* ctx, bt_tree *tree, bt_node *node)){
@@ -176,7 +200,7 @@ bt_node* bt_tree_find_node(bt_tree *tree, i64 exact_key, void* ctx, tern (*find_
 
 void bt_tree_debug_node(bt_node *node, int depth){
     if (!node) {
-        // print("NIL");
+        print("%sNIL",indent_by(depth));
         return;
     }
 
@@ -197,8 +221,7 @@ void* bt_traversal_reset(bt_tree_traversal *traversal){
 }
 
 bt_node* bt_tree_next(bt_tree_traversal *traversal){
-    if (!traversal || !traversal->tree || !traversal->tree->root || traversal->tree->count <= traversal->index) return bt_traversal_reset(traversal);
-
+    if (!traversal || !traversal->tree || !traversal->tree->root || traversal->index >= traversal->tree->count) return bt_traversal_reset(traversal);
     if (!traversal->current){
         if (traversal->index != 0) return bt_traversal_reset(traversal);
         traversal->current = traversal->backwards ? bt_tree_rightmost(traversal->tree->root) : bt_tree_leftmost(traversal->tree->root);
@@ -223,6 +246,20 @@ bt_node* bt_tree_next(bt_tree_traversal *traversal){
 
     return 0;
 
+}
+
+size_t bt_tree_count(bt_tree *tree){
+    bt_tree_traversal traversal = {
+        .tree = tree,
+        .backwards = false
+    };
+    bt_node *node = 0;
+    int count = 0;
+    while ((node = bt_tree_next(&traversal))){
+        count++;
+        continue;
+    }
+    return count;
 }
 
 bool bt_tree_test_direction(bt_tree *tree, bool descending){
