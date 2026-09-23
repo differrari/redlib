@@ -169,8 +169,12 @@ static __inline__ __attribute__((always_inline)) float vmagnitude_vector2(float3
 
 static  __inline__ __attribute__((always_inline)) float vector2_magnitude(vector2 v)
 {
+#ifdef SIMD_V2_MAG
     float32x2_t xy = vld1_f32_b(&v.x);  // [x, y]
     return vmagnitude_vector2(xy);
+#else
+    return sqrtf((v.x*v.x) + (v.y*v.y));
+#endif
 }
 
 static inline vector2 vector2_sub(vector2 a, vector2 b){
