@@ -29,14 +29,12 @@ bool reserve_mount_point(module_root* modules, char* mount_point, u16 owner){
 bool load_module_to(module_root* modules, system_module *module){
     if (!module->version){
         string format = string_format("[MODULE error] Version number cannot be null for module /%s",module->mount);
-        if (strcmp(module->mount,"/console")) {
-            print(format.data);
-        }
+        print(format.data);
         string_free(format);
         return false;
     }
     if (module->init && !module->init(module)){
-        if (strcmp(module->mount,"/console")) print("[MODULE error] failed to load module %s. Init failed",module->name);
+        print("[MODULE error] failed to load module %s. Init failed",module->name);
         return false;
     }
     if (!modules->map) modules->map = hash_map_create(64);
