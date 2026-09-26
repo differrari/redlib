@@ -61,10 +61,7 @@ typedef struct module_file {
     fs_entry_type entry_type;
     uint64_t fid;
     uint64_t serial;
-    uptr buf;//DEPRECATED
     void *private_data;
-    bool ignore_cursor;//DEPRECATED
-    bool read_only;//DEPRECATED
     data_signature data_type;
     buffer file_buffer;
     uint64_t references;
