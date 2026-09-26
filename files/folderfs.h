@@ -124,7 +124,7 @@ static inline FS_RESULT folderfs_open(const char *path, file *fd){
     return FS_RESULT_SUCCESS;
 }
 
-buffer* (*folderfs_resolve_fd)(file *fd);
+static buffer* (*folderfs_resolve_fd)(file *fd);
 
 static inline size_t folderfs_read(file *fd,  char *buf, size_t size, file_offset offset){
     if (!folderfs_resolve_fd) return 0;
@@ -137,7 +137,7 @@ static inline size_t folderfs_write(file *fd, const char *buf, size_t size, file
     return s;
 }
 
-bool folderfs_stat(const char *path, fs_stat *out_stat){
+static bool folderfs_stat(const char *path, fs_stat *out_stat){
     if (!out_stat) return false;
     if (strlen(path) && *path == '/') path++;
     if (!strlen(path)){
@@ -153,4 +153,34 @@ bool folderfs_stat(const char *path, fs_stat *out_stat){
     out_stat->size = resolution.file->file_buffer.buffer_size;
     out_stat->data_type = resolution.file->data_type;
     return true;
+}
+
+static inline FS_RESULT folderfs_trace_open(const char *path, file *fd){
+     FS_RESULT res = folderfs_open(path, fd);
+     print("folderfs_trace_open result %llx",res);
+     return res;
+}
+
+static inline size_t folderfs_trace_read(file *fd, char *buf, size_t size, file_offset offset){
+     size_t res = folderfs_read(fd, buf, size, offset);
+     print("folderfs_trace_read result %llx",res);
+     return res;
+}
+
+static inline size_t folderfs_trace_write(file *fd, const char *buf, size_t size, file_offset offset){
+     size_t res = folderfs_write(fd, buf, size, offset);
+     print("folderfs_trace_write result %llx",res);
+     return res;
+}
+
+static inline bool folderfs_trace_stat(const char *path, fs_stat *outstat){
+     bool res = folderfs_stat(path, outstat);
+     print("folderfs_trace_stat result %llx",res);
+     return res;
+}
+
+static inline size_t folderfs_trace_readdir(const char *path, void* buf, size_t size, file_offset *offset){
+     size_t res = folderfs_readdir(path, buf, size, offset);
+     print("folderfs_trace_readdir result %llx",res);
+     return res;
 }

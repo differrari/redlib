@@ -26,15 +26,15 @@ static inline module_file* make_entry(const char *name, fs_backing_type back_typ
         .entry_type = ent_type,
         .file_buffer = buf,
         .references = 0,
-        .read_only = false,
         .data_type = data_type,
+        // .permissions = fs_permission_shared,
         .fid = hash_filename(name),
         .serial = hash_filename(name),
     });
     return stack_get(entries, stack_count(entries)-1);
 }
 
-static inline bool make_complex_entry(const char *name, fs_backing_type back_type, fs_entry_type ent_type, data_signature data_type, file_actions actions, string alias){
+static inline module_file* make_complex_entry(const char *name, fs_backing_type back_type, fs_entry_type ent_type, data_signature data_type, file_actions actions, string alias){
     if (!entries) entries = stack_create(sizeof(module_file),32);
     stack_push(entries,&(module_file){
         .name = string_from_literal(name),
@@ -46,11 +46,11 @@ static inline bool make_complex_entry(const char *name, fs_backing_type back_typ
         .entry_type = ent_type,
         .actions = actions,
         .references = 0,
-        .read_only = false,
         .data_type = data_type,
+        // .permissions = fs_permission_shared,
         .fid = hash_filename(name),
     });
-    return true;
+    return stack_get(entries, stack_count(entries)-1);
 }
 
 static inline module_file* eval_entry(string_slice path){

@@ -47,6 +47,13 @@ typedef struct {
     file alias_fd;
 } alias_info_t;
 
+typedef enum {
+    fs_permission_none,//Only the kernel can access this
+    fs_permission_shared,//Everyone can access this
+    fs_permission_instanced,//Everyone can access their own copy of this
+    fs_permission_request,//Need to ask for permission to access this, if not given, treated like none. If given, treated like shared
+} fs_permission_level;
+
 typedef struct module_file {
     string name;
     alias_info_t alias_info;
@@ -59,7 +66,6 @@ typedef struct module_file {
     bool ignore_cursor;//DEPRECATED
     bool read_only;//DEPRECATED
     data_signature data_type;
-    size_t file_size;//DEPRECATED
     buffer file_buffer;
     uint64_t references;
     file_actions actions;
@@ -87,6 +93,8 @@ typedef struct system_module {
 
     file_transform_fn transform;
 
+    // fs_permission_level permissions;
+    
     alias_info_t alias_info; 
 
 } system_module;
