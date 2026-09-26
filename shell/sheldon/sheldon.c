@@ -4,6 +4,7 @@
 #include "environment/env_types.h"
 #include "data/serialize/binary_serial.h"
 #include "kbd_helper.h"
+#include "debug/inspect.h"
 
 void sheldon_init(shell_handle *handle){
     shell_print(handle, "$heldon");
@@ -43,8 +44,10 @@ bool sheldon_run_cmd(shell_handle *handle, string_slice fullcmd){
     sheldon_ctx* loctx = handle->local_ctx;
     if (loctx->script_only) return false;
     
-    int32_t proc = system_focus(fullcmd.data, EXEC_MODE_KEEP_FOCUS);
+    i32 proc = system_focus(fullcmd.data, EXEC_MODE_KEEP_FOCUS);
     if (!proc || proc == -1) return false;
+    
+    thread_inspect(TINSPECT_CONTROL | TINSPECT_STATE | TINSPECT_INPUT | TINSPECT_OUTPUT, proc, 1);
 
     string output_string = string_format("/proc/%i/out", proc);
     string state_string = string_format("/proc/%i/state", proc);
