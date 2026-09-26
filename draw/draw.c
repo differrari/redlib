@@ -172,15 +172,6 @@ void fb_draw_partial_img(draw_ctx *ctx, uint32_t *img, uint32_t x, uint32_t y, u
 gpu_rect fb_draw_line(draw_ctx *ctx, i32 x0, i32 y0, i32 x1, i32 y1, color color){
     const uint32_t ox0 = x0, oy0 = y0, ox1 = x1, oy1 = y1;
 
-    if (x0 < 0) x0 = 0;
-    if (x0 >= (i32)ctx->width) x0 = ctx->width-1;
-    if (x1 < 0) x1 = 0;
-    if (x1 >= (i32)ctx->width) x1 = ctx->width-1;
-    if (y0 < 0) y0 = 0;
-    if (y0 >= (i32)ctx->height) y0 = ctx->height-1;
-    if (y1 < 0) y1 = 0;
-    if (y1 >= (i32)ctx->height) y1 = ctx->height-1;
-
     int dx = abs(x0 - x1);
     int sx = (x0 < x1) ? 1 : -1;
     int dy = abs(y1 - y0);
@@ -189,7 +180,7 @@ gpu_rect fb_draw_line(draw_ctx *ctx, i32 x0, i32 y0, i32 x1, i32 y1, color color
     int err = (dx > dy ? dx : -dy) / 2, e2 = 0;
 
     for (;;) {
-        fb_draw_raw_pixel(ctx, x0, y0, color);
+        fb_draw_raw_pixel(ctx, x0, y0, color);//NOTE: we're relying on this function doing bounds checking
         if (x0 == x1 && y0 == y1) break;
         e2 = err;
         if (e2 > -dx) { err -= dy; x0 += sx; }
