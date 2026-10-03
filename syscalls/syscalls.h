@@ -12,6 +12,7 @@
 #include "signals/signal_types.h"
 #include "draw/draw.h"
 #include "debug/inspect.h"
+#include "files/pipes.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -66,6 +67,7 @@ extern bool socket_receive(SocketHandle *handle, void *packet, size_t size, net_
 extern int32_t socket_close(SocketHandle *handle);
 
 extern FS_RESULT openf(const char* path, file* descriptor);
+extern FS_RESULT pipef(const char *src, const char *dest, pipe_options options, file* descriptor);
 extern size_t readf(file *descriptor, char* buf, size_t size);
 extern size_t writef(file *descriptor, const char* buf, size_t size);
 extern size_t sreadf(const char* path, void* buf, size_t size);

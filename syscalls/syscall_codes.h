@@ -47,6 +47,8 @@
 #define FILE_TRANS_CODE             68
 
 #define DIR_LIST_CODE               70
+#define PIPE_OPEN_CODE              75
+#define PIPE_CLOSE_CODE             76
 
 #define LOAD_FSMODULE_CODE          71
 #define UNLOAD_FSMODULE_CODE        72

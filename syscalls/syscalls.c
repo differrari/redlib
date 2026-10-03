@@ -14,11 +14,6 @@ int print(const char *fmt, ...){
     va_end(args);
     if (n >= sizeof(log_buf)) log_buf[sizeof(log_buf)-1] = '\0';
     printl(log_buf);
-#ifndef CROSS
-    file fd2 = { .id = 2 };
-    writef(&fd2, log_buf, strlen(log_buf));
-    writef(&fd2, "\r\n", 2);
-#endif
     current_shell_print(log_buf);
     return 0;
 }
