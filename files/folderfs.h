@@ -117,7 +117,7 @@ static inline FS_RESULT folderfs_open(const char *path, file *fd){
     string_free(id_str);
     fd->cursor = 0;
     fd->data_type = resolution.file->data_type;
-    if (id && folderfs_custom_open){
+    if (folderfs_custom_open){
         const char *lpc = seek_to(resolution.file->name.data,'/');
         return folderfs_custom_open(id, slice_from_literal(lpc), fd);
     }
