@@ -85,3 +85,12 @@ bool slice_ends_with(string_slice slice, string_slice seek){
     }
     return true;
 }
+
+bool slice_starts_with(string_slice slice, string_slice seek){
+    i32 diff = slice.length-seek.length;
+    if (diff < 0) return false;
+    for (u32 i = 0; i < seek.length; i++){
+        if (slice.data[i] != seek.data[i]) return false;
+    }
+    return true;
+}

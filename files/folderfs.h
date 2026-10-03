@@ -78,6 +78,8 @@ static i64 folderfs_create_folder(void *ctx){
     return linked_list_count(data_list);
 }
 
+//TODO: Destroy folders
+
 static bool match_param(string_slice slice, string_slice param){
     if (slice_lit_match(param, ":id", true)){
         for (size_t i = 0; i < slice.length; i++) if (!is_digit(slice.data[i])) return false;

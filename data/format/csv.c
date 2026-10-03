@@ -3,7 +3,7 @@
 #include "tokenizer/tokenizer.h"
 #include "helpers/token_stream.h"
 
-void read_csv(string_slice slice, csv_handler on_val){
+void read_csv(string_slice slice, csv_handler on_val, void *ctx){
     Scanner s = scanner_make(slice.data, slice.length);
     Tokenizer tk = tokenizer_make(&s);
     tk.comment_type = TOKENIZER_COMMENT_TYPE_HASH;
@@ -21,7 +21,7 @@ void read_csv(string_slice slice, csv_handler on_val){
             case TOK_CONST:
             case TOK_NUMBER:
             {
-                on_val(token_to_slice(t));
+                on_val(token_to_slice(t), ctx);
             } break;
             case TOK_COMMA: {
                 

@@ -1,7 +1,8 @@
 #pragma once
 
 #include "types.h"
-#include "std/string.h"
+#include "string/string.h"
+#include "data/struct/chunk_array.h"
 
 typedef struct {
     bool valid;
@@ -9,6 +10,7 @@ typedef struct {
     string author;
     string version;
     string id;
+    chunk_array_t *entitlements;
 } package_info;
 
 #ifdef __cplusplus
