@@ -122,5 +122,5 @@ typedef int8_t i8;
 
 typedef struct {
     uptr start;
-    size_t size;
+    i64 size;
 } range_t;

@@ -1,5 +1,7 @@
 #pragma once
 
+extern int print(const char *fmt, ...);
+
 typedef enum {
     MOG_ERROR,
     MOG_IMPLEMENTATION_ERROR,
