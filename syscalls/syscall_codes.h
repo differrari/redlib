@@ -45,6 +45,7 @@
 #define FILE_STAT_CODE              66
 #define FILE_TRNC_CODE              67
 #define FILE_TRANS_CODE             68
+#define FILE_SYNC_CODE              69
 
 #define DIR_LIST_CODE               70
 #define PIPE_OPEN_CODE              75

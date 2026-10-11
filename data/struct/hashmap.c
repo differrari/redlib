@@ -185,18 +185,21 @@ int hash_map_put_dictionary(hash_map_t* map, const char* str, void* value){
     return hash_map_put(map, str, strlen(str), value);
 }
 
-void* hash_map_get(const hash_map_t* map, const void* key, uint64_t key_len){
-    if (!map) return 0;
+bool hash_map_has_key(const hash_map_t* map, const void* key, uint64_t key_len, void** out){
+    if (!map) return false;
 
     uint64_t h = map->hash_fn(key,key_len);
     uint64_t idx = h & (map->capacity-1);
     hash_map_entry_t* e = map->buckets[idx];
 
     while(e){
-        if(e->hash == h && map->keyeq_fn(e->key, e->key_len, key, key_len)) return e->value;
+        if(e->hash == h && map->keyeq_fn(e->key, e->key_len, key, key_len)) {
+            if (out) *out = e->value;
+            return true;
+        }
         e = e->next;
     }
-    return 0;
+    return false;
 }
 
 void* hash_map_get_dictionary(const hash_map_t *map, const char *str){

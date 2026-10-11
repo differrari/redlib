@@ -36,7 +36,12 @@ void hash_map_set_hash(hash_map_t* map, hash_map_hash_fn hash_fn, hash_map_keyeq
 void hash_map_set_value_dispose(hash_map_t* map, void (*dispose_fn)(void*));
 int hash_map_put(hash_map_t* map, const void* key, uint64_t key_len, void* value);
 int hash_map_put_dictionary(hash_map_t* map, const char* key, void* value);
-void* hash_map_get(const hash_map_t* map, const void* key, uint64_t key_len);
+bool hash_map_has_key(const hash_map_t* map, const void* key, uint64_t key_len, void** out);
+static inline void* hash_map_get(const hash_map_t* map, const void* key, uint64_t key_len){
+    void *val = 0;
+    if (!hash_map_has_key(map, key, key_len, &val)) return 0;
+    return val;
+}
 
 void* hash_map_get_dictionary(const hash_map_t *map, const char *str);
 bool hash_map_remove(hash_map_t* map, const void* key, uint64_t key_len, void** out_value);

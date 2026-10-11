@@ -44,6 +44,7 @@ void seek(file *descriptor, int64_t offset, SEEK_TYPE type){
     }
     if (new_cursor > descriptor->size) return;//TEST: check what happens if we intentionally mess with the descriptor size before changing
     descriptor->cursor = new_cursor;
+    syncf(descriptor, true);
 }
 
 void* realloc_sized(void* old_ptr, size_t old_size, size_t new_size){

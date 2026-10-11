@@ -53,6 +53,7 @@ syscall_def swritef,    FILE_SIMPLE_WRITE_CODE
 syscall_def statf,      FILE_STAT_CODE
 syscall_def truncatef,  FILE_TRNC_CODE
 syscall_def transformf, FILE_TRANS_CODE
+syscall_def syncf,    FILE_SYNC_CODE
 
 syscall_def send_signal, SIGNAL_SEND_CODE
 syscall_def handle_signal, SIGNAL_HANDLER_CODE

@@ -82,6 +82,7 @@ extern bool unload_fsmodule();
 extern bool send_signal(signal_types type, u16 proc_id);
 extern bool handle_signal(signal_types type, signal_handler handler);
 
+void syncf(file *descriptor, bool replace);
 void seek(file *descriptor, int64_t offset, SEEK_TYPE type);
 void* realloc_sized(void* old_ptr, size_t old_size, size_t new_size);
 
@@ -93,6 +94,10 @@ int system(const char *command);
 int system_focus(const char *command, u32 focus_mode);
 
 void in_case_of_js_break_glass();
+
+static inline void shame(){
+    in_case_of_js_break_glass();
+}
 
 void register_behavior();
 
