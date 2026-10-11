@@ -131,6 +131,7 @@ static inline FS_RESULT vfs_open(const char *path, file *fd){
     
     //TODO: bindings for aliases
     fd->id = mfile->fid;
+    fd->size = mfile->file_buffer.buffer_size;
     return FS_RESULT_SUCCESS;
 }
 
@@ -220,7 +221,9 @@ static inline size_t vfs_write(file *fd, const char* buf, size_t size, file_offs
         fd->id = mfile->fid;
         return res;
     } 
-    return buffer_write_to(&mfile->file_buffer, buf, size, fd->cursor);
+    size_t n = buffer_write_to(&mfile->file_buffer, buf, size, fd->cursor);
+    fd->size = mfile->file_buffer.buffer_size;
+    return n;
 }
 
 static inline bool vfs_stat(const char *path, fs_stat *out_stat){
