@@ -52,6 +52,7 @@ utils/package_info.c
 utils/embedded_fmt/tcf.c
 draw/rects.c
 draw/pathdraw.c
+draw/color.c
 draw/draw.c
 draw/textdraw.c
 syscalls/syscalls.c

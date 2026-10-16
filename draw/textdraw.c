@@ -165,7 +165,6 @@ void pos_to_lin_col(u32 pos, string_slice content, i32 *lin, i32 *col){
     }
 }
 
-
 void fb_draw_raw_char(draw_ctx *ctx, uint32_t x, uint32_t y, char c, uint32_t scale, uint32_t color){
     const uint8_t* glyph = font8x8_basic[(u8)c];
     const uint32_t char_size = CHAR_SIZE * scale;

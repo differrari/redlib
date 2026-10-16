@@ -15,6 +15,7 @@ typedef struct {
 void ts_init(TokenStream *ts, Tokenizer *tz);
 bool ts_peek(TokenStream *ts, Token *t);
 bool ts_next(TokenStream *ts, Token *t);
+bool ts_next_expecting(TokenStream *ts, Token *t, TokenKind expect);
 
 bool ts_expect(TokenStream *ts, TokenKind k, Token *out);
 bool ts_expect_operator(TokenStream *ts, const char *op);

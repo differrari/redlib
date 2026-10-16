@@ -59,6 +59,9 @@ typedef struct {
     TokenizerError err;
     uint32_t err_pos;
     bool skip_type_check;
+    bool (*custom_valid_identifier)(bool is_first, char c);
+    // bool (*custom_valid_number)(Scanner *s, Token *tok);
+    // bool (*custom_valid_string)(Scanner *s, Token *tok);
     bool parse_newline;
     TokenizerComment comment_type;
 } Tokenizer;
@@ -76,7 +79,11 @@ static inline bool tokenizer_ok(const Tokenizer *t) {
     return !t->failed;
 }
 
-bool tokenizer_next(Tokenizer *t, Token *out);
+bool tokenizer_next_expecting(Tokenizer *t, Token *out, TokenKind expect);
+
+static inline bool tokenizer_next(Tokenizer *t, Token *out){
+    return tokenizer_next_expecting(t, out, 0);
+}
 
 static inline string_slice token_to_slice(Token t){
     return (string_slice){ .data = (char*)t.start, .length = t.length };

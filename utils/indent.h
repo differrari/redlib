@@ -1,5 +1,5 @@
 #pragma once
 
-extern char *indent;
+extern char *_indent;
 #define MAX_DEPTH 64
-#define indent_by(depth) (indent + (MAX_DEPTH-(depth >= MAX_DEPTH ? 1 : depth)))
+#define indent_by(depth) (_indent + (MAX_DEPTH-(depth >= MAX_DEPTH ? 1 : depth)))

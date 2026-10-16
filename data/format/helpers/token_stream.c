@@ -23,6 +23,15 @@ bool ts_next(TokenStream *ts, Token *t) {
     return tokenizer_next(ts->tz, t);
 }
 
+bool ts_next_expecting(TokenStream *ts, Token *t, TokenKind expect) {
+    if (ts->has_cur) {
+        if (t) *t = ts->cur;
+        ts->has_cur = false;
+        return true;
+    }
+    return tokenizer_next_expecting(ts->tz, t, expect);
+}
+
 bool ts_expect(TokenStream *ts, TokenKind k, Token *out) {
     Token t;
     if (!ts_next(ts, &t)) return false;

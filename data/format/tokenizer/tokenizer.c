@@ -9,7 +9,7 @@ static void tokenizer_fail(Tokenizer *t, TokenizerError err) {
 }
 
 static bool skip_ws_and_comments(Tokenizer *t, Token *out) {
-    Scanner *s = t-> s;
+    Scanner *s = t->s;
     for (;;) {
         scan_skip_ws(s, !t->parse_newline);
         if (scan_eof(s)) return false;
@@ -73,13 +73,17 @@ static bool skip_ws_and_comments(Tokenizer *t, Token *out) {
     return false;
 }
 
-static void read_identifier(Scanner *s, Token *tok) {
+static inline bool tokenizer_default_valid_identifier_c(bool is_first, char c){
+    return is_alpha(c) || c == '_' || (!is_first && is_digit(c));
+}
+
+static void read_identifier(Tokenizer *t, Scanner *s, Token *tok) {
     uint32_t start = s->pos;
     scan_next(s);
 
     while (!scan_eof(s)) {
         char c = scan_peek(s);
-        if (!(is_alnum(c) || c == '_')) break;
+        if (!(t->custom_valid_identifier ? t->custom_valid_identifier(false, c) : tokenizer_default_valid_identifier_c(false, c))) break;
         scan_next(s);
     }
 
@@ -259,7 +263,7 @@ static const char *ops3[] = {">>>", "<<=", ">>=", "===", 0};
 static const char *ops2[] = {"==", "!=", "<=", ">=", "&&", "||", "<<", ">>", "+=", "-=", "*=", "/=", "%=", "&=", "|=", "^=", "::", "->", 0};
 static const char ops1[] = "+-*/%=<>!&|^~?";
 
-static bool read_operator(Scanner *s, Token *tok) {
+static bool read_operator(bool expected, Scanner *s, Token *tok) {
     const char *buf = s->buf;
     uint32_t len = s->len;
     uint32_t pos = s->pos;
@@ -308,7 +312,7 @@ static bool read_operator(Scanner *s, Token *tok) {
 
     for (int i = 0; ops1[i]; i++) {
         if (c == ops1[i]) {
-            if (c == '-' && pos+1 < len && (is_digit(buf[pos+1]) || buf[pos+1] == '.')) return false;
+            if (!expected && c == '-' && pos+1 < len && (is_digit(buf[pos+1]) || buf[pos+1] == '.')) return false;
             s->pos = pos + 1;
             tok->kind = TOK_OPERATOR;
             tok->start = buf + pos;
@@ -347,7 +351,75 @@ static bool read_delim(Scanner *s, Token *tok) {
     return true;
 }
 
-bool tokenizer_next(Tokenizer *t, Token *out) {
+bool tokenizer_valid_identifier(char c, Tokenizer *t, Scanner *s, Token *out, bool expected){
+    if (t->custom_valid_identifier ? t->custom_valid_identifier(true, c) : tokenizer_default_valid_identifier_c(true, c)) {
+        read_identifier(t, s, out);
+        return true;
+    }
+    return false;
+}
+
+bool tokenizer_valid_operator(char c, Tokenizer *t, Scanner *s, Token *out, bool expected){
+    return read_operator(expected, s, out);
+}
+
+bool tokenizer_valid_number(char c, Tokenizer *t, Scanner *s, Token *out, bool expected){
+    if (c == '-' || c == '.' || (c >= '0' && c <= '9')) {
+        uint32_t pos_before = s->pos;
+        if (read_number(t, out)) return true;
+
+        if (c != '-' && c != '.'){
+            tokenizer_fail(t, TOKENIZER_ERR_INVALID_NUMBER);
+            out->kind = TOK_INVALID;
+            out->start = s->buf + pos_before;
+            out->length = 0;
+            out->pos = pos_before;
+            return false;
+        } else s->pos = pos_before;
+    }
+    return false;
+}
+
+bool tokenizer_valid_string(char c, Tokenizer *t, Scanner *s, Token *out, bool expected){
+    if (c == '"') {
+        uint32_t pos_before = s->pos;
+        if (read_string(t, out)) return true;
+        
+        tokenizer_fail(t, TOKENIZER_ERR_UNTERMINATED_STRING);
+        out->kind = TOK_INVALID;
+        out->start = s->buf + pos_before;
+        out->length = 0;
+        out->pos = pos_before;
+        return false;
+    }
+    return false;
+}
+
+bool tokenizer_valid_delim(char c, Tokenizer *t, Scanner *s, Token *out, bool expected){
+    return read_delim(s, out);
+}
+
+typedef struct {
+    TokenKind kind;
+    bool (*check)(char c, Tokenizer *t, Scanner *s, Token *out, bool expected);
+} tokenizer_valid_check;
+
+ tokenizer_valid_check tokenizer_checks[] ={
+    {.kind = TOK_IDENTIFIER, .check = tokenizer_valid_identifier},
+    {.kind = TOK_OPERATOR, .check = tokenizer_valid_operator},
+    {.kind = TOK_NUMBER, .check = tokenizer_valid_number},
+    {.kind = TOK_STRING, .check = tokenizer_valid_string},
+    {.kind = TOK_INVALID, .check = tokenizer_valid_delim}
+};
+
+// NOTE: Default order of operations:
+// 1. Identifier
+// 2. Operators
+// 3. Numbers
+// 4. Strings
+// 5. Delimiter (paren, brack, semicolon, etc)
+// 6. Symbol
+bool tokenizer_next_expecting(Tokenizer *t, Token *out, TokenKind expect) {
     if (t->failed) {
         out->kind = TOK_INVALID;
         out->start = 0;
@@ -378,39 +450,33 @@ bool tokenizer_next(Tokenizer *t, Token *out) {
     }
 
     char c = scan_peek(s);
-
-    if (is_alpha(c) || c == '_') {
-        read_identifier(s, out);
-        return true;
+    
+    if (expect){
+        for (u32 i = 0; i < N_ARR(tokenizer_checks); i++){
+            if (tokenizer_checks[i].kind == expect){
+                if (tokenizer_checks[i].check(c, t, s, out,true)) return true;
+                if (t->failed) {
+                    out->kind = TOK_INVALID;
+                    out->start = 0;
+                    out->length = 0;
+                    out->pos = t->err_pos;
+                    return false;
+                }
+                break;
+            }
+        }
     }
 
-    if (read_operator(s, out)) return true;
-
-    if (c == '-' || c == '.' || (c >= '0' && c <= '9')) {
-        uint32_t pos_before = s->pos;
-        if (read_number(t, out)) return true;
-
-        tokenizer_fail(t, TOKENIZER_ERR_INVALID_NUMBER);
-        out->kind = TOK_INVALID;
-        out->start = s->buf + pos_before;
-        out->length = 0;
-        out->pos = pos_before;
-        return false;
+    for (u32 i = 0; i < N_ARR(tokenizer_checks); i++){
+        if (tokenizer_checks[i].check(c, t, s, out,false)) return true;
+        if (t->failed) {
+            out->kind = TOK_INVALID;
+            out->start = 0;
+            out->length = 0;
+            out->pos = t->err_pos;
+            return false;
+        }
     }
-
-    if (c == '"') {
-        uint32_t pos_before = s->pos;
-        if (read_string(t, out)) return true;
-        
-        tokenizer_fail(t, TOKENIZER_ERR_UNTERMINATED_STRING);
-        out->kind = TOK_INVALID;
-        out->start = s->buf + pos_before;
-        out->length = 0;
-        out->pos = pos_before;
-        return false;
-    }
-
-    if (read_delim(s, out)) return true;
 
     out->kind = TOK_SYMBOL;
     out->start = s->buf + s->pos;
