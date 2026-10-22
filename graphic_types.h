@@ -43,12 +43,13 @@ typedef struct {
 
 typedef struct draw_ctx {
     gpu_rect dirty_rects[MAX_DIRTY_RECTS];
-    uint32_t* fb;
-    uint32_t stride;
-    uint32_t width;
-    uint32_t height;
+    u32* fb;
+    u32 stride;
+    u32 width;
+    u32 height;
     uint32_t dirty_count;
     bool full_redraw;
+    i32 display_scale; 
 } draw_ctx;
 
 static inline draw_ctx buffer_to_draw_ctx(void *buf, i32 width, i32 height){
