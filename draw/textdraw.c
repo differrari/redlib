@@ -28,6 +28,9 @@ text_format get_current_format(uptr cpos, text_format default_format, text_forma
             if (current->foreground) default_format.foreground = current->foreground;
             if (current->scale) default_format.scale = current->scale;
             if (current->link.length) default_format.link = current->link;
+            if (current->font) default_format.font = current->font;
+            if (current->line_spacing) default_format.line_spacing = current->line_spacing;
+            if (current->character_spacing) default_format.character_spacing = current->character_spacing;
         }
     }
     return default_format;
@@ -63,18 +66,25 @@ void fb_continuous_draw_text(draw_ctx *ctx, draw_text_op operation, gpu_point *c
     }
     for (size_t i = render_range->start; i < render_range->start + render_range->size; i++){
         text_format current_format = get_current_format(i, default_format, array);
+        path_render_options render_opts = {
+            .background_color = current_format.background,
+            .color = current_format.foreground,
+            .scale = current_format.scale + (current_format.font ? 1: 0),//TODO: hack
+            .type = path_render_fill | path_render_background | path_render_outline
+        };
         char c = {};
         if (operation != draw_text_delete || (render_range->start < slice.length-1 && render_range->size < slice.length-render_range->start)) c = slice.data[i];
-        size_t curr_char_width = fb_char_width(current_format.scale);
-        size_t curr_line_height = fb_line_height(current_format.scale);
-        if (char_width < curr_char_width) char_width = curr_char_width;
-        if (line_height < curr_line_height) line_height = curr_line_height;
+        gpu_size curr_size = font_prerender_glyph_character(current_format.font, render_opts, ctx, (gpu_point){cursor->x + bounds.point.x, cursor->y + bounds.point.y}, c);
+        curr_size.width *= 1 + current_format.character_spacing;
+        curr_size.height *= 1 + current_format.line_spacing;
+        if (char_width < curr_size.width) char_width = curr_size.width;
+        if (line_height < curr_size.height) line_height = curr_size.height;
         wrap_policy current_wrap = default_format.wrap;
         if (c == '\n' || c == '\r' || is_whitespace(c)){
             current_lookahead = 0;
         }
         if (c == '\t'){
-            cursor->x += 4 * curr_char_width;
+            cursor->x += 4 * curr_size.width;
         }
         if (c == '\n'){
             new_line(cursor, line_height, 0);
@@ -108,13 +118,12 @@ void fb_continuous_draw_text(draw_ctx *ctx, draw_text_op operation, gpu_point *c
             cursor->y + scroll.y < (i32)bounds.size.height){
             if (ctx->fb){
                 if (operation == draw_text_delete) {
-                    cursor->x -= curr_char_width;
+                    cursor->x -= curr_size.width;
                     //TODO: handle moving to previous line with pos_to_lin_col
                 }
-                if (current_format.background) fb_fill_rect(ctx, cursor->x + bounds.point.x, cursor->y + bounds.point.y, char_width, line_height, current_format.background);
-                if (c) fb_draw_raw_char(ctx, cursor->x + bounds.point.x, cursor->y + bounds.point.y, c, current_format.scale, current_format.foreground);
+                if (c) font_render_glyph_character(current_format.font, render_opts, ctx, (gpu_point){cursor->x + bounds.point.x, cursor->y + bounds.point.y}, c);
             }
-            if (c && operation == draw_text_render) cursor->x += curr_char_width;
+            if (c && operation == draw_text_render) cursor->x += curr_size.width;
             if (cursor->x > (i32)out_size->width) out_size->width = cursor->x;
             if (!out_size->height) out_size->height = line_height;
         }

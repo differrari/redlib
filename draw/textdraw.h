@@ -26,6 +26,9 @@ typedef struct {
     range_t bounds;
     wrap_policy wrap;
     string link;
+    font_hdr *font;
+    float line_spacing;
+    float character_spacing;
 } text_format;
 
 typedef enum { fmt_array_none, fmt_array_static, fmt_array_stack } fmt_array_type;

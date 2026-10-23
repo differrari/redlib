@@ -56,11 +56,11 @@ gpu_size font_render_glyph_index(font_hdr *hdr, path_render_options options, dra
     return (gpu_size){};
 }
 
-gpu_size font_render_glyph_character(font_hdr *hdr, path_render_options options, draw_ctx *ctx, gpu_point location, u32 character){
+gpu_size font_glyph_character(font_hdr *hdr, path_render_options options, draw_ctx *ctx, gpu_point location, u32 character, bool render){
     if (!options.type) options.type = path_render_fill;
     if (!options.scale) options.scale = 1;
     if (!hdr || hdr->type == font_type_embedded){
-        fb_draw_raw_char(ctx, location.x, location.y, character, options.scale, options.color);
+        if (render) fb_draw_raw_char(ctx, location.x, location.y, character, options.scale, options.color);
         return (gpu_size){CHAR_SIZE * options.scale, CHAR_SIZE * options.scale};
     }
     if (hdr->type == font_type_ttf){
@@ -70,7 +70,7 @@ gpu_size font_render_glyph_character(font_hdr *hdr, path_render_options options,
         if (cptr.ptr){
             gpu_size size = *(gpu_size*)cptr.ptr;
             draw_ctx newctx = buffer_to_draw_ctx((void*)cptr.ptr + sizeof(gpu_size), size.width, size.height);
-            fb_draw_img(ctx, location.x, location.y, newctx.fb, newctx.width, newctx.height);
+            if (render) fb_draw_img(ctx, location.x, location.y, newctx.fb, newctx.width, newctx.height);
             return size;
         } else {
             point_graph graph = ttf_get_character(font, character);
@@ -80,9 +80,17 @@ gpu_size font_render_glyph_character(font_hdr *hdr, path_render_options options,
             draw_ctx newctx = buffer_to_draw_ctx((void*)cptr.ptr + sizeof(gpu_size), size.width, size.height);
             fb_render_path(&newctx, (gpu_point){}, graph, options);
             *(gpu_size*)cptr.ptr = size;
-            fb_draw_img(ctx, location.x, location.y, newctx.fb, newctx.width, newctx.height);
+            if (render) fb_draw_img(ctx, location.x, location.y, newctx.fb, newctx.width, newctx.height);
             return size;
         }
     }
     return (gpu_size){};
+}
+
+gpu_size font_render_glyph_character(font_hdr *hdr, path_render_options options, draw_ctx *ctx, gpu_point location, u32 character){
+    return font_glyph_character(hdr, options, ctx, location, character, true);
+}
+
+gpu_size font_prerender_glyph_character(font_hdr *hdr, path_render_options options, draw_ctx *ctx, gpu_point location, u32 character){
+    return font_glyph_character(hdr, options, ctx, location, character, false);
 }

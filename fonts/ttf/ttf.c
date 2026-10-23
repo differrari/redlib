@@ -58,7 +58,7 @@ void ttf_parse_name(ttf_font *font, ttf_name *name){
         ttf_name_record *record = &name->records[i];
         ttf_name_record_swap(record);
         if (record->name_id != 1 || record->language_id != 1033) continue;//TODO: this is just based on observation, might break, same for the u16 encoding
-        print("pid %i psid %i lid %i nid %i %i %i",record->platform_id,record->platform_specific_id,record->language_id,record->name_id,record->offset,record->length);
+        // print("pid %i psid %i lid %i nid %i %i %i",record->platform_id,record->platform_specific_id,record->language_id,record->name_id,record->offset,record->length);
         string_slice s = {(char*)((uptr)name + name->string_offset + record->offset),record->length};
         char *str = zalloc(record->length/2);
         for (int i = 0; i < record->length; i++)
