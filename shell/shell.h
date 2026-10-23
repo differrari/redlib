@@ -36,6 +36,7 @@ struct shell_handle {
     void *local_ctx;
     shell_script_ctx scripting;
     void *owner;
+    bool ignore_print_output;
     bool (*cmd_input)(shell_handle*, string_slice input);
 };
 
@@ -53,7 +54,7 @@ bool run_cmd(shell_handle *, string_slice);
 #endif
 
 static inline void shell_print_specify_newline(shell_handle *handle, bool newline, char *fmt, ...){
-    if (!handle || !handle->out_buffer.buffer) return;
+    if (!handle || !handle->out_buffer.buffer || handle->ignore_print_output) return;
     __attribute__((aligned(16))) va_list args;
     va_start(args, fmt); 
     uptr cursor = handle->out_buffer.cursor;

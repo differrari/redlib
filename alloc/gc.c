@@ -26,8 +26,8 @@ void gc_run_next_node(void* node){
         }
     }
     size_t obj_size = *(size_t*)((uptr)node - INDIVIDUAL_HDR);
-    for (u64 i = 0; i < obj_size; i += 8){
-        u64 val = *(u64*)((uptr)node + i);
+    for (uptr i = 0; i < obj_size; i += sizeof(uptr)){
+        uptr val = *(uptr*)((uptr)node + i);
         if (!val) continue;
         if (node <= (void*)val && node + obj_size >= (void*)val) continue;
         for (linked_list_node_t *n = gc_white->head; n; n = n->next){

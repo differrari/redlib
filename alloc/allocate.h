@@ -9,6 +9,8 @@ extern "C" {
 
 #define INDIVIDUAL_HDR (sizeof(size_t) * 2)//TODO: use the extra value as a canary to indicate live memory
 
+//TODO: allow for automatic gc by adding a flag to the header (and propagating it to new linked headers), also allow using it in the zalloc with a global setter
+
 void* allocate(void* page, size_t size, page_allocator fallback);
 
 void* zalloc(size_t size);

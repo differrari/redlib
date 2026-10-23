@@ -16,14 +16,15 @@ extern "C" {
 static inline bool handle_modifier(kbd_event *event){
     switch (event->type) {
         case MOD_PRESS:
-            current_modifier |= event->modifier;
+            current_modifier |= 1 << event->modifier;//NOTE: I've had to switch this from just the modifier to 1 <<, does REDACTED handle it differently? GLFW needs 1 <<
+            // print("Pressed modifier %x",event->modifier);
             return true;
         case MOD_RELEASE:
-            current_modifier &= ~event->modifier;
+            current_modifier &= ~(1 << event->modifier);
             return true;
         case KEY_PRESS:
             if (event->key == KEY_CAPSLOCK){
-                print("Current special key %x",special_key);
+                // print("Current special key %x",special_key);
                 if (!special_key)
                     special_key = event->key;
                 else if (special_key == KEY_CAPSLOCK)

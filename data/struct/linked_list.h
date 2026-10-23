@@ -32,6 +32,7 @@ static inline linked_list_node_t* linked_list_push(linked_list_t *list, void *da
 }
 
 void* linked_list_get(linked_list_t *list, uint64_t index);
+linked_list_node_t* linked_list_get_node(linked_list_t *list, uint64_t index);
 void* linked_list_remove(linked_list_t *list, linked_list_node_t *node);
 void linked_list_update(linked_list_t *list, linked_list_node_t *node, void *new_data);
 uint64_t linked_list_count(const linked_list_t *list);

@@ -142,10 +142,18 @@ void linked_list_for_each(const linked_list_t *list, void (*func)(void *)){
     }
 }
 
-void* linked_list_get(linked_list_t *list, uint64_t index){
+void* linked_list_get(linked_list_t *list, uint64_t index){//NOTE: This used to return a node, now it returns data, if you have a crash it might be that
     u64 i = 0;
     for (linked_list_node_t *node = list->head; node && i <= index; node = node->next, i++){
-        if (i == index) return node;//TODO: this should return the data, not the node
+        if (i == index) return node->data;
+    }
+    return 0;
+}
+
+linked_list_node_t* linked_list_get_node(linked_list_t *list, uint64_t index){
+    u64 i = 0;
+    for (linked_list_node_t *node = list->head; node && i <= index; node = node->next, i++){
+        if (i == index) return node;
     }
     return 0;
 }
