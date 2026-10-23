@@ -25,6 +25,7 @@ typedef struct {
     color background;
     range_t bounds;
     wrap_policy wrap;
+    string link;
 } text_format;
 
 typedef enum { fmt_array_none, fmt_array_static, fmt_array_stack } fmt_array_type;
@@ -88,3 +89,5 @@ static inline gpu_size fb_draw_slice(draw_ctx *ctx, string_slice slice, uint32_t
 static inline gpu_size fb_draw_string(draw_ctx *ctx, const char* s, uint32_t x0, uint32_t y0, uint32_t scale, uint32_t color){
     return fb_draw_slice(ctx, slice_from_literal(s), x0, y0, scale, color);
 }
+
+text_format get_current_format(uptr cpos, text_format default_format, text_format_arr array);

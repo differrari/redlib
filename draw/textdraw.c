@@ -16,7 +16,7 @@ static inline text_format* get_fmt_at(text_format_arr array, size_t index){
     return 0;
 }
 
-static inline text_format get_current_format(uptr cpos, text_format default_format, text_format_arr array){
+text_format get_current_format(uptr cpos, text_format default_format, text_format_arr array){
     if (array.array_type == fmt_array_stack){
         array.count = stack_count(array.fmt);
     }
@@ -27,6 +27,7 @@ static inline text_format get_current_format(uptr cpos, text_format default_form
             if (current->background) default_format.background = current->background;
             if (current->foreground) default_format.foreground = current->foreground;
             if (current->scale) default_format.scale = current->scale;
+            if (current->link.length) default_format.link = current->link;
         }
     }
     return default_format;
@@ -58,7 +59,7 @@ void fb_continuous_draw_text(draw_ctx *ctx, draw_text_op operation, gpu_point *c
     bounds.point.x += scroll.x;
     bounds.point.y += scroll.y;
     if (operation != draw_text_delete){
-        if (render_range->start > slice.length-1|| render_range->size > slice.length-render_range->start) return;
+        if (render_range->start > slice.length-1|| render_range->size > (i64)slice.length-(i64)render_range->start) return;
     }
     for (size_t i = render_range->start; i < render_range->start + render_range->size; i++){
         text_format current_format = get_current_format(i, default_format, array);
@@ -147,7 +148,9 @@ u32 lin_col_to_pos(i32 line, i32 col, string_slice content){
             line_number++;
         } else {
             if (line_number == line && column == col) return i;
-            column++;   
+            if (content.data[i] == '\t') column += 4;
+            else
+                column++;
         }
     }
     return pos;
