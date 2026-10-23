@@ -26,8 +26,6 @@ typedef struct allocator_header {
 #define alloc_print(fmt,...) 
 #endif
 
-#define INDIVIDUAL_HDR (sizeof(size_t) * 2)//TODO: use the extra value as a canary to indicate live memory
-
 page_index *p_index;
 
 static inline void* fallback_proxy(size_t size, page_allocator fallback){

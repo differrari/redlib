@@ -47,6 +47,7 @@ files/dir_list.c
 files/module_loader.c
 alloc/allocate.c
 alloc/page_index.c
+alloc/gc.c
 utils/indent.c
 utils/package_info.c
 utils/embedded_fmt/tcf.c
