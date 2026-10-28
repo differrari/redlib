@@ -53,8 +53,25 @@ u32 fb_line_height(u32 scale){
     return fb_get_char_size(scale) + fb_get_line_spacing(scale);
 }
 
+uptr next_cursor_after(size_t render_cursor_count, uptr *render_cursors, i64 latest){
+    uptr smallest = UINT64_MAX;
+    for (u64 i = 0; i < render_cursor_count; i++)
+        if ((latest == UINT64_MAX || render_cursors[i] > latest) && render_cursors[i] < smallest){
+            smallest = render_cursors[i];
+        }
+    return smallest;
+}
+
+extern int print(const char *fmt, ...);
+
+#define recalc_cursor if (remaining_render_cursors){\
+    latest_cursor = next_cursor_after(render_cursor_count, render_cursors, latest_cursor);\
+    if (latest_cursor < UINT64_MAX) remaining_render_cursors--;\
+    print("Latest cursor at %lli",latest_cursor);\
+} else latest_cursor = UINT64_MAX;
+
 //TODO: use font
-void fb_continuous_draw_text(draw_ctx *ctx, draw_text_op operation, gpu_point *cursor, string_slice slice, range_t *render_range, gpu_rect bounds, gpu_size *out_size, gpu_point scroll, text_format default_format, text_format_arr array){
+void fb_continuous_draw_text(draw_ctx *ctx, draw_text_op operation, gpu_point *cursor, size_t render_cursor_count, uptr *render_cursors, color cursor_color, string_slice slice, range_t *render_range, gpu_rect bounds, gpu_size *out_size, gpu_point scroll, text_format default_format, text_format_arr array){
     int indent = 0;
     bool can_indent = true;
     u32 char_width = 0, line_height = 0;
@@ -64,6 +81,9 @@ void fb_continuous_draw_text(draw_ctx *ctx, draw_text_op operation, gpu_point *c
     if (operation != draw_text_delete){
         if (render_range->start > slice.length-1|| render_range->size > (i64)slice.length-(i64)render_range->start) return;
     }
+    size_t remaining_render_cursors = render_cursor_count;
+    i64 latest_cursor = UINT64_MAX;
+    recalc_cursor
     for (size_t i = render_range->start; i < render_range->start + render_range->size; i++){
         text_format current_format = get_current_format(i, default_format, array);
         path_render_options render_opts = {
@@ -114,18 +134,24 @@ void fb_continuous_draw_text(draw_ctx *ctx, draw_text_op operation, gpu_point *c
             }
         }
         
-        if (c != '\n' && cursor->x + scroll.x < (i32)bounds.size.width && 
+        if (cursor->x + scroll.x < (i32)bounds.size.width && 
             cursor->y + scroll.y < (i32)bounds.size.height){
-            if (ctx->fb){
-                if (operation == draw_text_delete) {
-                    cursor->x -= curr_size.width;
-                    //TODO: handle moving to previous line with pos_to_lin_col
+            if (c != '\n'){
+                if (ctx->fb){
+                    if (operation == draw_text_delete) {
+                        cursor->x -= curr_size.width;
+                        //TODO: handle moving to previous line with pos_to_lin_col
+                    }
+                    if (c) font_render_glyph_character(current_format.font, render_opts, ctx, (gpu_point){cursor->x + bounds.point.x, cursor->y + bounds.point.y}, c);
                 }
-                if (c) font_render_glyph_character(current_format.font, render_opts, ctx, (gpu_point){cursor->x + bounds.point.x, cursor->y + bounds.point.y}, c);
             }
             if (c && operation == draw_text_render) cursor->x += curr_size.width;
             if (cursor->x > (i32)out_size->width) out_size->width = cursor->x;
             if (!out_size->height) out_size->height = line_height;
+            if (i == latest_cursor-1){
+                fb_fill_rect(ctx, cursor->x, cursor->y, 3, curr_size.height, cursor_color);
+                recalc_cursor
+            }
         }
     }
 }
@@ -135,7 +161,7 @@ text_draw_result fb_draw_text(draw_ctx *ctx, string_slice slice, gpu_rect bounds
 
     range_t string_range = {.start = 0, .size = slice.length};
     
-    fb_continuous_draw_text(ctx, false, &result.cursor, slice, &string_range, bounds, &result.size, scroll, default_format, array);
+    fb_continuous_draw_text(ctx, false, &result.cursor, 0,0,0, slice, &string_range, bounds, &result.size, scroll, default_format, array);
     if (ctx->fb) mark_dirty(ctx, bounds.point.x, bounds.point.y, result.size.width, result.size.height);
     
     return result;
