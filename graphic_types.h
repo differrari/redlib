@@ -61,6 +61,7 @@ static inline draw_ctx buffer_to_draw_ctx(void *buf, i32 width, i32 height){
         .height = (u32)height,
         .dirty_count = 0,
         .full_redraw = 0,
+        .display_scale = 1,
     };
 }
 

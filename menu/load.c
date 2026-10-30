@@ -7,6 +7,15 @@ arr_stack_t *menu_items = 0;
 
 menu_item_t *first_menu_item = 0, *last_menu_item = 0;
 
+#ifndef CROSS
+extern bool get_stat(module_root *root, const char *path, fs_stat *out_stat);
+extern size_t list_directory_contents(module_root *root, const char *path, void *buf, size_t size, uint64_t *offset);
+extern module_root* get_fs_for_id(u64 id);
+typedef struct process_t process_t;
+extern process_t* get_proc_by_pid(uint16_t pid);
+extern u16 sys_get_focused_pid();
+#endif
+
 extern int print(const char *fmt, ...);
 
 menu_item_t* menu_add_entry(char *name, menu_item_t *parent){
@@ -44,12 +53,14 @@ string menu_create_pathname(menu_item_t *parent){
 
 #ifdef CROSS
 extern system_module menu_mod;
+#else
+extern module_root* get_menu_mod();
 #endif
 
 void load_menu_level(menu_item_t *parent){
     string path = menu_create_pathname(parent);
 #ifndef CROSS
-    module_root *localfs = get_fs_for_id(menu_proc->permissions.fs_id);
+    module_root *localfs = get_menu_mod();
     if (!localfs) return;
 #endif
     void *buf = zalloc(0x1000);

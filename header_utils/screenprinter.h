@@ -69,7 +69,7 @@ void screen_print_flush(bool can_scroll){
     
     gpu_point cursor = {.x = screen_printer_formatting.cursor_x*char_width,.y = screen_printer_formatting.cursor_y*line_height};
     gpu_size out_size = {};
-    fb_continuous_draw_text(&printer_ctx, printer_operation, &cursor, slice_from_buffer(&screen_printer_buffer), &printer_rerender_range, rect, &out_size, printer_scroll, embedded_fmt_to_text(screen_printer_formatting), (text_format_arr){});
+    fb_continuous_draw_text(&printer_ctx, printer_operation, &cursor, 0,0,0, slice_from_buffer(&screen_printer_buffer), &printer_rerender_range, rect, &out_size, printer_scroll, embedded_fmt_to_text(screen_printer_formatting), (text_format_arr){});
     
     if (cursor.y + printer_scroll.y > (i32)rect.size.height && can_scroll)
         screen_print_scroll(-line_height, true);
