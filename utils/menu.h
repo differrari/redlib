@@ -1,24 +1,9 @@
 #pragma once
 
 #include "files/vfs.h"
+#include "files/module_loader.h"
 
-system_module menu_mod = {
-    .name = "demo menu",
-    .mount = "menu",
-    .version = VERSION_NUM(0, 1, 0, 0),
-    .owner = 0,
-    .init = 0,
-    .fini = 0,
-    .open = vfs_open,
-    .read = vfs_read,
-    .write = vfs_write,
-    .close = vfs_close,
-    .truncate = 0,
-    .getstat = vfs_stat,
-    .readdir = vfs_readdir,
-    .transform = vfs_transform,
-    .alias_info = {}
-};
+extern system_module menu_mod;
 
 static inline string make_menu_entry(const char *parent, const char *name, fs_entry_type ent_type, file_transform_fn trigger){
     if (parent && *parent == '/') parent++;
@@ -59,7 +44,25 @@ static inline string make_menu_entry(const char *parent, const char *name, fs_en
     return file->name;
 }
 
-#define MAKE_MENU(contents) void setup_menu(){ char *parent_dir = 0; contents; };
+#define MAKE_MENU(contents) \
+system_module menu_mod = {\
+    .name = "demo menu",\
+    .mount = "menu",\
+    .version = VERSION_NUM(0, 1, 0, 0),\
+    .owner = 0,\
+    .init = 0,\
+    .fini = 0,\
+    .open = vfs_open,\
+    .read = vfs_read,\
+    .write = vfs_write,\
+    .close = vfs_close,\
+    .truncate = 0,\
+    .getstat = vfs_stat,\
+    .readdir = vfs_readdir,\
+    .transform = vfs_transform,\
+    .alias_info = {}\
+};\
+void setup_menu(){ char *parent_dir = 0; contents; };
 
 #define MENU_SUBMENU(name, items)\
     {\
@@ -75,6 +78,9 @@ static inline string make_menu_entry(const char *parent, const char *name, fs_en
     
 extern void setup_menu();
     
+#ifdef CROSS
+extern void menu_init();
+#else
 void menu_init(){
     setup_menu();
     
@@ -82,3 +88,4 @@ void menu_init(){
     
     swritef("/environment/menu", 0, 0, false);
 }
+#endif

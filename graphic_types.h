@@ -75,6 +75,11 @@ static inline gpu_rect draw_ctx_rect(draw_ctx *ctx){
     };
 }
 
+static inline bool mouse_in_rect(gpu_rect rect, gpu_point click){
+    if (click.x < rect.point.x || click.x >= rect.point.x + (i32)rect.size.width || 
+        click.y < rect.point.y || click.y >= rect.point.y + (i32)rect.size.height) return false;
+    return true;
+}
 
 #ifdef __cplusplus
 }

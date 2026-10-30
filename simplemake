@@ -63,6 +63,8 @@ compression/huffman.c
 compression/deflate.c
 math/aabb2.c
 math/rng.c
+menu/load.c
+menu/render.c
 input_keycodes.c
 string/string.c
 string/slice.c
