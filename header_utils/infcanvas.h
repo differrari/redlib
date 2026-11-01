@@ -9,12 +9,11 @@
 #ifndef INFCANVAS_NONSTATIC
 static float zoom = 1;
 static float max_zoom = 10;
-static int max_grid = 500;
+static int max_grid = 1024;
 static float min_zoom = 1;
-static int min_grid = 30;
+static int min_grid = 16;
 static gpu_point pan = {};
 static int grid_size = 100;
-static int grid_snap = 10;
 static void (*on_canvas_pan)(gpu_point point);
 static void (*on_canvas_zoom)(float zoom);
 #else
@@ -57,8 +56,8 @@ static void canvas_mouse(mouse_data mouse, float dt){
     }
     if (mouse.raw.scroll){
         if (is_mod_pressed(KEY_LEFTALT, true)){
-            grid_size += mouse.raw.scroll * grid_snap;
-            grid_size = round_to_int((float)grid_size/grid_snap) * grid_snap;
+            if (mouse.raw.scroll > 0) grid_size *= mouse.raw.scroll * 2;
+            else grid_size /= -mouse.raw.scroll * 2;
             grid_size = clampf(grid_size, min_grid, max_grid);
         } else {
             zoom += mouse.raw.scroll * dt;
