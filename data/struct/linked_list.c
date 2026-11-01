@@ -158,4 +158,33 @@ linked_list_node_t* linked_list_get_node(linked_list_t *list, uint64_t index){
     return 0;
 }
 
-//TEST: whole file
+void linked_list_sort(linked_list_t *list, void *ctx, bool (*less)(void *a, void *b, void *ctx)){
+    if (!list || !list->head || list->head == list->tail || !list->head->next) return;
+    
+    linked_list_node_t dummy = {
+        .next = list->head
+    };
+    
+    linked_list_node_t *current = list->head;
+    
+    linked_list_node_t *node = current->next;
+    while (node){
+        if (!less(node->data,current->data,ctx)){
+            linked_list_node_t *prev = &dummy;
+            while (prev->next && prev->next != node && less(node->data,prev->next->data,ctx)) prev = prev->next;
+            current->next = node->next;
+            node->next = prev->next;
+            prev->next = node;
+            node = current->next;
+        } else {
+            current = node;
+            node = node->next;
+        }
+    }
+    list->head = dummy.next;
+    linked_list_node_t *tail = list->head;
+    while (tail->next) tail = tail->next;
+    list->tail = tail;
+}
+
+//TODO: write tests for whole file
