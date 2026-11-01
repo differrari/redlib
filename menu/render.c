@@ -6,6 +6,10 @@ extern system_module menu_mod;
 #endif
 extern int print(const char *fmt, ...);
 
+#ifndef BORDER_SIZE
+#define BORDER_SIZE 5
+#endif
+
 typedef union {
     struct {
         u8 quit: 1;
@@ -20,6 +24,10 @@ color menu_color;
 void set_menu_color(color color){
     menu_color = color;
 }
+
+#ifndef CROSS
+extern size_t transform_file(module_root *root, const char *path, void *buf, size_t size);
+#endif
 
 menu_info draw_submenu(draw_ctx *ctx, gpu_point origin, menu_item_t *parent, bool did_click, gpu_point mouse_click){
     int width = 256;

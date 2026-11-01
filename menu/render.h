@@ -4,10 +4,9 @@
 #include "graphic_types.h"
 #include "load.h"
 
-#if CROSS
 #define MENU_HEIGHT 50
-#define BORDER_SIZE 5
-#endif
+
+extern bool menu_dirty;
 
 void set_menu_color(color color);
 bool draw_menu(draw_ctx *screen_ctx, gpu_point mouse_pos, bool mouse_pressed);
