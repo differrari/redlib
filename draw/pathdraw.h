@@ -5,7 +5,14 @@
 #include "draw/draw.h"
 #include "syscalls/syscalls.h"
 
-#define PATH_SIZE {(options.scale*(options.ignore_char ? 1 : CHAR_SIZE)*graph.size.x), (options.scale*(options.ignore_char ? 1 : CHAR_SIZE)*graph.size.y)}
+static inline int path_autosize(path_render_options options){
+    switch (options.sizing_policy) {
+        case path_render_sizing_char: return CHAR_SIZE;
+        case path_render_sizing_none: return 1;
+    }
+}
+
+#define PATH_SIZE {(options.scale*path_autosize(options)*graph.size.x), (options.scale*path_autosize(options)*graph.size.y)}
 
 gpu_size fb_fill_path(draw_ctx *ctx, gpu_point point, point_graph graph, path_render_options options);
 gpu_size fb_draw_path(draw_ctx *ctx, gpu_point point, point_graph graph, path_render_options options);

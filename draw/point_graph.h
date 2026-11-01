@@ -35,11 +35,16 @@ typedef enum {
     path_render_background = 1 << 2,
 } path_render_type;
 
+typedef enum {
+    path_render_sizing_char,
+    path_render_sizing_none
+} path_render_sizing;
+
 typedef struct {
     u32 scale;
     color background_color;
     color outline_color;
     color color;
     path_render_type type;
-    bool ignore_char;
+    path_render_sizing sizing_policy;
 } path_render_options;
