@@ -26,3 +26,10 @@ static inline bool aabb2_check_collision(aabb2 bb1, aabb2 bb2) {
     return (bb1.min.x < bb2.max.x) && (bb2.min.x < bb1.max.x) &&
            (bb1.min.y < bb2.max.y) && (bb2.min.y < bb1.max.y);
 }
+
+static inline bool aabb_point_intersect(aabb2 bb, vec2 v){
+    return !(
+        v.x < bb.min.x || v.x > bb.max.x ||
+        v.y < bb.min.y || v.y > bb.max.y
+    );
+}

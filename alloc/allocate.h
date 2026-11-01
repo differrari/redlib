@@ -17,6 +17,8 @@ void* zalloc(size_t size);
 
 void release(void* ptr);
 
+void release_page_all(void* ptr);
+
 void* reallocate(void* ptr, size_t new_size);
 
 #ifdef __cplusplus

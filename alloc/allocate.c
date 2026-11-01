@@ -320,6 +320,13 @@ void* reallocate(void* ptr, size_t new_size){
     return new_ptr;
 }
 
+void release_page_all(void* ptr){
+    if (!ptr || ((uptr)ptr & 0xFFF)) return;
+    allocator_header *hdr = ptr;
+    if (hdr->next) release_page_all(hdr->next);
+    page_free(ptr);
+}
+
 #include "debug/assert.h"
 
 bool test_zalloc(){

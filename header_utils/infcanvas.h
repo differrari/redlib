@@ -11,12 +11,16 @@ static float max_zoom = 10;
 static float min_zoom = 1;
 static gpu_point pan = {};
 static int grid_size = 100;
+static void (*on_canvas_pan)(gpu_point point);
+static void (*on_canvas_zoom)(float zoom);
 #else
 extern float zoom;
 extern float max_zoom;
 extern float min_zoom;
 extern gpu_point pan;
 extern int grid_size;
+extern void (*on_canvas_pan)(gpu_point point);
+extern void (*on_canvas_zoom)(float zoom);
 #endif
 
 static void canvas_background(draw_ctx *ctx, color bg, color grid){
@@ -37,9 +41,6 @@ static void canvas_background(draw_ctx *ctx, color bg, color grid){
         }
     }
 }
-
-void (*on_canvas_pan)(gpu_point point);
-void (*on_canvas_zoom)(float zoom);
 
 static void canvas_mouse(mouse_data mouse, float dt){
     if (mouse_button_down(&mouse, MMB)){
