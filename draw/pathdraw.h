@@ -5,7 +5,7 @@
 #include "draw/draw.h"
 #include "syscalls/syscalls.h"
 
-#define PATH_SIZE {(options.scale*CHAR_SIZE*graph.size.x), (options.scale*CHAR_SIZE*graph.size.y)}
+#define PATH_SIZE {(options.scale*(options.ignore_char ? 1 : CHAR_SIZE)*graph.size.x), (options.scale*(options.ignore_char ? 1 : CHAR_SIZE)*graph.size.y)}
 
 gpu_size fb_fill_path(draw_ctx *ctx, gpu_point point, point_graph graph, path_render_options options);
 gpu_size fb_draw_path(draw_ctx *ctx, gpu_point point, point_graph graph, path_render_options options);

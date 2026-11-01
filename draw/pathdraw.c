@@ -31,18 +31,17 @@ gpu_size fb_draw_path(draw_ctx *ctx, gpu_point point, point_graph graph, path_re
         point_graph_curve_type curve = graph.slices[s].curve_type;
         if (graph.slices[s].close){
             point_entry entry = graph.graph[count-1];
-            loc = (vec2){point.x+(entry.pos.x*options.scale*CHAR_SIZE),point.y+(entry.pos.y*options.scale*CHAR_SIZE)};
+            loc = (vec2){point.x+(entry.pos.x*options.scale*(options.ignore_char ? 1 : CHAR_SIZE)),point.y+(entry.pos.y*options.scale*(options.ignore_char ? 1 : CHAR_SIZE))};
         } else {
             point_entry entry = graph.graph[graph.slices[s].start];
-            loc = (vec2){point.x+(entry.pos.x*options.scale*CHAR_SIZE),point.y+(entry.pos.y*options.scale*CHAR_SIZE)};
+            loc = (vec2){point.x+(entry.pos.x*options.scale*(options.ignore_char ? 1 : CHAR_SIZE)),point.y+(entry.pos.y*options.scale*(options.ignore_char ? 1 : CHAR_SIZE))};
         }
         vec2 controls[max_points] = {};
         int num_controls = 0;
         // print("Slice %i - %i to %i",s, graph.slices[s].start,count);
         for (size_t i = max(0,graph.slices[s].start) + !graph.slices[s].close; i < count; i++){
             point_entry entry = graph.graph[i];
-            vec2 nloc = {point.x+(entry.pos.x*options.scale*CHAR_SIZE),point.y+(entry.pos.y*options.scale*CHAR_SIZE)};
-            // print("%i,%i -> %i,%i",loc.x,loc.y,nloc.x,nloc.y);
+            vec2 nloc = {point.x+(entry.pos.x*options.scale*(options.ignore_char ? 1 : CHAR_SIZE)),point.y+(entry.pos.y*options.scale*(options.ignore_char ? 1 : CHAR_SIZE))};
             if (nloc.x < 0 || nloc.y < 0) continue;
             if (entry.on_curve || curve == point_graph_curve_none || i == count-1){
 
@@ -148,16 +147,16 @@ gpu_size fb_fill_path(draw_ctx *ctx, gpu_point point, point_graph graph, path_re
             point_graph_curve_type curve = graph.slices[s].curve_type;
             if (graph.slices[s].close){
                 point_entry entry = graph.graph[count-1];
-                loc = (vec2){point.x+(entry.pos.x*options.scale*CHAR_SIZE),point.y+(entry.pos.y*options.scale*CHAR_SIZE)};
+                loc = (vec2){point.x+(entry.pos.x*options.scale*(options.ignore_char ? 1 : CHAR_SIZE)),point.y+(entry.pos.y*options.scale*(options.ignore_char ? 1 : CHAR_SIZE))};
             } else {
                 point_entry entry = graph.graph[graph.slices[s].start];
-                loc = (vec2){point.x+(entry.pos.x*options.scale*CHAR_SIZE),point.y+(entry.pos.y*options.scale*CHAR_SIZE)};
+                loc = (vec2){point.x+(entry.pos.x*options.scale*(options.ignore_char ? 1 : CHAR_SIZE)),point.y+(entry.pos.y*options.scale*(options.ignore_char ? 1 : CHAR_SIZE))};
             }
             vec2 controls[max_points] = {};
             int num_controls = 0;
             for (size_t i = max(0,graph.slices[s].start) + !graph.slices[s].close; i < count; i++){
                 point_entry entry = graph.graph[i];
-                vec2 nloc = {point.x+(entry.pos.x*options.scale*CHAR_SIZE),point.y+(entry.pos.y*options.scale*CHAR_SIZE)};
+                vec2 nloc = {point.x+(entry.pos.x*options.scale*(options.ignore_char ? 1 : CHAR_SIZE)),point.y+(entry.pos.y*options.scale*(options.ignore_char ? 1 : CHAR_SIZE))};
                 // print("%i,%i -> %i,%i",loc.x,loc.y,nloc.x,nloc.y);
                 if (nloc.x < 0 || nloc.y < 0) continue;
                 if (entry.on_curve || curve == point_graph_curve_none || i == count-1){

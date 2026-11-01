@@ -22,12 +22,9 @@ typedef union argbcolor {
 typedef struct {
     i32 x;
     i32 y;
-} gpu_point;
-
-typedef struct {
-    i32 x;
-    i32 y;
 } int_point;
+
+typedef int_point gpu_point;
 
 typedef struct {
     u32 width;

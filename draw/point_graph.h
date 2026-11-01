@@ -41,4 +41,5 @@ typedef struct {
     color outline_color;
     color color;
     path_render_type type;
+    bool ignore_char;
 } path_render_options;
