@@ -3,6 +3,7 @@
 #include "types.h"
 
 #define MAX_PROC_NAME_LENGTH 256
+#define MAX_PROC_BUNDLE_ID 32
 
 typedef struct {
     u16 id;

@@ -65,7 +65,10 @@ typedef long long intptr_t;
 typedef signed short int16_t;
 typedef signed char int8_t;
 
+#define INT64_MAX 0x7FFFFFFFFFFFFFFFULL
+#define INT32_MAX 0x7FFFFFFF
 #define INT16_MAX 0x7FFF
+#define INT8_MAX 0x7F
 
 #define NULL 0
 

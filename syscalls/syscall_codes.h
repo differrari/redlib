@@ -48,16 +48,15 @@
 #define FILE_SYNC_CODE              69
 
 #define DIR_LIST_CODE               70
-#define PIPE_OPEN_CODE              75
-#define PIPE_CLOSE_CODE             76
-
 #define LOAD_FSMODULE_CODE          71
 #define UNLOAD_FSMODULE_CODE        72
+#define CREATE_ENTRY_CODE             73
 
-#define FILE_MKDIR_CODE             75
-#define FILE_MKFILE_CODE            76
+#define PIPE_OPEN_CODE              75
+#define PIPE_CLOSE_CODE             76
 #define FILE_DELETE_CODE            77
 #define FILE_MOVING_CODE            78
+
 
 #define SIGNAL_SEND_CODE            80
 #define SIGNAL_HANDLER_CODE         81

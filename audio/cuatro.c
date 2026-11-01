@@ -6,10 +6,10 @@
 #include "wav.h"
 #include "tone.h"
 
-static file mixer = { .id = 0 };  // 0 ok as filesystem ids > 256
+static file mixer = { };  // 0 ok as filesystem ids > 256
 
 static inline bool mixer_open_file(){
-    return (mixer.id > 0) || (FS_RESULT_SUCCESS == openf("/audio/output", &mixer));
+    return (mixer.id > 0) || (openf("/audio/output", &mixer) == FS_RESULT_SUCCESS);
 }
 
 int8_t mixer_open_line(){
