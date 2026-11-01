@@ -66,7 +66,7 @@ extern int print(const char *fmt, ...);
 
 #define recalc_cursor if (remaining_render_cursors){\
     latest_cursor = next_cursor_after(render_cursor_count, render_cursors, latest_cursor);\
-    if (latest_cursor < UINT64_MAX) remaining_render_cursors--;\
+    if (latest_cursor < INT64_MAX) remaining_render_cursors--;\
     print("Latest cursor at %lli",latest_cursor);\
 } else latest_cursor = UINT64_MAX;
 
@@ -90,7 +90,8 @@ void fb_continuous_draw_text(draw_ctx *ctx, draw_text_op operation, gpu_point *c
             .background_color = current_format.background,
             .color = current_format.foreground,
             .scale = current_format.scale + (current_format.font ? 1: 0),//TODO: hack
-            .type = path_render_fill | path_render_background | path_render_outline
+            .type = path_render_fill | path_render_background | path_render_outline,
+            .sizing_policy = path_render_sizing_char
         };
         char c = {};
         if (operation != draw_text_delete || (render_range->start < slice.length-1 && render_range->size < slice.length-render_range->start)) c = slice.data[i];

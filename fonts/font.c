@@ -57,11 +57,12 @@ gpu_size font_render_glyph_index(font_hdr *hdr, path_render_options options, dra
 }
 
 gpu_size font_glyph_character(font_hdr *hdr, path_render_options options, draw_ctx *ctx, gpu_point location, u32 character, bool render){
+    options.sizing_policy = path_render_sizing_char;
     if (!options.type) options.type = path_render_fill;
     if (!options.scale) options.scale = 1;
     if (!hdr || hdr->type == font_type_embedded){
         if (render) fb_draw_raw_char(ctx, location.x, location.y, character, options.scale, options.color);
-        return (gpu_size){CHAR_SIZE * options.scale, CHAR_SIZE * options.scale};
+        return (gpu_size){path_autosize(options) * options.scale, path_autosize(options) * options.scale};
     }
     if (hdr->type == font_type_ttf){
         ttf_font *font = (ttf_font*)hdr;

@@ -3,7 +3,6 @@
 #include "graphic_types.h"
 #include "point_graph.h"
 #include "draw/draw.h"
-#include "syscalls/syscalls.h"
 
 static inline int path_autosize(path_render_options options){
     switch (options.sizing_policy) {
@@ -19,7 +18,7 @@ gpu_size fb_draw_path(draw_ctx *ctx, gpu_point point, point_graph graph, path_re
 
 static inline gpu_size fb_render_path(draw_ctx *ctx, gpu_point point, point_graph graph, path_render_options options){
     if (graph.offset.x != 0)
-        point.x += graph.offset.x*options.scale*CHAR_SIZE;
+        point.x += graph.offset.x*options.scale*path_autosize(options);
     gpu_size size = PATH_SIZE;
     if (options.type & path_render_background){
         fb_fill_rect(ctx, point.x, point.y, size.width, size.height, options.background_color);
@@ -28,9 +27,7 @@ static inline gpu_size fb_render_path(draw_ctx *ctx, gpu_point point, point_grap
         fb_fill_path(ctx, point, graph, options);
     }
     if (options.type & path_render_outline){
-        path_render_options new_options = options;
-        new_options.color = new_options.outline_color;
-        fb_draw_path(ctx, point, graph, new_options);
+        fb_draw_path(ctx, point, graph, options);
     }
     return size;
 }

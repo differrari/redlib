@@ -81,6 +81,7 @@ static inline gpu_size fb_draw_slice(draw_ctx *ctx, string_slice slice, uint32_t
             .outline_color = 0,
             .color = color,
             .type = path_render_fill,
+            .sizing_policy = path_render_sizing_char
         },
         .font = 0,
         .crop = 0,

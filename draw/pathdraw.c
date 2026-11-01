@@ -25,7 +25,7 @@ void fb_draw_bezier_cubic(draw_ctx *ctx, vec2 p1, vec2 c1, vec2 c2, vec2 p2, col
 
 gpu_size fb_draw_path(draw_ctx *ctx, gpu_point point, point_graph graph, path_render_options options){
     for (int s = 0; s < graph.num_slices; s++){
-        size_t count = min(graph.num_points,graph.slices[s].end); 
+        size_t count = min(graph.num_points,graph.slices[s].count); 
         vec2 loc = {};
         i8 max_points = graph.slices[s].max_curve_points;
         point_graph_curve_type curve = graph.slices[s].curve_type;
@@ -46,20 +46,20 @@ gpu_size fb_draw_path(draw_ctx *ctx, gpu_point point, point_graph graph, path_re
             if (entry.on_curve || curve == point_graph_curve_none || i == count-1){
 
                 if (curve == point_graph_curve_none || num_controls == 0 || num_controls > max_points){
-                    fb_draw_line(ctx, loc.x, loc.y, nloc.x, nloc.y, options.color);
+                    fb_draw_line(ctx, loc.x, loc.y, nloc.x, nloc.y, options.outline_color);
                 } else if (num_controls == 2 && curve == point_graph_curve_quad_cube){
-                    fb_draw_bezier_cubic(ctx, loc, controls[0], controls[1], nloc, options.color);
+                    fb_draw_bezier_cubic(ctx, loc, controls[0], controls[1], nloc, options.outline_color);
                 } else {
                     if (num_controls > 1){
                         vec2 last = loc;
                         for (int j = 1; j < num_controls; j++){
                             vec2 l2 = (vec2){(controls[j-1].x+controls[j].x)/2.f, (controls[j-1].y+controls[j].y)/2.f};
-                            fb_draw_bezier_quadratic(ctx, last, controls[j-1], l2, options.color);
+                            fb_draw_bezier_quadratic(ctx, last, controls[j-1], l2, options.outline_color);
                             last = l2;
                         }
-                        fb_draw_bezier_quadratic(ctx, last, controls[num_controls-1], nloc, options.color);
+                        fb_draw_bezier_quadratic(ctx, last, controls[num_controls-1], nloc, options.outline_color);
                     } else {
-                        fb_draw_bezier_quadratic(ctx, loc, controls[0], nloc, options.color);
+                        fb_draw_bezier_quadratic(ctx, loc, controls[0], nloc, options.outline_color);
                     }
                 }
 
@@ -141,7 +141,7 @@ gpu_size fb_fill_path(draw_ctx *ctx, gpu_point point, point_graph graph, path_re
         vec2 start = {point.x,point.y + y };
         // fb_draw_line(ctx, start.x, start.y, end.x, end.y, 0xFFFF0000);
         for (int s = 0; s < graph.num_slices; s++){
-            size_t count = min(graph.num_points,graph.slices[s].end); 
+            size_t count = min(graph.num_points,graph.slices[s].count); 
             vec2 loc = {};
             i8 max_points = graph.slices[s].max_curve_points;
             point_graph_curve_type curve = graph.slices[s].curve_type;

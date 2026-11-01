@@ -14,7 +14,7 @@ typedef enum { point_graph_curve_none, point_graph_curve_quad_only, point_graph_
 
 typedef struct {
     int start;
-    int end;
+    int count;
     bool close;
     point_graph_curve_type curve_type;
     i8 max_curve_points;
@@ -36,8 +36,8 @@ typedef enum {
 } path_render_type;
 
 typedef enum {
-    path_render_sizing_char,
-    path_render_sizing_none
+    path_render_sizing_none,
+    path_render_sizing_char
 } path_render_sizing;
 
 typedef struct {

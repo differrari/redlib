@@ -248,7 +248,7 @@ point_graph ttf_simple_glyph(binary_scanner *scanner, ttf_font *font, u16 index,
         new_countour++;
         num_points = max(new_countour,num_points);
         glyph.slices[i].start = last_countour;
-        glyph.slices[i].end = new_countour;
+        glyph.slices[i].count = new_countour;
         glyph.slices[i].close = true;
         glyph.slices[i].curve_type = point_graph_curve_quad_only;
         glyph.slices[i].max_curve_points = 32;
@@ -381,7 +381,7 @@ point_graph ttf_compound_glyph(ttf_font *font, binary_scanner *scanner, u16 inde
         for (int j = 0; j < glyph->num_slices; j++){
             point_graph_slice slice = glyph->slices[j];
             slice.start += point_count;
-            slice.end += point_count;
+            slice.count += point_count;
             buffer_write_lim(&slices_buf, (const char *)&slice, sizeof(point_graph_slice));
         }
         
