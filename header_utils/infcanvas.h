@@ -11,6 +11,7 @@ static float zoom = 1;
 static float max_zoom = 10;
 static int max_grid = 1024;
 static float min_zoom = 1;
+static float zoom_speed = 3;
 static int min_grid = 16;
 static gpu_point pan = {};
 static int grid_size = 100;
@@ -21,6 +22,7 @@ extern float zoom;
 extern float max_zoom;
 extern int max_grid;
 extern float min_zoom;
+extern float zoom_speed;
 extern int min_grid;
 extern int grid_snap;
 extern gpu_point pan;
@@ -60,8 +62,11 @@ static void canvas_mouse(mouse_data mouse, float dt){
             else grid_size /= -mouse.raw.scroll * 2;
             grid_size = clampf(grid_size, min_grid, max_grid);
         } else {
-            zoom += mouse.raw.scroll * dt;
+            float old_zoom = zoom;
+            zoom += mouse.raw.scroll * zoom_speed * dt;
             zoom = clampf(zoom, min_zoom, max_zoom);
+            pan.x = mouse.position.x - ((mouse.position.x - pan.x) * (zoom/old_zoom));
+            pan.y = mouse.position.y - ((mouse.position.y - pan.y) * (zoom/old_zoom));
             if (on_canvas_zoom) on_canvas_zoom(zoom);
         }
     }
