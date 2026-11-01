@@ -3,9 +3,9 @@
 #include "input_keycodes.h"
 #include "keyboard_input.h"
 
-static u8 current_modifier = 0;
+extern u8 current_modifier;
 
-static u8 special_key = 0;
+extern u8 special_key;
 
 #ifdef __cplusplus
 extern "C" {

@@ -181,3 +181,4 @@ regex/regex.c
 net/checksums.c
 compression/huffman.c
 compression/deflate.c
+kbd_helper.c

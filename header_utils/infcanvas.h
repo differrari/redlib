@@ -4,11 +4,14 @@
 #include "draw/draw.h"
 #include "mouse_input.h"
 #include "math/math.h"
+#include "kbd_helper.h"
 
 #ifndef INFCANVAS_NONSTATIC
 static float zoom = 1;
 static float max_zoom = 10;
+static float max_grid = 500;
 static float min_zoom = 1;
+static float min_grid = 30;
 static gpu_point pan = {};
 static int grid_size = 100;
 static void (*on_canvas_pan)(gpu_point point);
@@ -16,7 +19,9 @@ static void (*on_canvas_zoom)(float zoom);
 #else
 extern float zoom;
 extern float max_zoom;
+extern float max_grid;
 extern float min_zoom;
+extern float min_grid;
 extern gpu_point pan;
 extern int grid_size;
 extern void (*on_canvas_pan)(gpu_point point);
@@ -49,8 +54,13 @@ static void canvas_mouse(mouse_data mouse, float dt){
         if (on_canvas_pan) on_canvas_pan(pan);
     }
     if (mouse.raw.scroll){
-        zoom += mouse.raw.scroll * dt;
-        zoom = clampf(zoom, min_zoom, max_zoom);
-        if (on_canvas_zoom) on_canvas_zoom(zoom);
+        if (is_mod_pressed(KEY_LEFTALT, true)){
+            grid_size += mouse.raw.scroll * dt;
+            grid_size = clampf(grid_size, min_grid, max_grid);
+        } else {
+            zoom += mouse.raw.scroll * dt;
+            zoom = clampf(zoom, min_zoom, max_zoom);
+            if (on_canvas_zoom) on_canvas_zoom(zoom);
+        }
     }
 }
