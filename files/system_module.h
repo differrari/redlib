@@ -22,6 +22,7 @@ typedef bool        (*file_getstat_fn)(const char*, fs_stat*);
 typedef size_t      (*file_readdir_fn)(const char*, void*, size_t, file_offset*);
 typedef bool        (*file_truncate_fn)(file*);
 typedef size_t      (*file_transform_fn)(const char*, void*, size_t);
+typedef bool        (*file_create_entry)(const char*, fs_entry_type type);
 //mkdir
 //mkfile
 //delete
@@ -40,6 +41,7 @@ typedef struct {
     file_getstat_fn getstat;
     file_readdir_fn readdir;
     file_transform_fn transform;
+    file_create_entry create;
 } file_actions;
 
 typedef struct {
@@ -91,6 +93,8 @@ typedef struct system_module {
     file_transform_fn transform;
 
     // fs_permission_level permissions;
+    
+    file_create_entry create;
     
     alias_info_t alias_info; 
 

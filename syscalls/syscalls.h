@@ -82,6 +82,16 @@ extern bool unload_fsmodule();
 extern bool send_signal(signal_types type, u16 proc_id);
 extern bool handle_signal(signal_types type, signal_handler handler);
 
+extern bool create_fs_entry(char *path, fs_entry_type type); 
+
+static inline bool create_directory(char *path){
+    return create_fs_entry(path, entry_directory);
+}
+
+static inline bool create_file(char *path){
+    return create_fs_entry(path, entry_file);
+}
+
 void syncf(file *descriptor, bool replace);
 void seek(file *descriptor, int64_t offset, SEEK_TYPE type);
 void* realloc_sized(void* old_ptr, size_t old_size, size_t new_size);
