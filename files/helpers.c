@@ -60,7 +60,13 @@ char *read_full_file(const char *path, size_t *out_size){
 
 bool write_full_file(const char *path, void* buf, size_t size){
     file fd = {};
-    if (openf(path, &fd) != FS_RESULT_SUCCESS) return false;
+    FS_RESULT ores = openf(path, &fd);
+    if (ores == FS_RESULT_NOTFOUND){
+        if (!create_file(path)) return false;
+        ores = openf(path, &fd);
+    }
+    
+    if (ores != FS_RESULT_SUCCESS) return false;
     
     size_t res = writef(&fd, buf, size);
     
