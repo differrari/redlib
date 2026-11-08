@@ -50,7 +50,8 @@
 #define DIR_LIST_CODE               70
 #define LOAD_FSMODULE_CODE          71
 #define UNLOAD_FSMODULE_CODE        72
-#define CREATE_ENTRY_CODE             73
+#define CREATE_ENTRY_CODE           73
+#define DELETE_ENTRY_CODE           74
 
 #define PIPE_OPEN_CODE              75
 #define PIPE_CLOSE_CODE             76
@@ -64,3 +65,5 @@
 #define IN_CASE_OF_JS_CODE          99
 
 #define THREAD_INSPECT_CODE         100
+
+//NOTE: MAX 65535
