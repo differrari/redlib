@@ -76,6 +76,7 @@ gpu_size font_glyph_character(font_hdr *hdr, path_render_options options, draw_c
         } else {
             point_graph graph = ttf_get_character(font, character);
             gpu_size size = PATH_SIZE;
+            if (size.width > font->xMaxExtent) return (gpu_size){};//TODO: try to return default/empty
             size_t len = (size.width * size.height * sizeof(color)) + sizeof(gpu_size);
             cptr = cache_prealloc(font->character_cache, &key, len);
             draw_ctx newctx = buffer_to_draw_ctx((void*)cptr.ptr + sizeof(gpu_size), size.width, size.height);

@@ -56,7 +56,7 @@ u32 fb_line_height(u32 scale){
 uptr next_cursor_after(size_t render_cursor_count, uptr *render_cursors, i64 latest){
     uptr smallest = UINT64_MAX;
     for (u64 i = 0; i < render_cursor_count; i++)
-        if ((latest == UINT64_MAX || render_cursors[i] > latest) && render_cursors[i] < smallest){
+        if ((latest == -1 || (i64)render_cursors[i] > latest) && render_cursors[i] < smallest){
             smallest = render_cursors[i];
         }
     return smallest;
@@ -68,7 +68,7 @@ extern int print(const char *fmt, ...);
     latest_cursor = next_cursor_after(render_cursor_count, render_cursors, latest_cursor);\
     if (latest_cursor < INT64_MAX) remaining_render_cursors--;\
     print("Latest cursor at %lli",latest_cursor);\
-} else latest_cursor = UINT64_MAX;
+} else latest_cursor = -1;
 
 //TODO: use font
 void fb_continuous_draw_text(draw_ctx *ctx, draw_text_op operation, gpu_point *cursor, size_t render_cursor_count, uptr *render_cursors, color cursor_color, string_slice slice, range_t *render_range, gpu_rect bounds, gpu_size *out_size, gpu_point scroll, text_format default_format, text_format_arr array){
@@ -82,7 +82,7 @@ void fb_continuous_draw_text(draw_ctx *ctx, draw_text_op operation, gpu_point *c
         if (render_range->start > slice.length-1|| render_range->size > (i64)slice.length-(i64)render_range->start) return;
     }
     size_t remaining_render_cursors = render_cursor_count;
-    i64 latest_cursor = UINT64_MAX;
+    i64 latest_cursor = -1;
     recalc_cursor
     for (size_t i = render_range->start; i < render_range->start + render_range->size; i++){
         text_format current_format = get_current_format(i, default_format, array);
@@ -93,8 +93,8 @@ void fb_continuous_draw_text(draw_ctx *ctx, draw_text_op operation, gpu_point *c
             .type = path_render_fill | path_render_background | path_render_outline,
             .sizing_policy = path_render_sizing_char
         };
-        char c = {};
-        if (operation != draw_text_delete || (render_range->start < slice.length-1 && render_range->size < slice.length-render_range->start)) c = slice.data[i];
+        char c = 0;
+        if (operation != draw_text_delete || (render_range->start < slice.length-1 && render_range->size < (i64)slice.length-(i64)render_range->start)) c = slice.data[i];
         gpu_size curr_size = font_prerender_glyph_character(current_format.font, render_opts, ctx, (gpu_point){cursor->x + bounds.point.x, cursor->y + bounds.point.y}, c);
         curr_size.width *= 1 + current_format.character_spacing;
         curr_size.height *= 1 + current_format.line_spacing;
@@ -105,7 +105,7 @@ void fb_continuous_draw_text(draw_ctx *ctx, draw_text_op operation, gpu_point *c
             current_lookahead = 0;
         }
         if (c == '\t'){
-            cursor->x += 4 * curr_size.width;
+            cursor->x += 4 * char_width;
         }
         if (c == '\n'){
             new_line(cursor, line_height, 0);
@@ -137,19 +137,19 @@ void fb_continuous_draw_text(draw_ctx *ctx, draw_text_op operation, gpu_point *c
         
         if (cursor->x + scroll.x < (i32)bounds.size.width && 
             cursor->y + scroll.y < (i32)bounds.size.height){
-            if (c != '\n'){
+            if (!is_whitespace(c)){
                 if (ctx->fb){
                     if (operation == draw_text_delete) {
                         cursor->x -= curr_size.width;
-                        //TODO: handle moving to previous line with pos_to_lin_col
+                        //TODO: remove all deletion
                     }
                     if (c) font_render_glyph_character(current_format.font, render_opts, ctx, (gpu_point){cursor->x + bounds.point.x, cursor->y + bounds.point.y}, c);
                 }
             }
-            if (c && operation == draw_text_render) cursor->x += curr_size.width;
+            if (c && c != '\n' && operation == draw_text_render) cursor->x += curr_size.width;
             if (cursor->x > (i32)out_size->width) out_size->width = cursor->x;
             if (!out_size->height) out_size->height = line_height;
-            if (i == latest_cursor-1){
+            if ((i64)i == latest_cursor-1){
                 fb_fill_rect(ctx, cursor->x, cursor->y, 3, curr_size.height, cursor_color);
                 recalc_cursor
             }
