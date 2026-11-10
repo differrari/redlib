@@ -120,7 +120,7 @@ static inline FS_RESULT vfs_open_aliased(module_file *mfile, path_resolution res
 static inline FS_RESULT vfs_open(const char *path, file *fd){
     if (path && *path == '/') path++;
     if (!path || !strlen(path)) path = DIR_AS_FILE;
-    path_resolution resolution = parse_path(entries, path, 0, 0);//TODO: What's the correct value for resolution option here? It used to be forward, but that matches partial paths, but somewhere else that probably worked
+    path_resolution resolution = parse_path(entries, path, path_resolution_forward, 0);
     module_file *mfile = resolution.file;
     if (!mfile) return FS_RESULT_NOTFOUND;
     if (mfile->actions.open) return mfile->actions.open(path,fd);
@@ -230,7 +230,7 @@ static inline bool vfs_stat(const char *path, fs_stat *out_stat){
     if (!out_stat) return false;
     if (path && *path == '/') path++;
     if (!path || !strlen(path)) path = DIR_AS_FILE;
-    path_resolution resolution = parse_path(entries, path, 0, 0);//NOTE: see TODO in vfs_open about path resolution. (If it's not there, issue is fixed)
+    path_resolution resolution = parse_path(entries, path, path_resolution_forward, 0);
     module_file *file = resolution.file;
     if (!file){
         if (resolution.forwarded.length == 0)
