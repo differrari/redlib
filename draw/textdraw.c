@@ -83,7 +83,7 @@ void fb_continuous_draw_text(draw_ctx *ctx, draw_text_op operation, gpu_point *c
     }
     size_t remaining_render_cursors = render_cursor_count;
     i64 latest_cursor = -1;
-    recalc_cursor
+    recalc_cursor;
     for (size_t i = render_range->start; i < render_range->start + render_range->size; i++){
         text_format current_format = get_current_format(i, default_format, array);
         path_render_options render_opts = {
@@ -93,28 +93,31 @@ void fb_continuous_draw_text(draw_ctx *ctx, draw_text_op operation, gpu_point *c
             .type = path_render_fill | path_render_background | path_render_outline,
             .sizing_policy = path_render_sizing_char
         };
-        char c = 0;
-        if (operation != draw_text_delete || (render_range->start < slice.length-1 && render_range->size < (i64)slice.length-(i64)render_range->start)) c = slice.data[i];
-        gpu_size curr_size = font_prerender_glyph_character(current_format.font, render_opts, ctx, (gpu_point){cursor->x + bounds.point.x, cursor->y + bounds.point.y}, c);
+        utf_codepoint character = {};
+        if (operation != draw_text_delete || (render_range->start < slice.length-1 && render_range->size < (i64)slice.length-(i64)render_range->start)){
+            character = utf8_get_character(&slice.data[i]);
+            i += character.extra_byte_size;
+        }
+        gpu_size curr_size = font_prerender_glyph_character(current_format.font, render_opts, ctx, (gpu_point){cursor->x + bounds.point.x, cursor->y + bounds.point.y}, character.character);
         curr_size.width *= 1 + current_format.character_spacing;
         curr_size.height *= 1 + current_format.line_spacing;
         if (char_width < curr_size.width) char_width = curr_size.width;
         if (line_height < curr_size.height) line_height = curr_size.height;
         wrap_policy current_wrap = default_format.wrap;
-        if (c == '\n' || c == '\r' || is_whitespace(c)){
+        if (character.character == '\n' || character.character == '\r' || is_whitespace(character.character)){
             current_lookahead = 0;
         }
-        if (c == '\t'){
+        if (character.character == '\t'){
             cursor->x += 4 * char_width;//TODO: it'd be better to get the size of the space glyph here
         }
-        if (c == '\n'){
+        if (character.character == '\n'){
             new_line(cursor, line_height, 0);
             if (cursor->y + line_height > out_size->height) out_size->height = cursor->y + line_height;
             char_width = 0;
             line_height = 0;
             indent = 0;
             can_indent = true;
-        } else if (can_indent && is_whitespace(c)){
+        } else if (can_indent && is_whitespace(character.character)){
             indent++;
         } else if (operation != draw_text_delete) {
             can_indent = false;
@@ -125,7 +128,7 @@ void fb_continuous_draw_text(draw_ctx *ctx, draw_text_op operation, gpu_point *c
             recalc_cursor
         }
         
-        if (operation != draw_text_delete && (current_wrap == wrap_word || current_wrap == wrap_word_preserve_indent) && !is_whitespace(c)){
+        if (operation != draw_text_delete && (current_wrap == wrap_word || current_wrap == wrap_word_preserve_indent) && !is_whitespace(character.character)){
             if (current_lookahead){
                 current_lookahead--;
             } else {
@@ -142,16 +145,16 @@ void fb_continuous_draw_text(draw_ctx *ctx, draw_text_op operation, gpu_point *c
         
         if (cursor->x + scroll.x < (i32)bounds.size.width && 
             cursor->y + scroll.y < (i32)bounds.size.height){
-            if (!is_whitespace(c)){
+            if (!is_whitespace(character.character)){
                 if (ctx->fb){
                     if (operation == draw_text_delete) {
                         cursor->x -= curr_size.width;
                         //TODO: remove all deletion
                     }
-                    if (c) font_render_glyph_character(current_format.font, render_opts, ctx, (gpu_point){cursor->x + bounds.point.x, cursor->y + bounds.point.y}, c);
+                    if (character.character) font_render_glyph_character(current_format.font, render_opts, ctx, (gpu_point){cursor->x + bounds.point.x, cursor->y + bounds.point.y}, character.character);
                 }
             }
-            if (c && c != '\n' && operation == draw_text_render) cursor->x += curr_size.width;
+            if (character.character && character.character != '\n' && operation == draw_text_render) cursor->x += curr_size.width;
             if (cursor->x > (i32)out_size->width) out_size->width = cursor->x;
             if (!out_size->height) out_size->height = line_height;
             if ((i64)i == latest_cursor-1){
