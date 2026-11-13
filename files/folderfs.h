@@ -24,10 +24,10 @@ static inline void folderfs_list_ids(u64 *out_offset){
     for (linked_list_node_t *node = data_list->head; node; node = node->next){
         if (node->data){
             if (folderfs_custom_list){
-                print("Custom folder name");
+                // print("Custom folder name");
                 folderfs_custom_list(node->data, i, out_offset);
             } else {
-                print("Default folder name %i",i);
+                // print("Default folder name %i",i);
                 string s = string_format("%i",i);
                 if (!dir_list_fill(router_fs_dir_helper, s.data)){
                     if (out_offset) *out_offset = current_offset;

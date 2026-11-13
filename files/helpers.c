@@ -62,7 +62,7 @@ bool write_full_file(const char *path, void* buf, size_t size){
     file fd = {};
     FS_RESULT ores = openf(path, &fd);
     if (ores == FS_RESULT_NOTFOUND){
-        if (!create_file(path)) return false;
+        if (!create_file((char*)path)) return false;
         ores = openf(path, &fd);
     }
     

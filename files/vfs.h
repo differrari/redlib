@@ -279,6 +279,11 @@ static inline size_t vfs_list(const char *path, void *buf, size_t size, file_off
     return vfs_readdir(path, buf, size, offset);
 }
 
+static inline bool vfs_create(const char *path, fs_entry_type type){
+    if (path && *path == '/') path++;
+    return make_entry(path, backing_virtual, type, 0, (buffer){}) != 0;
+}
+
 static inline FS_RESULT vfs_trace_open(const char *path, file *fd){
      FS_RESULT res = vfs_open(path, fd);
      print("vfs_trace_open result %llx",res);
@@ -305,12 +310,18 @@ static inline size_t vfs_trace_write(file *fd, const char *buf, size_t size, fil
 
 static inline bool vfs_trace_stat(const char *path, fs_stat *outstat){
      bool res = vfs_stat(path, outstat);
-     print("vfs_trace_stat result %llx",res);
+     print("vfs_trace_stat %s result %llx",path,res);
      return res;
 }
 
 static inline size_t vfs_trace_readdir(const char *path, void* buf, size_t size, file_offset *offset){
      size_t res = vfs_readdir(path, buf, size, offset);
-     print("vfs_trace_readdir result %llx",res);
+     print("vfs_trace_readdir %s result %llx",path,res);
      return res;
+}
+
+static inline bool vfs_trace_create(const char *path, fs_entry_type type){
+    bool res = vfs_create(path, type);
+    print("vfs_trace_create %s result %i",path,res);
+    return res;
 }
