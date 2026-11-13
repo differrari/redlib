@@ -68,6 +68,7 @@ menu/render.c
 input_keycodes.c
 string/string.c
 string/slice.c
+string/utf8.c
 ui/uno/uno.c
 ui/color/color.c
 shell/shell.c

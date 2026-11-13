@@ -175,7 +175,7 @@ bool ttf_lookup_glyph_fmt4(ttf_font *font, ttf_glyph_loc *out_glyph, u16 *out_in
     return false;
 }
 
-bool ttf_lookup_glyph(ttf_font *font, ttf_glyph_loc *out_glyph, u16 *out_index, u16 glyph){
+bool ttf_lookup_glyph(ttf_font *font, ttf_glyph_loc *out_glyph, u16 *out_index, u32 glyph){
     switch (font->character_map->hdr.format){
         case 4:
             return ttf_lookup_glyph_fmt4(font, out_glyph, out_index, glyph);
@@ -449,15 +449,15 @@ point_graph ttf_get_index(ttf_font *font, u16 index){
     return cached->glyph;
 }
 
-void ttf_cache_graph_char(ttf_font *font, u16 character, u16 index){
+void ttf_cache_graph_char(ttf_font *font, u32 character, u16 index){
     if (!font->graph_cache) font->graph_cache = hash_map_create(font->hdr.num_glyphs);
-    hash_map_put(font->graph_cache, &character, sizeof(u16), (void*)(u64)((1 << 16) | index));
+    hash_map_put(font->graph_cache, &character, sizeof(u32), (void*)(u64)((1 << 16) | index));
 }
 
-point_graph ttf_get_character(ttf_font *font, u16 character){
+point_graph ttf_get_character(ttf_font *font, u32 character){
     if (font->graph_cache){
-        u64 val = (u64)hash_map_get(font->graph_cache, &character, sizeof(u16));
-        if ((val >> 16))
+        u64 val = (u64)hash_map_get(font->graph_cache, &character, sizeof(u32));
+        if ((val >> 32))
             return ttf_get_index(font, (u16)(val & 0xFFFF));
     }
     ttf_glyph_loc glyph = {};

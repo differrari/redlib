@@ -27,6 +27,7 @@ int print(const char *fmt, ...);
 #ifndef CROSS
 void put(const char *fmt, ...);
 #else
+extern int printf(const char *, ...);
 #define put(...) printf(__VA_ARGS__)
 #endif
 

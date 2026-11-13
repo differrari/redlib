@@ -42,10 +42,10 @@ typedef struct {
 
 bool load_ttf(const char *path, ttf_font *out_font);
 point_graph ttf_get_index(ttf_font *font, u16 index);
-point_graph ttf_get_character(ttf_font *font, u16 character);
+point_graph ttf_get_character(ttf_font *font, u32 character);
 void ttf_font_destroy(ttf_font *font);
 
 // Internal util functions
-bool ttf_lookup_glyph(ttf_font *font, ttf_glyph_loc *out_glyph, u16 *out_index, u16 glyph);
+bool ttf_lookup_glyph(ttf_font *font, ttf_glyph_loc *out_glyph, u16 *out_index, u32 glyph);
 bool ttf_find_glyph(ttf_font *font, ttf_glyph_loc *glyph, u16 index);
 point_graph ttf_read_glyph(ttf_font *font, u16 index, ttf_glyph_loc *glyph);

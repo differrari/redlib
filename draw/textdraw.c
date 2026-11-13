@@ -70,7 +70,6 @@ extern int print(const char *fmt, ...);
     print("Latest cursor at %lli",latest_cursor);\
 } else latest_cursor = -1;
 
-//TODO: use font
 void fb_continuous_draw_text(draw_ctx *ctx, draw_text_op operation, gpu_point *cursor, size_t render_cursor_count, uptr *render_cursors, color cursor_color, string_slice slice, range_t *render_range, gpu_rect bounds, gpu_size *out_size, gpu_point scroll, text_format default_format, text_format_arr array){
     int indent = 0;
     bool can_indent = true;
@@ -89,7 +88,7 @@ void fb_continuous_draw_text(draw_ctx *ctx, draw_text_op operation, gpu_point *c
         path_render_options render_opts = {
             .background_color = current_format.background,
             .color = current_format.foreground,
-            .scale = current_format.scale + (current_format.font ? 1: 0),//TODO: hack
+            .scale = current_format.scale + (current_format.font != 0),//TODO: hack
             .type = path_render_fill | path_render_background | path_render_outline,
             .sizing_policy = path_render_sizing_char
         };
@@ -105,7 +104,7 @@ void fb_continuous_draw_text(draw_ctx *ctx, draw_text_op operation, gpu_point *c
             current_lookahead = 0;
         }
         if (c == '\t'){
-            cursor->x += 4 * char_width;
+            cursor->x += 4 * char_width;//TODO: it'd be better to get the size of the space glyph here
         }
         if (c == '\n'){
             new_line(cursor, line_height, 0);
@@ -118,6 +117,11 @@ void fb_continuous_draw_text(draw_ctx *ctx, draw_text_op operation, gpu_point *c
             indent++;
         } else if (operation != draw_text_delete) {
             can_indent = false;
+        }
+        
+        if (latest_cursor == 0 && i == 0){
+            fb_fill_rect(ctx, cursor->x, cursor->y, 3, curr_size.height, cursor_color);
+            recalc_cursor
         }
         
         if (operation != draw_text_delete && (current_wrap == wrap_word || current_wrap == wrap_word_preserve_indent) && !is_whitespace(c)){
