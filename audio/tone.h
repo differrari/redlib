@@ -8,6 +8,7 @@ typedef enum WAVE_TYPE {
     WAVE_SQUARE,
     WAVE_TRIG,
     WAVE_SAW,
+    WAVE_SINE,
     WAVE_NOISE,
 } WAVE_TYPE;
 
@@ -36,6 +37,9 @@ extern "C" {
 
 void sound_create(float seconds, sound_defn *sound, audio_samples *audio);
 void sound_shape(envelope_defn* env, audio_samples* audio);
+void sound_alloc(float duration, audio_samples* audio);
+
+void wave_generate(sound_defn* sound, audio_sample_t* sample, size_t count);
 
 #ifdef __cplusplus
 }

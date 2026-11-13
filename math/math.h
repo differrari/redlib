@@ -14,6 +14,10 @@ extern "C" {
 #define EPSILON 1e-5
 #endif
 
+#ifndef M_PI
+#define M_PI 3.141592653589793238462643383279502884
+#endif
+
 static inline i64 powi(i64 n, i64 e){
     if (e == 1) return n;
     if (e == 2) return n << e;
@@ -35,8 +39,12 @@ static inline double pow2(double v){
     return v*v;
 }
 
-static inline float powfloat(float a, float b){
+static __attribute__((always_inline)) inline float powf(float a, float b){
     return __builtin_powf(a,b);
+}
+
+static __attribute__((always_inline)) inline float sinf(float a){
+    return __builtin_sinf(a);
 }
 
 static inline double pow3(double v){

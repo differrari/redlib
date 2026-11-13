@@ -26,6 +26,10 @@ static audio_sample_t wave_sample(WAVE_TYPE type, uint32_t phase, rng_t* rng){
         case WAVE_SQUARE:
             wave = (phase < PHASE_MID) ? 0.5 : -0.5;
             break;
+        case WAVE_SINE: {
+            float fase = 0.25 + (float)phase / (float)PHASE_MAX;
+            wave = sinf(2*M_PI * fase)/2.f;
+        } break;
         case WAVE_NOISE: {
             return (audio_sample_t)rng_next16(rng);
         }
@@ -33,7 +37,7 @@ static audio_sample_t wave_sample(WAVE_TYPE type, uint32_t phase, rng_t* rng){
     return (audio_sample_t)(wave * UINT16_MAX);
 }
 
-static void wave_generate(sound_defn* sound, audio_sample_t* sample, size_t count){
+void wave_generate(sound_defn* sound, audio_sample_t* sample, size_t count){
     float freq = sound->start_freq;
     float freq_delta = (sound->end_freq - sound->start_freq) / count;
     uint32_t phase = 0;
@@ -47,12 +51,16 @@ static void wave_generate(sound_defn* sound, audio_sample_t* sample, size_t coun
     }
 }
 
-void sound_create(float duration, sound_defn* sound, audio_samples* audio){
-    // !! MONO only
+void sound_alloc(float duration, audio_samples* audio){
     audio->channels = 1;
     audio->smpls_per_channel = duration * 44100.f;
     audio->samples.size = audio->smpls_per_channel * sizeof(audio_sample_t);
     audio->samples.ptr = (uintptr_t)zalloc(audio->samples.size);
+}
+
+void sound_create(float duration, sound_defn* sound, audio_samples* audio){
+    // !! MONO only
+    sound_alloc(duration, audio);
     wave_generate(sound, (audio_sample_t*)audio->samples.ptr, audio->smpls_per_channel);
 }
 
