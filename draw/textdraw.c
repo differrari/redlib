@@ -3,6 +3,7 @@
 #include "draw.h"
 #include "fonts/font.h"
 #include "font8x8_basic.h"
+#include "string/utf8.h"
 
 static inline text_format* get_fmt_at(text_format_arr array, size_t index){
     if (!array.fmt) return 0;
@@ -259,6 +260,8 @@ gpu_size fb_write_slice(draw_ctx *ctx, string_slice slice, gpu_point loc, simple
 
     for (size_t i = 0; i < slice.length; ++i){    
         char c = slice.data[i];
+        utf_codepoint character = utf8_get_character(&slice.data[i]);
+        i += character.extra_byte_size;
         if (c == '\n'){
             if (xRowSize > xSize)
                 xSize = xRowSize;
@@ -268,7 +271,7 @@ gpu_size fb_write_slice(draw_ctx *ctx, string_slice slice, gpu_point loc, simple
             rows++;
             if (options.crop && loc.y >= (i32)ctx->height) break;
         } else {
-            gpu_size size = font_render_glyph_character(options.font, options.glyph, ctx, (gpu_point){loc.x + xoff,loc.y }, c);
+            gpu_size size = font_render_glyph_character(options.font, options.glyph, ctx, (gpu_point){loc.x + xoff,loc.y }, character.character);
             xoff += (size.width * (1 + options.character_spacing));
             y_line_size = (size.height * (1 + options.line_spacing));
             xRowSize += (size.width * (1 + options.character_spacing));

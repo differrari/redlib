@@ -3,6 +3,8 @@
 #include "types.h"
 #include "slice.h"
 
+#define UTF_HAS_EXTRA_BYTES_MASK 0b10000000
+
 typedef struct {
     u32 character;
     u8 extra_byte_size;
@@ -15,3 +17,6 @@ static inline size_t utf8_count_characters(char *c){
     return utf8_count_slice_characters((string_slice){ .data = c, .length = strlen(c) });
 }
 
+static inline bool utf8_is_ascii(u32 c){
+    return !(c & UTF_HAS_EXTRA_BYTES_MASK);
+}

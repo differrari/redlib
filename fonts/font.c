@@ -3,6 +3,7 @@
 #include "draw/pathdraw.h"
 #include "cache/cache.h"
 #include "header_utils/composite.h"
+#include "string/utf8.h"
 
 cache_config font_make_cache(int num_glyphs){
     return cache_configure((cache_config){
@@ -61,6 +62,7 @@ gpu_size font_glyph_character(font_hdr *hdr, path_render_options options, draw_c
     if (!options.type) options.type = path_render_fill;
     if (!options.scale) options.scale = 1;
     if (!hdr || hdr->type == font_type_embedded){
+        if (!utf8_is_ascii(character)) character = '?';//TODO: Anything better? Even some hack
         if (render) fb_draw_raw_char(ctx, location.x, location.y, character, options.scale, options.color);
         return (gpu_size){path_autosize(options) * options.scale, path_autosize(options) * options.scale};
     }

@@ -2,8 +2,6 @@
 
 #define UTF8_READ(data,i) (data[i])
 
-#define UTF_HAS_EXTRA_BYTES 0b10000000
-
 #define UTF_HAS_1_EXTRA_MASK 0b11100000
 #define UTF_HAS_1_EXTRA_VALUE 0b11000000
 #define UTF_HAS_2_EXTRA_MASK 0b11110000
@@ -22,7 +20,7 @@ utf_codepoint utf8_get_character(char *start){//TODO: follow bounds, adding a li
     u32 character = 0;
     u8 skip = 0;
     char c = *start;
-    if (c & UTF_HAS_EXTRA_BYTES){
+    if (c & UTF_HAS_EXTRA_BYTES_MASK){
         if ((c & UTF_HAS_1_EXTRA_MASK) == UTF_HAS_1_EXTRA_VALUE){
             u8 fb = c & UTF_1_BYTE_FIRST_MASK;
             u8 sb = start[1] & UTF_EXTRA_BITE_MASK;
@@ -53,7 +51,7 @@ size_t utf8_count_slice_characters(string_slice sl){
     size_t num_chars = 0;
     for (u64 i = 0; i < sl.length; i++){
         char c = sl.data[i];
-        if (c & UTF_HAS_EXTRA_BYTES){
+        if (c & UTF_HAS_EXTRA_BYTES_MASK){
             if ((c & UTF_HAS_1_EXTRA_MASK) == UTF_HAS_1_EXTRA_VALUE){
                 i++;
             } else if ((c & UTF_HAS_2_EXTRA_MASK) == UTF_HAS_2_EXTRA_VALUE){
