@@ -73,11 +73,11 @@ void fb_fill_rect(draw_ctx *ctx, int32_t x, int32_t y, uint32_t width, uint32_t 
     int32_t w = width;
     int32_t h = height;
     if (x < 0){
-        width -= -x;
+        w -= -x;
         x = 0;
     }
     if (y < 0){
-        height -= -y;
+        h -= -y;
         y = 0;
     }
     if (x + w > (int32_t)ctx->width) w = ctx->width - x;

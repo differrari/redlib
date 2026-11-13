@@ -42,11 +42,22 @@ size_t buffer_write_to(buffer *buf, const char *lit, size_t size, uintptr_t curs
 size_t buffer_write_space(buffer *buf);
 size_t buffer_read(buffer *buf, void *into, size_t size, uintptr_t cursor);
 size_t buffer_delete(buffer *buf, uptr cursor, size_t amount);
+
 void buffer_wipe(buffer *buf);
 void buffer_destroy(buffer *buf);
 uptr buffer_seek(buffer *buf, i64 amount, bool absolute);
 
 #include "string/slice.h"
+
+static inline string_slice buffer_write_get_slice(buffer *buf, char *fmt, ...){
+    if (!buf || !buf->buffer) return (string_slice){};
+    uptr cursor = buf->cursor;
+    __attribute__((aligned(16))) va_list args;
+    va_start(args, fmt); 
+    size_t n = buffer_write_va(buf, fmt, args);
+    va_end(args);
+    return (string_slice){.data = (char*)(buf->buffer + cursor), n};
+}
 
 static inline string_slice slice_from_buffer(buffer *buf){
     return (string_slice){ .data = (char*)buf->buffer, .length = buf->buffer_size };
