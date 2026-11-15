@@ -40,6 +40,8 @@ uint64_t linked_list_size_bytes(const linked_list_t *list);
 linked_list_node_t* linked_list_find(linked_list_t *list, void *key, int (*cmp)(void *, void *));
 void linked_list_for_each(const linked_list_t *list, void (*func)(void *));
 void linked_list_sort(linked_list_t *list, void *ctx, bool (*less)(void *a, void *b, void *ctx));
+i64 linked_list_index_of(linked_list_t *list, void *data);
+i64 linked_list_index_of_node(linked_list_t *list, linked_list_node_t *data);
 
 static inline void linked_list_clear(linked_list_t *list){
     while (list->tail) linked_list_remove(list, list->tail);

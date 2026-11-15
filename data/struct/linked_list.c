@@ -187,4 +187,27 @@ void linked_list_sort(linked_list_t *list, void *ctx, bool (*less)(void *a, void
     list->tail = tail;
 }
 
+i64 linked_list_index_of(linked_list_t *list, void *data){
+    if (!list) return -1;
+    i64 count = 0;
+    for (linked_list_node_t *node = list->head; node; node = node->next) {
+        if (node->data == data){
+            return count;
+        }
+        count++;
+    }
+    return -1;
+}
+
+i64 linked_list_index_of_node(linked_list_t *list, linked_list_node_t *data){
+    if (!list) return -1;
+    i64 count = 0;
+    for (linked_list_node_t *node = list->head; node; node = node->next) {
+        if (node == data)
+            return count;
+        count++;
+    }
+    return -1;
+}
+
 //TODO: write tests for whole file

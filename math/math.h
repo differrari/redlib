@@ -35,6 +35,10 @@ static inline double pow2(double v){
     return v*v;
 }
 
+static inline float powfloat(float a, float b){
+    return __builtin_powf(a,b);
+}
+
 static inline double pow3(double v){
     return v*v*v;
 }

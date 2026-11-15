@@ -1,3 +1,5 @@
+#ifndef CROSS
+
 #include "math/math.h"
 #include "files/fs.h"
 #include "syscalls/syscalls.h"
@@ -112,3 +114,5 @@ bool audio_update_stream(int8_t lineId, sizedptr samples){
     }
     return false;
 }
+
+#endif

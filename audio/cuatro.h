@@ -2,7 +2,7 @@
 
 #include "types.h"
 
-typedef int16_t audio_sample_t;
+typedef i16 audio_sample_t;
 
 typedef enum AUDIO_LIFETIME {
     AUDIO_OFF = 0,
